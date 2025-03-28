@@ -12,3 +12,6 @@ Saved
 *.suo
 *.xcodeproj
 *.xcworkspace
+
+// 100MB 넘는 파일/폴더 추가
+Content
