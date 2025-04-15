@@ -14,6 +14,3 @@ class AUncleWebGameMode : public AGameModeBase
 public:
 	AUncleWebGameMode();
 };
-
-
-
