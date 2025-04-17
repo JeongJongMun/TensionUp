@@ -6,6 +6,7 @@
 #include "InputMappingContext.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Blueprint/UserWidget.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 AUWCharacterPlayer::AUWCharacterPlayer()
@@ -63,6 +64,18 @@ AUWCharacterPlayer::AUWCharacterPlayer()
 	CableComponent->CableWidth = 2.0f;
 	CableComponent->NumSegments = 10; // 케이블 세그먼트 수 - 부드러운 곡선을 위해
 	CableComponent->bAttachEnd = true;
+
+	// Widget
+	static ConstructorHelpers::FClassFinder<UUserWidget>HUD(TEXT("WidgetBlueprint'/Game/UI/WBP_Crosshair.WBP_Crosshair_C'"));
+	if (HUD.Succeeded())
+	{
+		HUDClass = HUD.Class;
+		UE_LOG(LogTemp, Log, TEXT("HUD created"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("HUD not created"));
+	}
 }
 
 void AUWCharacterPlayer::BeginPlay()
@@ -74,6 +87,17 @@ void AUWCharacterPlayer::BeginPlay()
 	{
 		Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		//Subsystem->RemoveMappingContext(DefaultMappingContext);
+	}
+
+	// HUD
+	HUDWidget = CreateWidget<UUserWidget>(PlayerController, HUDClass);
+	if (HUDWidget)
+	{
+		HUDWidget->AddToViewport();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Widget could not be created"));
 	}
 }
 
@@ -134,12 +158,8 @@ bool AUWCharacterPlayer::FindCableAttachPoint(FVector& OutLocation, FVector& Out
         return false;
     }
 
-	// FVector2D ScreenCenter;
 	int32 ViewportSizeX, ViewportSizeY;
 	PC->GetViewportSize(ViewportSizeX, ViewportSizeY);
-	// ScreenCenter.X = ViewportSizeX / 2.0f;
-	// ScreenCenter.Y = ViewportSizeY / 2.0f;
-	
     FVector WorldLocation, WorldDirection;
 	if (PC->DeprojectScreenPositionToWorld(ViewportSizeX * 0.5f, ViewportSizeY * 0.5f, WorldLocation, WorldDirection))
     {

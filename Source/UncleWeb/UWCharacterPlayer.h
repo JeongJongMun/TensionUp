@@ -27,6 +27,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cable")
 	float DampingFactor = 0.5f;
 
+	// HUD
+	UPROPERTY(EditAnywhere, Category = "Widget")
+	TSubclassOf<class UUserWidget> HUDClass;
+
+	UPROPERTY()
+	TObjectPtr<class UUserWidget> HUDWidget;
+
 private:
 	FVector CableEndLocation;
 	float NewCableLength = 0.0f;
