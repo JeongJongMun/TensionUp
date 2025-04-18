@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
-#include "UncleWebGameMode.generated.h"
+#include "TUGameMode.generated.h"
 
 UCLASS(minimalapi)
-class AUncleWebGameMode : public AGameModeBase
+class ATUGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
 
 public:
-	AUncleWebGameMode();
+	ATUGameMode();
 };

@@ -1,6 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "UWCharacterPlayer.h"
+#include "TUCharacterPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "InputMappingContext.h"
@@ -9,7 +9,7 @@
 #include "Blueprint/UserWidget.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
-AUWCharacterPlayer::AUWCharacterPlayer()
+ATUCharacterPlayer::ATUCharacterPlayer()
 {
 	// Camera
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -70,15 +70,10 @@ AUWCharacterPlayer::AUWCharacterPlayer()
 	if (HUD.Succeeded())
 	{
 		HUDClass = HUD.Class;
-		UE_LOG(LogTemp, Log, TEXT("HUD created"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("HUD not created"));
 	}
 }
 
-void AUWCharacterPlayer::BeginPlay()
+void ATUCharacterPlayer::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -95,13 +90,9 @@ void AUWCharacterPlayer::BeginPlay()
 	{
 		HUDWidget->AddToViewport();
 	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("Widget could not be created"));
-	}
 }
 
-void AUWCharacterPlayer::Tick(float DeltaTime)
+void ATUCharacterPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
@@ -112,22 +103,22 @@ void AUWCharacterPlayer::Tick(float DeltaTime)
 	}
 }
 
-void AUWCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void ATUCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent);
 
-	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &AUWCharacterPlayer::Jump);
-	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AUWCharacterPlayer::StopJumping);
-	EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AUWCharacterPlayer::Move);
-	EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AUWCharacterPlayer::Look);
+	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::Jump);
+	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::StopJumping);
+	EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ATUCharacterPlayer::Move);
+	EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ATUCharacterPlayer::Look);
 
-	EnhancedInputComponent->BindAction(LeftClickAction, ETriggerEvent::Started, this, &AUWCharacterPlayer::FireCable);
-	EnhancedInputComponent->BindAction(LeftClickAction, ETriggerEvent::Completed, this, &AUWCharacterPlayer::ReleaseCable);
+	EnhancedInputComponent->BindAction(LeftClickAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::FireCable);
+	EnhancedInputComponent->BindAction(LeftClickAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::ReleaseCable);
 }
 
-void AUWCharacterPlayer::Move(const FInputActionValue& Value)
+void ATUCharacterPlayer::Move(const FInputActionValue& Value)
 {
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
@@ -141,7 +132,7 @@ void AUWCharacterPlayer::Move(const FInputActionValue& Value)
 	AddMovementInput(RightDirection, MovementVector.Y);
 }
 
-void AUWCharacterPlayer::Look(const FInputActionValue& Value)
+void ATUCharacterPlayer::Look(const FInputActionValue& Value)
 {
 	FVector2D LookAxisVector = Value.Get<FVector2D>();
 
@@ -149,12 +140,12 @@ void AUWCharacterPlayer::Look(const FInputActionValue& Value)
 	AddControllerPitchInput(LookAxisVector.Y);
 }
 
-bool AUWCharacterPlayer::FindCableAttachPoint(FVector& OutLocation, FVector& OutNormal)
+bool ATUCharacterPlayer::FindCableAttachPoint(FVector& OutLocation, FVector& OutNormal)
 {
     APlayerController* PC = Cast<APlayerController>(GetController());
     if (!PC)
     {
-        UE_LOG(LogTemp, Warning, TEXT("[AUWCharacterPlayer::FindCableAttachPoint] PlayerController is null"));
+        UE_LOG(LogTemp, Warning, TEXT("[%s] PlayerController is null"), *FString(__FUNCTION__));
         return false;
     }
 
@@ -180,17 +171,15 @@ bool AUWCharacterPlayer::FindCableAttachPoint(FVector& OutLocation, FVector& Out
 
             OutLocation = HitResult.ImpactPoint;
             OutNormal = HitResult.ImpactNormal;
-            UE_LOG(LogTemp, Log, TEXT("[AUWCharacterPlayer::FindCableAttachPoint] Cable Attach Point Found: %s"), *OutLocation.ToString());
             return true;
         }
     }
 
-    UE_LOG(LogTemp, Log, TEXT("[AUWCharacterPlayer::FindCableAttachPoint] Cable Attach Point Not Found"));
     return false;
 }
 
 // 마우스 클릭 시 케이블 발사
-void AUWCharacterPlayer::FireCable()
+void ATUCharacterPlayer::FireCable()
 {
     if (bIsCableAttached)
 	{
@@ -209,7 +198,7 @@ void AUWCharacterPlayer::FireCable()
 }
 
 // 케이블 해제
-void AUWCharacterPlayer::ReleaseCable()
+void ATUCharacterPlayer::ReleaseCable()
 {
 	if (bIsCableAttached)
 	{
@@ -218,7 +207,7 @@ void AUWCharacterPlayer::ReleaseCable()
 	}
 }
 
-void AUWCharacterPlayer::CalculateSwingForce()
+void ATUCharacterPlayer::CalculateSwingForce()
 {
 	FVector CharacterLocation = GetActorLocation();
 	FVector ToSwingPoint = CableEndLocation - CharacterLocation;
@@ -235,7 +224,7 @@ void AUWCharacterPlayer::CalculateSwingForce()
 	}
 }
 
-void AUWCharacterPlayer::UpdateCableEndLocation()
+void ATUCharacterPlayer::UpdateCableEndLocation()
 {
 	FVector LocalEndLocation = CableComponent->GetComponentTransform().InverseTransformPosition(CableEndLocation);
 	CableComponent->EndLocation = LocalEndLocation;

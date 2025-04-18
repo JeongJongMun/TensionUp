@@ -1,11 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "UWCharacterBase.h"
+#include "TUCharacterBase.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
-AUWCharacterBase::AUWCharacterBase()
+ATUCharacterBase::ATUCharacterBase()
 {
 	// Pawn
 	bUseControllerRotationPitch = false;
@@ -37,7 +37,7 @@ AUWCharacterBase::AUWCharacterBase()
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[AUWCharacterBase::AUWCharacterBase()] CharacterMesh Object is not created"));
+		UE_LOG(LogTemp, Warning, TEXT("[%s()] CharacterMesh Object is not created"), *FString(__FUNCTION__));
 	}
 
 	static ConstructorHelpers::FClassFinder<UAnimInstance> AnimInstanceClassRef(TEXT("/Game/Characters/Mannequins/Animations/ABP_Quinn.ABP_Quinn_C"));
@@ -47,6 +47,6 @@ AUWCharacterBase::AUWCharacterBase()
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[AUWCharacterBase::AUWCharacterBase()] AnimInstance Class Object is not created"));
+		UE_LOG(LogTemp, Warning, TEXT("[%s()] AnimInstance Class Object is not created"), *FString(__FUNCTION__));
 	}
 }

@@ -4,16 +4,16 @@
 #include "CoreMinimal.h"
 #include "InputActionValue.h"
 #include "CableComponent.h"
-#include "UWCharacterBase.h"
-#include "UWCharacterPlayer.generated.h"
+#include "TUCharacterBase.h"
+#include "TUCharacterPlayer.generated.h"
 
 UCLASS()
-class UNCLEWEB_API AUWCharacterPlayer : public AUWCharacterBase
+class UNCLEWEB_API ATUCharacterPlayer : public ATUCharacterBase
 {
 	GENERATED_BODY()
 
 public:
-	AUWCharacterPlayer();
+	ATUCharacterPlayer();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cable")
 	UCableComponent* CableComponent;

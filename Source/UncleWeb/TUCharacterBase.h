@@ -4,14 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "UWCharacterBase.generated.h"
+#include "TUCharacterBase.generated.h"
 
 UCLASS()
-class UNCLEWEB_API AUWCharacterBase : public ACharacter
+class UNCLEWEB_API ATUCharacterBase : public ACharacter
 {
 	GENERATED_BODY()
 
 public:
-	AUWCharacterBase();
+	ATUCharacterBase();
 	
 };
