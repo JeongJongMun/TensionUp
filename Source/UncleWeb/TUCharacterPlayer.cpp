@@ -142,12 +142,7 @@ void ATUCharacterPlayer::Look(const FInputActionValue& Value)
 
 bool ATUCharacterPlayer::FindCableAttachPoint(FVector& OutLocation, FVector& OutNormal)
 {
-    APlayerController* PC = Cast<APlayerController>(GetController());
-    if (!PC)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("[%s] PlayerController is null"), *FString(__FUNCTION__));
-        return false;
-    }
+    APlayerController* PC = CastChecked<APlayerController>(GetController());
 
 	int32 ViewportSizeX, ViewportSizeY;
 	PC->GetViewportSize(ViewportSizeX, ViewportSizeY);
@@ -178,9 +173,13 @@ bool ATUCharacterPlayer::FindCableAttachPoint(FVector& OutLocation, FVector& Out
     return false;
 }
 
-// 마우스 클릭 시 케이블 발사
 void ATUCharacterPlayer::FireCable()
 {
+	// if (!GetCharacterMovement()->IsFalling())
+	// {
+		// return;
+	// }
+	
     if (bIsCableAttached)
 	{
 		ReleaseCable();
@@ -202,6 +201,41 @@ void ATUCharacterPlayer::ReleaseCable()
 {
 	if (bIsCableAttached)
 	{
+		// 추가적인 힘 얻는거 함수로 빼기
+		APlayerController* PC = CastChecked<APlayerController>(GetController());
+		
+		bool bIsWPressed = PC->IsInputKeyDown(EKeys::W);
+		bool bIsAPressed = PC->IsInputKeyDown(EKeys::A);
+		bool bIsSPressed = PC->IsInputKeyDown(EKeys::S);
+		bool bIsDPressed = PC->IsInputKeyDown(EKeys::D);
+		bool bIsSpacePressed = PC->IsInputKeyDown(EKeys::SpaceBar);
+		FVector Direction = FVector::ZeroVector;
+
+		if (bIsWPressed)
+		{
+			Direction += GetActorForwardVector();
+		}
+		if (bIsAPressed)
+		{
+			Direction += -GetActorRightVector();
+		}
+		if (bIsSPressed)
+		{
+			Direction += -GetActorForwardVector();
+		}
+		if (bIsDPressed)
+		{
+			Direction += GetActorRightVector();
+		}
+		if (bIsSpacePressed)
+		{
+			Direction += GetActorUpVector();
+		}
+		Direction.Normalize();
+
+		FVector Force = Direction * CableDrivingForce;
+		GetCharacterMovement()->AddForce(Force);
+		
 		bIsCableAttached = false;
 		CableComponent->SetVisibility(false);
 	}

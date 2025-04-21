@@ -22,10 +22,13 @@ public:
 	float MaxCableLength = 2000.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cable")
-	float CableStrength = 2000.0f;
+	float CableStrength = 1000.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cable")
 	float DampingFactor = 0.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cable")
+	float CableDrivingForce = 100000.0f;
 
 	// HUD
 	UPROPERTY(EditAnywhere, Category = "Widget")
