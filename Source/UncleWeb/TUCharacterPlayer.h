@@ -4,6 +4,7 @@
 #include "CoreMinimal.h"
 #include "InputActionValue.h"
 #include "TUCharacterBase.h"
+#include "TUDynamicCamera.h"
 #include "TUCharacterPlayer.generated.h"
 
 UCLASS()
@@ -13,7 +14,10 @@ class UNCLEWEB_API ATUCharacterPlayer : public ATUCharacterBase
 
 public:
 	ATUCharacterPlayer();
-	
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<UTUDynamicCamera> DynamicCameraComponent;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cable")
 	TObjectPtr<class UCableComponent> CableComponent;
      
