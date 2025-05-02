@@ -3,7 +3,6 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "InputActionValue.h"
-#include "CableComponent.h"
 #include "TUCharacterBase.h"
 #include "TUCharacterPlayer.generated.h"
 
@@ -14,21 +13,21 @@ class UNCLEWEB_API ATUCharacterPlayer : public ATUCharacterBase
 
 public:
 	ATUCharacterPlayer();
-
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cable")
-	UCableComponent* CableComponent;
+	TObjectPtr<class UCableComponent> CableComponent;
      
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cable")
-	float MaxCableLength = 2000.0f;
+	float CableMaxLength;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cable")
-	float CableStrength = 1000.0f;
+	float CableStrength;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cable")
-	float DampingFactor = 0.5f;
+	float CableDampingFactor;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cable")
-	float CableDrivingForce = 100000.0f;
+	float CableDrivingForce;
 
 	// HUD
 	UPROPERTY(EditAnywhere, Category = "Widget")
@@ -38,14 +37,15 @@ public:
 	TObjectPtr<class UUserWidget> HUDWidget;
 
 private:
-	FVector CableEndLocation;
-	float NewCableLength = 0.0f;
+	FVector CableAttachPoint = FVector::ZeroVector;
+	float CurrentCableLength = 0.0f;
 	bool bIsCableAttached = false;
-	void CalculateSwingForce();
-	void UpdateCableEndLocation();
-	bool FindCableAttachPoint(FVector& OutLocation, FVector& OutNormal);
-	void FireCable();
-	void ReleaseCable();
+	void CalculateCableSwing();
+	bool FindCableAttachPoint(FVector& OutLocation, AActor*& OutHitActor);
+	void AttachCable();
+	void DetachCable();
+	void SetCable(const FVector& AttachLocation, AActor* HitActor);
+	void ResetCable();
 
 protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;

@@ -7,6 +7,8 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Blueprint/UserWidget.h"
+#include "CableComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 ATUCharacterPlayer::ATUCharacterPlayer()
@@ -51,20 +53,17 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 	{
 		LeftClickAction = InputActionLeftClickRef.Object;
 	}
-
-	CableEndLocation = FVector::ZeroVector;
-	// 케이블 컴포넌트 생성
+	
+	// Cable
+	CableMaxLength = 2000.0f;
+	CableDrivingForce = 10000.0f;
+	
 	CableComponent = CreateDefaultSubobject<UCableComponent>(TEXT("CableComponent"));
 	CableComponent->SetupAttachment(GetRootComponent(), "Swing");
-	CableComponent->EndLocation = FVector::ZeroVector;
-	CableComponent->CableLength = 0;
-	CableComponent->SetVisibility(false);
-    
-	// 케이블 외관 설정
+	CableComponent->NumSegments = 1;
 	CableComponent->CableWidth = 2.0f;
-	CableComponent->NumSegments = 10; // 케이블 세그먼트 수 - 부드러운 곡선을 위해
 	CableComponent->bAttachEnd = true;
-
+	
 	// Widget
 	static ConstructorHelpers::FClassFinder<UUserWidget>HUD(TEXT("WidgetBlueprint'/Game/UI/WBP_Crosshair.WBP_Crosshair_C'"));
 	if (HUD.Succeeded())
@@ -77,13 +76,14 @@ void ATUCharacterPlayer::BeginPlay()
 {
 	Super::BeginPlay();
 
+	ResetCable();
 	APlayerController* PlayerController = CastChecked<APlayerController>(GetController());
 	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
 	{
 		Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		//Subsystem->RemoveMappingContext(DefaultMappingContext);
 	}
-
+	
 	// HUD
 	HUDWidget = CreateWidget<UUserWidget>(PlayerController, HUDClass);
 	if (HUDWidget)
@@ -98,8 +98,7 @@ void ATUCharacterPlayer::Tick(float DeltaTime)
 
 	if (bIsCableAttached)
 	{
-		CalculateSwingForce();
-		UpdateCableEndLocation();
+		CalculateCableSwing();
 	}
 }
 
@@ -114,8 +113,8 @@ void ATUCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ATUCharacterPlayer::Move);
 	EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ATUCharacterPlayer::Look);
 
-	EnhancedInputComponent->BindAction(LeftClickAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::FireCable);
-	EnhancedInputComponent->BindAction(LeftClickAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::ReleaseCable);
+	EnhancedInputComponent->BindAction(LeftClickAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::AttachCable);
+	EnhancedInputComponent->BindAction(LeftClickAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::DetachCable);
 }
 
 void ATUCharacterPlayer::Move(const FInputActionValue& Value)
@@ -140,7 +139,7 @@ void ATUCharacterPlayer::Look(const FInputActionValue& Value)
 	AddControllerPitchInput(LookAxisVector.Y);
 }
 
-bool ATUCharacterPlayer::FindCableAttachPoint(FVector& OutLocation, FVector& OutNormal)
+bool ATUCharacterPlayer::FindCableAttachPoint(FVector& OutLocation, AActor*& OutHitActor)
 {
     APlayerController* PC = CastChecked<APlayerController>(GetController());
 
@@ -151,7 +150,7 @@ bool ATUCharacterPlayer::FindCableAttachPoint(FVector& OutLocation, FVector& Out
     {
         // 레이캐스트 매개변수 설정
         FVector Start = WorldLocation;
-        FVector End = Start + WorldDirection * MaxCableLength;
+        FVector End = Start + WorldDirection * CableMaxLength;
         
         DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 2.0f, 0, 1.0f);
         
@@ -165,7 +164,7 @@ bool ATUCharacterPlayer::FindCableAttachPoint(FVector& OutLocation, FVector& Out
             DrawDebugPoint(GetWorld(), HitResult.ImpactPoint, 10.0f, FColor::Green, false, 2.0f);
 
             OutLocation = HitResult.ImpactPoint;
-            OutNormal = HitResult.ImpactNormal;
+        	OutHitActor = HitResult.GetActor();
             return true;
         }
     }
@@ -173,35 +172,30 @@ bool ATUCharacterPlayer::FindCableAttachPoint(FVector& OutLocation, FVector& Out
     return false;
 }
 
-void ATUCharacterPlayer::FireCable()
+void ATUCharacterPlayer::AttachCable()
 {
-	// if (!GetCharacterMovement()->IsFalling())
-	// {
-		// return;
-	// }
+	if (!GetCharacterMovement()->IsFalling())
+		return;
 	
     if (bIsCableAttached)
 	{
-		ReleaseCable();
+		DetachCable();
 		return;
 	}
     
-	FVector AttachLocation, AttachNormal;
-	if (FindCableAttachPoint(AttachLocation, AttachNormal))
+	FVector AttachLocation;
+	AActor* HitActor = nullptr;
+	if (FindCableAttachPoint(AttachLocation, HitActor))
 	{
-		bIsCableAttached = true;
-		CableEndLocation = AttachLocation;
-		NewCableLength = FVector::Dist(GetActorLocation(), CableEndLocation);
-		CableComponent->SetVisibility(true);
+		SetCable(AttachLocation, HitActor);
 	}
 }
 
-// 케이블 해제
-void ATUCharacterPlayer::ReleaseCable()
+void ATUCharacterPlayer::DetachCable()
 {
 	if (bIsCableAttached)
 	{
-		// 추가적인 힘 얻는거 함수로 빼기
+		// TODO : 추가적인 힘 얻는거 함수로 빼기
 		APlayerController* PC = CastChecked<APlayerController>(GetController());
 		
 		bool bIsWPressed = PC->IsInputKeyDown(EKeys::W);
@@ -211,55 +205,65 @@ void ATUCharacterPlayer::ReleaseCable()
 		bool bIsSpacePressed = PC->IsInputKeyDown(EKeys::SpaceBar);
 		FVector Direction = FVector::ZeroVector;
 
-		if (bIsWPressed)
-		{
-			Direction += GetActorForwardVector();
-		}
-		if (bIsAPressed)
-		{
-			Direction += -GetActorRightVector();
-		}
-		if (bIsSPressed)
-		{
-			Direction += -GetActorForwardVector();
-		}
-		if (bIsDPressed)
-		{
-			Direction += GetActorRightVector();
-		}
-		if (bIsSpacePressed)
-		{
-			Direction += GetActorUpVector();
-		}
+		if (bIsWPressed) Direction += GetActorForwardVector();
+		if (bIsAPressed) Direction += -GetActorRightVector();
+		if (bIsSPressed) Direction += -GetActorForwardVector();
+		if (bIsDPressed) Direction += GetActorRightVector();
+		if (bIsSpacePressed) Direction += GetActorUpVector();
 		Direction.Normalize();
 
 		FVector Force = Direction * CableDrivingForce;
 		GetCharacterMovement()->AddForce(Force);
-		
-		bIsCableAttached = false;
-		CableComponent->SetVisibility(false);
+
+		ResetCable();
 	}
 }
 
-void ATUCharacterPlayer::CalculateSwingForce()
+void ATUCharacterPlayer::SetCable(const FVector& AttachLocation, AActor* HitActor)
+{
+	CableAttachPoint = AttachLocation;
+	CurrentCableLength = FVector::Distance(GetActorLocation(), AttachLocation);
+	bIsCableAttached = true;
+	CableComponent->CableLength = CurrentCableLength;
+	CableComponent->SetAttachEndTo(HitActor, NAME_None);
+	CableComponent->SetVisibility(true);
+}
+
+void ATUCharacterPlayer::ResetCable()
+{
+	CableAttachPoint = FVector::ZeroVector;
+	CurrentCableLength = 0;
+	bIsCableAttached = false;
+	CableComponent->CableLength = 0;
+	CableComponent->SetAttachEndToComponent(nullptr);
+	CableComponent->SetVisibility(false);
+}
+
+void ATUCharacterPlayer::CalculateCableSwing()
 {
 	FVector CharacterLocation = GetActorLocation();
-	FVector ToSwingPoint = CableEndLocation - CharacterLocation;
+	FVector ToSwingPoint = CableAttachPoint - CharacterLocation;
 	float CurrentDistance = ToSwingPoint.Size();
-
-	if (CurrentDistance > NewCableLength)
+	
+	if (FMath::Abs(CurrentDistance - CurrentCableLength) > 0.1f)
 	{
-		FVector Direction = ToSwingPoint.GetSafeNormal();
-		float Stretch = CurrentDistance - NewCableLength;
-		FVector SpringForce = Direction * Stretch * CableStrength;
-		FVector DampingForce = -GetVelocity() * DampingFactor;
-
-		GetCharacterMovement()->AddForce(SpringForce + DampingForce);
+		FVector CableDirection = ToSwingPoint.GetSafeNormal();
+		
+		// circumference of a circle
+		FVector CorrectPosition = CableAttachPoint - (CableDirection * CurrentCableLength);
+		FVector CurrentVelocity = GetVelocity();
+		SetActorLocation(CorrectPosition);
+		
+		// 케이블 방향의 속도 성분 제거 (원의 접선 방향 속도만 유지)
+		FVector UpdatedDirection = (CableAttachPoint - CorrectPosition).GetSafeNormal();
+		float RadialVelocity = FVector::DotProduct(CurrentVelocity, UpdatedDirection);
+		FVector TangentialVelocity = CurrentVelocity - (UpdatedDirection * RadialVelocity);
+		
+		// 원심력에 의한 추가 접선 속도 (스윙감 향상)
+		FVector GravityInfluence = FVector(0, 0, GetWorld()->GetGravityZ());
+		FVector SwingAcceleration = FVector::CrossProduct(UpdatedDirection, FVector::CrossProduct(GravityInfluence, UpdatedDirection));
+		
+		// 새 속도 설정 (접선 방향만)
+		GetCharacterMovement()->Velocity = TangentialVelocity + (SwingAcceleration * 0.016f); // 약 1프레임 가속도
 	}
-}
-
-void ATUCharacterPlayer::UpdateCableEndLocation()
-{
-	FVector LocalEndLocation = CableComponent->GetComponentTransform().InverseTransformPosition(CableEndLocation);
-	CableComponent->EndLocation = LocalEndLocation;
 }
