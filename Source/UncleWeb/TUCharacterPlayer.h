@@ -21,12 +21,6 @@ public:
 	float CableMaxLength;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cable")
-	float CableStrength;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cable")
-	float CableDampingFactor;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cable")
 	float CableDrivingForce;
 
 	// HUD
@@ -44,6 +38,7 @@ private:
 	bool FindCableAttachPoint(FVector& OutLocation, AActor*& OutHitActor);
 	void AttachCable();
 	void DetachCable();
+	void ApplyDetachDrivingForce();
 	void SetCable(const FVector& AttachLocation, AActor* HitActor);
 	void ResetCable();
 

@@ -8,7 +8,6 @@
 #include "EnhancedInputSubsystems.h"
 #include "Blueprint/UserWidget.h"
 #include "CableComponent.h"
-#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 ATUCharacterPlayer::ATUCharacterPlayer()
@@ -56,8 +55,7 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 	
 	// Cable
 	CableMaxLength = 2000.0f;
-	CableDrivingForce = 10000.0f;
-	
+	CableDrivingForce = 1000000.0f;
 	CableComponent = CreateDefaultSubobject<UCableComponent>(TEXT("CableComponent"));
 	CableComponent->SetupAttachment(GetRootComponent(), "Swing");
 	CableComponent->NumSegments = 1;
@@ -112,7 +110,6 @@ void ATUCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::StopJumping);
 	EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ATUCharacterPlayer::Move);
 	EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ATUCharacterPlayer::Look);
-
 	EnhancedInputComponent->BindAction(LeftClickAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::AttachCable);
 	EnhancedInputComponent->BindAction(LeftClickAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::DetachCable);
 }
@@ -193,30 +190,49 @@ void ATUCharacterPlayer::AttachCable()
 
 void ATUCharacterPlayer::DetachCable()
 {
-	if (bIsCableAttached)
-	{
-		// TODO : 추가적인 힘 얻는거 함수로 빼기
-		APlayerController* PC = CastChecked<APlayerController>(GetController());
-		
-		bool bIsWPressed = PC->IsInputKeyDown(EKeys::W);
-		bool bIsAPressed = PC->IsInputKeyDown(EKeys::A);
-		bool bIsSPressed = PC->IsInputKeyDown(EKeys::S);
-		bool bIsDPressed = PC->IsInputKeyDown(EKeys::D);
-		bool bIsSpacePressed = PC->IsInputKeyDown(EKeys::SpaceBar);
-		FVector Direction = FVector::ZeroVector;
+	if (!bIsCableAttached)
+		return;
+	
+	ApplyDetachDrivingForce();
 
-		if (bIsWPressed) Direction += GetActorForwardVector();
-		if (bIsAPressed) Direction += -GetActorRightVector();
-		if (bIsSPressed) Direction += -GetActorForwardVector();
-		if (bIsDPressed) Direction += GetActorRightVector();
-		if (bIsSpacePressed) Direction += GetActorUpVector();
-		Direction.Normalize();
+	FTimerHandle DetachTimerHandle;
+	GetWorldTimerManager().SetTimer(DetachTimerHandle, this, &ATUCharacterPlayer::ResetCable, 0.01f, false);
+}
 
-		FVector Force = Direction * CableDrivingForce;
-		GetCharacterMovement()->AddForce(Force);
+void ATUCharacterPlayer::ApplyDetachDrivingForce()
+{
+	APlayerController* PC = CastChecked<APlayerController>(GetController());
+	
+	bool bIsWPressed = PC->IsInputKeyDown(EKeys::W);
+	bool bIsAPressed = PC->IsInputKeyDown(EKeys::A);
+	bool bIsSPressed = PC->IsInputKeyDown(EKeys::S);
+	bool bIsDPressed = PC->IsInputKeyDown(EKeys::D);
+	bool bIsSpacePressed = PC->IsInputKeyDown(EKeys::SpaceBar);
 
-		ResetCable();
-	}
+	if (!bIsWPressed && !bIsAPressed && !bIsSPressed && !bIsDPressed && !bIsSpacePressed)
+		return;
+
+	FVector CableDirection = (CableAttachPoint - GetActorLocation()).GetSafeNormal();
+	FVector ForwardDir = GetActorForwardVector();
+	FVector RightDir = GetActorRightVector();
+    
+	FVector InputDirection = FVector::ZeroVector;
+	if (bIsWPressed) InputDirection += ForwardDir;
+	if (bIsAPressed) InputDirection -= RightDir;
+	if (bIsSPressed) InputDirection -= ForwardDir;
+	if (bIsDPressed) InputDirection += RightDir;
+	InputDirection.Normalize();
+    
+	// 입력 방향의 접선 성분 계산
+	float InputRadialComponent = FVector::DotProduct(InputDirection, CableDirection);
+	FVector InputTangential = InputDirection - (CableDirection * InputRadialComponent);
+	InputTangential.Normalize();
+    
+	// FVector Force = InputTangential * CableDrivingForce;
+	FVector Force = InputTangential * 1e7;
+    
+	GetCharacterMovement()->AddForce(Force);
+	UE_LOG(LogTemp, Log, TEXT("[%s] ControlForce: %s"), *FString(__FUNCTION__), *Force.ToString());
 }
 
 void ATUCharacterPlayer::SetCable(const FVector& AttachLocation, AActor* HitActor)
