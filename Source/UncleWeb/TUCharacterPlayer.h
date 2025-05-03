@@ -27,9 +27,32 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cable")
 	float CableDrivingForce;
 
+	// Dash 값 설정
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dash")
+	float DashStrength = 1500.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dash")
+	float DashStaminaCost = 20.0f;
+
+	// 스태미나 설정
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
+	float MaxStamina = 100.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stamina")
+	float CurrentStamina = 100.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
+	float StaminaRecoveryRate = 10.0f;
+
 	// HUD
 	UPROPERTY(EditAnywhere, Category = "Widget")
 	TSubclassOf<class UUserWidget> HUDClass;
+
+	UPROPERTY(EditAnywhere, Category = "Widget")
+	TSubclassOf<class UUserWidget> StaminaWidgetClass;
+
+	UPROPERTY()
+	TObjectPtr<class UUserWidget> StaminaWidget;
 
 	UPROPERTY()
 	TObjectPtr<class UUserWidget> HUDWidget;
@@ -45,6 +68,10 @@ private:
 	void ApplyDetachDrivingForce();
 	void SetCable(const FVector& AttachLocation, AActor* HitActor);
 	void ResetCable();
+	void Dash();
+	void ConsumeStamina(float Amount);
+	bool HasEnoughStamina(float Amount) const;
+	void UpdateStaminaUI();
 
 protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
@@ -76,4 +103,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UInputAction> LeftClickAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UInputAction> DashAction; // 임시 R키
 };

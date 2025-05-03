@@ -55,6 +55,12 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 	{
 		LeftClickAction = InputActionLeftClickRef.Object;
 	}
+
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionDashRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_Dash.IA_Dash'"));
+	if (InputActionDashRef.Succeeded())
+	{
+		DashAction = InputActionDashRef.Object;
+	}
 	
 	// Cable
 	CableMaxLength = 2000.0f;
@@ -70,6 +76,12 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 	if (HUD.Succeeded())
 	{
 		HUDClass = HUD.Class;
+	}
+	// Stamina Widget
+	static ConstructorHelpers::FClassFinder<UUserWidget> StaminaHUD(TEXT("WidgetBlueprint'/Game/UI/WBP_Stamina.WBP_Stamina_C'"));
+	if (StaminaHUD.Succeeded())
+	{
+		StaminaWidgetClass = StaminaHUD.Class;
 	}
 }
 
@@ -91,6 +103,16 @@ void ATUCharacterPlayer::BeginPlay()
 	{
 		HUDWidget->AddToViewport();
 	}
+
+	if (StaminaWidgetClass)
+	{
+		StaminaWidget = CreateWidget<UUserWidget>(PlayerController, StaminaWidgetClass);
+		if (StaminaWidget)
+		{
+			StaminaWidget->AddToViewport();
+		}
+	}
+
 }
 
 void ATUCharacterPlayer::Tick(float DeltaTime)
@@ -100,6 +122,17 @@ void ATUCharacterPlayer::Tick(float DeltaTime)
 	if (bIsCableAttached)
 	{
 		CalculateCableSwing();
+	}
+	else
+	{
+		if (GetCharacterMovement()->IsMovingOnGround())
+		{
+			if (CurrentStamina < MaxStamina)
+			{
+				CurrentStamina = FMath::Clamp(CurrentStamina + StaminaRecoveryRate * DeltaTime, 0.0f, MaxStamina);
+				UpdateStaminaUI();
+			}
+		}
 	}
 }
 
@@ -115,6 +148,8 @@ void ATUCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ATUCharacterPlayer::Look);
 	EnhancedInputComponent->BindAction(LeftClickAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::AttachCable);
 	EnhancedInputComponent->BindAction(LeftClickAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::DetachCable);
+	EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::Dash);
+
 }
 
 void ATUCharacterPlayer::Move(const FInputActionValue& Value)
@@ -138,6 +173,18 @@ void ATUCharacterPlayer::Look(const FInputActionValue& Value)
 	AddControllerYawInput(LookAxisVector.X);
 	AddControllerPitchInput(LookAxisVector.Y);
 }
+
+void ATUCharacterPlayer::Dash()
+{
+	if (HasEnoughStamina(DashStaminaCost))
+	{
+		FVector DashDirection = GetActorForwardVector();
+		LaunchCharacter(DashDirection * DashStrength, true, true);
+
+		ConsumeStamina(DashStaminaCost);
+	}
+}
+
 
 bool ATUCharacterPlayer::FindCableAttachPoint(FVector& OutLocation, AActor*& OutHitActor)
 {
@@ -182,11 +229,17 @@ void ATUCharacterPlayer::AttachCable()
 		DetachCable();
 		return;
 	}
+	// 스태미나 체크
+	float SwingStaminaCost = 10.0f; // 소모량 변수 값
+	if (!HasEnoughStamina(SwingStaminaCost))
+		return;
     
 	FVector AttachLocation;
 	AActor* HitActor = nullptr;
 	if (FindCableAttachPoint(AttachLocation, HitActor))
 	{
+		//케이블 설정 전 스태미나 소모
+		ConsumeStamina(SwingStaminaCost);
 		SetCable(AttachLocation, HitActor);
 	}
 }
@@ -286,3 +339,34 @@ void ATUCharacterPlayer::CalculateCableSwing()
 		GetCharacterMovement()->Velocity = TangentialVelocity + (SwingAcceleration * 0.016f); // 약 1프레임 가속도
 	}
 }
+
+void ATUCharacterPlayer::ConsumeStamina(float Amount)
+{
+	CurrentStamina = FMath::Clamp(CurrentStamina - Amount, 0.0f, MaxStamina);
+	UpdateStaminaUI();
+}
+
+bool ATUCharacterPlayer::HasEnoughStamina(float Amount) const
+{
+	return CurrentStamina >= Amount;
+}
+
+void ATUCharacterPlayer::UpdateStaminaUI()
+{
+	if (UFunction* Func = StaminaWidget->FindFunction(TEXT("UpdateStaminaBar")))
+	{
+		struct FParams
+		{
+			float Current;
+			float Max;
+		};
+
+		FParams Params;
+		Params.Current = CurrentStamina;
+		Params.Max = MaxStamina;
+
+		StaminaWidget->ProcessEvent(Func, &Params);
+		UE_LOG(LogTemp, Warning, TEXT("Stamina: %f / %f"), CurrentStamina, MaxStamina);
+	}
+}
+
