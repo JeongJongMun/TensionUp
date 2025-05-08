@@ -15,32 +15,27 @@ class UNCLEWEB_API ATUCharacterPlayer : public ATUCharacterBase
 public:
 	ATUCharacterPlayer();
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "DynamicCamera")
 	TObjectPtr<UTUDynamicCamera> DynamicCameraComponent;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cable")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "CableAction")
 	TObjectPtr<class UCableComponent> CableComponent;
      
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cable")
-	float CableMaxLength;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CableAction")
+	float CableMaxLength = 2000.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cable")
-	float CableDrivingForce;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CableAction")
+	float CableDrivingForce = 1000000.0f;
 
-	// Dash 값 설정
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dash")
 	float DashStrength = 1500.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dash")
 	float DashStaminaCost = 20.0f;
 
-	// 스태미나 설정
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
 	float MaxStamina = 100.0f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stamina")
-	float CurrentStamina = 100.0f;
-
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
 	float StaminaRecoveryRate = 10.0f;
 
@@ -58,9 +53,11 @@ public:
 	TObjectPtr<class UUserWidget> HUDWidget;
 
 private:
+	float CurrentStamina = 100.0f;
 	FVector CableAttachPoint = FVector::ZeroVector;
 	float CurrentCableLength = 0.0f;
 	bool bIsCableAttached = false;
+	
 	void CalculateCableSwing();
 	bool FindCableAttachPoint(FVector& OutLocation, AActor*& OutHitActor);
 	void AttachCable();
@@ -105,5 +102,5 @@ protected:
 	TObjectPtr<class UInputAction> LeftClickAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UInputAction> DashAction; // 임시 R키
+	TObjectPtr<class UInputAction> DashAction;
 };

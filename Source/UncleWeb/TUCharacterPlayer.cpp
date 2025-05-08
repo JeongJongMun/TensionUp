@@ -63,8 +63,6 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 	}
 	
 	// Cable
-	CableMaxLength = 2000.0f;
-	CableDrivingForce = 1000000.0f;
 	CableComponent = CreateDefaultSubobject<UCableComponent>(TEXT("CableComponent"));
 	CableComponent->SetupAttachment(GetRootComponent(), "Swing");
 	CableComponent->NumSegments = 1;
