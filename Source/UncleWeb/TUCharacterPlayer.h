@@ -4,7 +4,6 @@
 #include "CoreMinimal.h"
 #include "InputActionValue.h"
 #include "TUCharacterBase.h"
-#include "TUDynamicCamera.h"
 #include "TUCharacterPlayer.generated.h"
 
 UCLASS()
@@ -16,16 +15,10 @@ public:
 	ATUCharacterPlayer();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "DynamicCamera")
-	TObjectPtr<UTUDynamicCamera> DynamicCameraComponent;
+	TObjectPtr<class UTUDynamicCamera> DynamicCameraComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "CableAction")
-	TObjectPtr<class UCableComponent> CableComponent;
-     
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CableAction")
-	float CableMaxLength = 2000.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CableAction")
-	float CableDrivingForce = 1000000.0f;
+	TObjectPtr<class UCableActionComponent> CableActionComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dash")
 	float DashStrength = 1500.0f;
@@ -38,6 +31,9 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
 	float StaminaRecoveryRate = 10.0f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
+	float CableStaminaCost = 10.0f;
 
 	// HUD
 	UPROPERTY(EditAnywhere, Category = "Widget")
@@ -54,21 +50,17 @@ public:
 
 private:
 	float CurrentStamina = 100.0f;
-	FVector CableAttachPoint = FVector::ZeroVector;
-	float CurrentCableLength = 0.0f;
-	bool bIsCableAttached = false;
 	
-	void CalculateCableSwing();
-	bool FindCableAttachPoint(FVector& OutLocation, AActor*& OutHitActor);
-	void AttachCable();
-	void DetachCable();
-	void ApplyDetachDrivingForce();
-	void SetCable(const FVector& AttachLocation, AActor* HitActor);
-	void ResetCable();
 	void Dash();
 	void ConsumeStamina(float Amount);
 	bool HasEnoughStamina(float Amount) const;
 	void UpdateStaminaUI();
+	
+	UFUNCTION()
+	void ConsumeCableStamina();
+	
+	void HandleAttachCable();
+	void HandleDetachCable();
 
 protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
