@@ -19,6 +19,8 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	void AttachCable();
 	void DetachCable();
+	void ShortenCable();
+	void ExtendCable();
 	
 	UPROPERTY(BlueprintAssignable, Category = "CableAction")
 	FOnCableAttachedAction OnCableAttachedAction;
@@ -34,6 +36,20 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CableAction")
 	float CableDrivingForce = 10000000.0f;
 
+	UPROPERTY(EditAnywhere, Category = "CableAction")
+	float CableAdjustSpeed = 200.0f;
+
+	UPROPERTY(EditAnywhere, Category = "CableAction")
+	float CableMinLength = 300.0f;
+
+	UPROPERTY(EditAnywhere, Category = "CableAction")
+	float CableInterpSpeed = 5.0f;
+
+	UPROPERTY(EditAnywhere, Category = "CableAction")
+	float InitialCableLengthRatio = 0.7f;
+
+
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -41,6 +57,7 @@ private:
 	TObjectPtr<ACharacter> Owner;
 	bool bIsCableAttached = false;
 	float CurrentCableLength = 0.0f;
+	float TargetCableLength = 0.0f;
 	FVector CableAttachPoint = FVector::ZeroVector;
 
 	void CalculateCableSwing();

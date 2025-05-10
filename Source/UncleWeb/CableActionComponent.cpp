@@ -131,12 +131,19 @@ void UCableActionComponent::ApplyDetachDrivingForce()
 void UCableActionComponent::SetCable(const FVector& AttachLocation, AActor* HitActor)
 {
 	CableAttachPoint = AttachLocation;
-	CurrentCableLength = FVector::Distance(Owner->GetActorLocation(), AttachLocation);
+
+	float MaxPossibleLength = FVector::Distance(Owner->GetActorLocation(), AttachLocation);
+	float InitialLength = FMath::Clamp(MaxPossibleLength * InitialCableLengthRatio, CableMinLength, CableMaxLength);
+
+	CurrentCableLength = InitialLength;
+	TargetCableLength = InitialLength;
+
 	bIsCableAttached = true;
 	TargetCable->CableLength = CurrentCableLength;
 	TargetCable->SetAttachEndTo(HitActor, NAME_None);
 	TargetCable->SetVisibility(true);
 }
+
 
 void UCableActionComponent::ResetCable()
 {
@@ -150,6 +157,13 @@ void UCableActionComponent::ResetCable()
 
 void UCableActionComponent::CalculateCableSwing()
 {
+	// Smooth interpolation of cable length
+	if (!FMath::IsNearlyEqual(CurrentCableLength, TargetCableLength, 1.0f))
+	{
+		CurrentCableLength = FMath::FInterpTo(CurrentCableLength, TargetCableLength, GetWorld()->GetDeltaSeconds(), CableInterpSpeed);
+		TargetCable->CableLength = CurrentCableLength;
+	}
+
 	FVector CharacterLocation = Owner->GetActorLocation();
 	FVector ToSwingPoint = CableAttachPoint - CharacterLocation;
 	float CurrentDistance = ToSwingPoint.Size();
@@ -175,4 +189,18 @@ void UCableActionComponent::CalculateCableSwing()
 		// 새 속도 설정 (접선 방향만)
 		Owner->GetCharacterMovement()->Velocity = TangentialVelocity + (SwingAcceleration * 0.016f); // 약 1프레임 가속도
 	}
+}
+
+void UCableActionComponent::ShortenCable()
+{
+	if (!bIsCableAttached) return;
+
+	TargetCableLength = FMath::Clamp(TargetCableLength - CableAdjustSpeed, CableMinLength, CableMaxLength);
+}
+
+void UCableActionComponent::ExtendCable()
+{
+	if (!bIsCableAttached) return;
+
+	TargetCableLength = FMath::Clamp(TargetCableLength + CableAdjustSpeed, CableMinLength, CableMaxLength);
 }
