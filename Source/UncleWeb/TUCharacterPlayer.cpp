@@ -69,6 +69,19 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 	{
 		DashAction = InputActionDashRef.Object;
 	}
+	// Zoom In/Out
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionZoomInRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_ZoomIn.IA_ZoomIn'"));
+	if (InputActionZoomInRef.Succeeded())
+	{
+		ZoomInAction = InputActionZoomInRef.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionZoomOutRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_ZoomOut.IA_ZoomOut'"));
+	if (InputActionZoomOutRef.Succeeded())
+	{
+		ZoomOutAction = InputActionZoomOutRef.Object;
+	}
+
 	
 	// Widget
 	static ConstructorHelpers::FClassFinder<UUserWidget>HUD(TEXT("WidgetBlueprint'/Game/UI/WBP_Crosshair.WBP_Crosshair_C'"));
@@ -142,6 +155,10 @@ void ATUCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	EnhancedInputComponent->BindAction(LeftClickAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleAttachCable);
 	EnhancedInputComponent->BindAction(LeftClickAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::HandleDetachCable);
 	EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::Dash);
+	EnhancedInputComponent->BindAction(ZoomInAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::ZoomInCable);
+	EnhancedInputComponent->BindAction(ZoomOutAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::ZoomOutCable);
+
+
 }
 
 void ATUCharacterPlayer::Move(const FInputActionValue& Value)
@@ -226,4 +243,18 @@ void ATUCharacterPlayer::HandleDetachCable()
 	
 	CableActionComponent->DetachCable();
 }
+
+
+void ATUCharacterPlayer::ZoomInCable()
+{
+	if (CableActionComponent)
+		CableActionComponent->ShortenCable();
+}
+
+void ATUCharacterPlayer::ZoomOutCable()
+{
+	if (CableActionComponent)
+		CableActionComponent->ExtendCable();
+}
+
 
