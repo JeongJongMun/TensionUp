@@ -18,19 +18,18 @@ public:
 	UTUDynamicCamera();
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
 	TObjectPtr<USpringArmComponent> TargetSpringArm;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DynamicCamera")
 	float MinArmLength = 300.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DynamicCamera")
 	float MaxArmLength = 600.0f;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DynamicCamera")
 	float MaxSpeed = 1200.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DynamicCamera")
 	float InterpolationSpeed = 5.0f;
 	
 protected:
