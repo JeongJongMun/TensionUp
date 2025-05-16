@@ -20,19 +20,17 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "CableAction")
 	TObjectPtr<class UCableActionComponent> CableActionComponent;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stamina")
+	TObjectPtr<class UStaminaComponent> StaminaComponent;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dash")
 	float DashStrength = 1500.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dash")
 	float DashStaminaCost = 20.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
-	float MaxStamina = 100.0f;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
-	float StaminaRecoveryRate = 10.0f;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
+	// Cable
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CableAction")
 	float CableStaminaCost = 10.0f;
 
 	// HUD
@@ -49,15 +47,7 @@ public:
 	TObjectPtr<class UUserWidget> HUDWidget;
 
 private:
-	float CurrentStamina = 100.0f;
-	
 	void Dash();
-	void ConsumeStamina(float Amount);
-	bool HasEnoughStamina(float Amount) const;
-	void UpdateStaminaUI();
-	
-	UFUNCTION()
-	void ConsumeCableStamina();
 	
 	void HandleAttachCable();
 	void HandleDetachCable();
@@ -65,6 +55,10 @@ private:
 	void ZoomInCable();
 	void ZoomOutCable();
 
+	UFUNCTION()
+	void ConsumeCableStamina();
+	UFUNCTION()
+	void UpdateStaminaUI(float Current, float Max);
 
 protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
