@@ -34,6 +34,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dash")
 	float DashStaminaCost = 20.0f;
 
+<<<<<<< Updated upstream
 	// 스태미나 설정
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
 	float MaxStamina = 100.0f;
@@ -43,6 +44,14 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
 	float StaminaRecoveryRate = 10.0f;
+=======
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stamina")
+	TObjectPtr<class UStaminaComponent> StaminaComponent;
+	// Cable
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CableAction")
+	float CableStaminaCost = 10.0f;
+>>>>>>> Stashed changes
+
 
 	// HUD
 	UPROPERTY(EditAnywhere, Category = "Widget")
@@ -58,6 +67,7 @@ public:
 	TObjectPtr<class UUserWidget> HUDWidget;
 
 private:
+<<<<<<< Updated upstream
 	FVector CableAttachPoint = FVector::ZeroVector;
 	float CurrentCableLength = 0.0f;
 	bool bIsCableAttached = false;
@@ -72,6 +82,22 @@ private:
 	void ConsumeStamina(float Amount);
 	bool HasEnoughStamina(float Amount) const;
 	void UpdateStaminaUI();
+=======
+	void Dash();
+	
+	UFUNCTION()
+	void ConsumeCableStamina();
+
+	UFUNCTION()
+	void UpdateStaminaUI(float Current, float Max);
+	
+	void HandleAttachCable();
+	void HandleDetachCable();
+
+	void ZoomInCable();
+	void ZoomOutCable();
+
+>>>>>>> Stashed changes
 
 protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;

@@ -1,6 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "TUCharacterPlayer.h"
+<<<<<<< Updated upstream
+=======
+#include "CableActionComponent.h"
+#include "StaminaComponent.h"
+>>>>>>> Stashed changes
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "InputMappingContext.h"
@@ -25,6 +30,19 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 	DynamicCameraComponent = CreateDefaultSubobject<UTUDynamicCamera>(TEXT("DynamicCameraComponent"));
 	DynamicCameraComponent->TargetSpringArm = CameraBoom;
 
+<<<<<<< Updated upstream
+=======
+	CableActionComponent = CreateDefaultSubobject<UCableActionComponent>(TEXT("CableActionComponent"));
+	CableActionComponent->TargetCable = CreateDefaultSubobject<UCableComponent>(TEXT("CableComponent"));
+	CableActionComponent->TargetCable->SetupAttachment(GetRootComponent(), "Swing");
+	CableActionComponent->TargetCable->NumSegments = 1;
+	CableActionComponent->TargetCable->CableWidth = 2.0f;
+	CableActionComponent->TargetCable->bAttachEnd = true;
+
+	StaminaComponent = CreateDefaultSubobject<UStaminaComponent>(TEXT("StaminaComponent"));
+
+
+>>>>>>> Stashed changes
 	// Input
 	static ConstructorHelpers::FObjectFinder<UInputMappingContext> InputMappingContextRef(TEXT("/Script/EnhancedInput.InputMappingContext'/Game/Input/IMC_Default.IMC_Default'"));
 	if (nullptr != InputMappingContextRef.Object)
@@ -103,21 +121,32 @@ void ATUCharacterPlayer::BeginPlay()
 	{
 		HUDWidget->AddToViewport();
 	}
-
+	// Stamina Widget
 	if (StaminaWidgetClass)
 	{
 		StaminaWidget = CreateWidget<UUserWidget>(PlayerController, StaminaWidgetClass);
-		if (StaminaWidget)
-		{
-			StaminaWidget->AddToViewport();
-		}
+		StaminaWidget->AddToViewport();
 	}
+<<<<<<< Updated upstream
 
+=======
+	// Stamina
+	if (StaminaComponent)
+	{
+		StaminaComponent->OnStaminaChanged.AddDynamic(this, &ATUCharacterPlayer::UpdateStaminaUI);
+	}
+	// Cable Action
+	if (CableActionComponent)
+	{
+		CableActionComponent->OnCableAttachedAction.AddDynamic(this, &ATUCharacterPlayer::ConsumeCableStamina);
+	}
+>>>>>>> Stashed changes
 }
 
 void ATUCharacterPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+<<<<<<< Updated upstream
 
 	if (bIsCableAttached)
 	{
@@ -133,6 +162,12 @@ void ATUCharacterPlayer::Tick(float DeltaTime)
 				UpdateStaminaUI();
 			}
 		}
+=======
+	// Stamina Recovery
+	if (GetCharacterMovement()->IsMovingOnGround() && StaminaComponent)
+	{
+		StaminaComponent->RecoverStamina(DeltaTime);
+>>>>>>> Stashed changes
 	}
 }
 
@@ -176,15 +211,14 @@ void ATUCharacterPlayer::Look(const FInputActionValue& Value)
 
 void ATUCharacterPlayer::Dash()
 {
-	if (HasEnoughStamina(DashStaminaCost))
+	if (StaminaComponent && StaminaComponent->HasEnoughStamina(DashStaminaCost))
 	{
-		FVector DashDirection = GetActorForwardVector();
-		LaunchCharacter(DashDirection * DashStrength, true, true);
-
-		ConsumeStamina(DashStaminaCost);
+		LaunchCharacter(GetActorForwardVector() * DashStrength, true, true);
+		StaminaComponent->ConsumeStamina(DashStaminaCost);
 	}
 }
 
+<<<<<<< Updated upstream
 
 bool ATUCharacterPlayer::FindCableAttachPoint(FVector& OutLocation, AActor*& OutHitActor)
 {
@@ -367,6 +401,52 @@ void ATUCharacterPlayer::UpdateStaminaUI()
 
 		StaminaWidget->ProcessEvent(Func, &Params);
 		UE_LOG(LogTemp, Warning, TEXT("Stamina: %f / %f"), CurrentStamina, MaxStamina);
+=======
+void ATUCharacterPlayer::HandleAttachCable()
+{
+	if (!CableActionComponent) return;
+	
+	CableActionComponent->AttachCable();
+}
+
+void ATUCharacterPlayer::HandleDetachCable()
+{
+	if (!CableActionComponent) return;
+	
+	CableActionComponent->DetachCable();
+}
+
+
+void ATUCharacterPlayer::ZoomInCable()
+{
+	if (!CableActionComponent) return;
+
+	CableActionComponent->ShortenCable();
+}
+
+void ATUCharacterPlayer::ZoomOutCable()
+{
+	if (!CableActionComponent) return;
+	
+	CableActionComponent->ExtendCable();
+}
+void ATUCharacterPlayer::ConsumeCableStamina()
+{
+	if (StaminaComponent)
+		StaminaComponent->ConsumeStamina(CableStaminaCost);
+}
+
+void ATUCharacterPlayer::UpdateStaminaUI(float Current, float Max)
+{
+	if (StaminaWidget)
+	{
+		if (UFunction* Func = StaminaWidget->FindFunction(TEXT("UpdateStaminaBar")))
+		{
+			struct FParams { float Current; float Max; };
+			FParams Params{ Current, Max };
+			StaminaWidget->ProcessEvent(Func, &Params);
+		}
+>>>>>>> Stashed changes
 	}
 }
 
