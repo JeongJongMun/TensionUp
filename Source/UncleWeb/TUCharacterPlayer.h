@@ -29,7 +29,14 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dash")
 	float DashStaminaCost = 20.0f;
-	
+
+	//run
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Run")
+	float WalkSpeed = 600.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Run")
+	float RunSpeed = 1000.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
 	float CableStaminaCost = 10.0f;
 
@@ -48,6 +55,10 @@ public:
 
 	UFUNCTION()
 	void UpdateStaminaUI(float Current, float Max);
+
+	bool bIsRunning = false;
+	void StartRunning();
+	void StopRunning();
 
 private:
 	void Dash();
@@ -101,5 +112,8 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UInputAction> ZoomOutAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UInputAction> RunAction;
 
 };
