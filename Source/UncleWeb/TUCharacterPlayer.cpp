@@ -73,6 +73,13 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 	{
 		DashAction = InputActionDashRef.Object;
 	}
+
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionRunRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_Run.IA_Run'"));
+	if (InputActionRunRef.Succeeded())
+	{
+		RunAction = InputActionRunRef.Object;
+	}
+
 	// Zoom In/Out
 	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionZoomInRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_ZoomIn.IA_ZoomIn'"));
 	if (InputActionZoomInRef.Succeeded())
@@ -131,6 +138,8 @@ void ATUCharacterPlayer::BeginPlay()
 	}
 
 	CableActionComponent->OnCableAttachedAction.AddDynamic(this, &ATUCharacterPlayer::ConsumeCableStamina);
+
+	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 }
 
 void ATUCharacterPlayer::Tick(float DeltaTime)
@@ -158,8 +167,8 @@ void ATUCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::Dash);
 	EnhancedInputComponent->BindAction(ZoomInAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::ZoomInCable);
 	EnhancedInputComponent->BindAction(ZoomOutAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::ZoomOutCable);
-
-
+	EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::StartRunning);
+	EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::StopRunning);
 }
 
 void ATUCharacterPlayer::Move(const FInputActionValue& Value)
@@ -218,6 +227,18 @@ void ATUCharacterPlayer::ZoomOutCable()
 {
 	if (CableActionComponent)
 		CableActionComponent->ExtendCable();
+}
+
+void ATUCharacterPlayer::StartRunning()
+{
+	bIsRunning = true;
+	GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
+}
+
+void ATUCharacterPlayer::StopRunning()
+{
+	bIsRunning = false;
+	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 }
 
 void ATUCharacterPlayer::ConsumeCableStamina()
