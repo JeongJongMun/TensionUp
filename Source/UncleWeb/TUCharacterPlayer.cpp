@@ -2,6 +2,7 @@
 
 #include "TUCharacterPlayer.h"
 #include "CableActionComponent.h"
+#include "StaminaComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "InputMappingContext.h"
@@ -13,6 +14,7 @@
 
 ATUCharacterPlayer::ATUCharacterPlayer()
 {
+	PrimaryActorTick.bCanEverTick = true;
 	// Camera
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
@@ -32,6 +34,8 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 	CableActionComponent->TargetCable->NumSegments = 1;
 	CableActionComponent->TargetCable->CableWidth = 2.0f;
 	CableActionComponent->TargetCable->bAttachEnd = true;
+
+	StaminaComponent = CreateDefaultSubobject<UStaminaComponent>(TEXT("StaminaComponent"));
 
 	// Input
 	static ConstructorHelpers::FObjectFinder<UInputMappingContext> InputMappingContextRef(TEXT("/Script/EnhancedInput.InputMappingContext'/Game/Input/IMC_Default.IMC_Default'"));
@@ -114,17 +118,18 @@ void ATUCharacterPlayer::BeginPlay()
 	{
 		HUDWidget->AddToViewport();
 	}
-
+	// Stamina Widget
 	if (StaminaWidgetClass)
 	{
 		StaminaWidget = CreateWidget<UUserWidget>(PlayerController, StaminaWidgetClass);
-		if (StaminaWidget)
-		{
-			StaminaWidget->AddToViewport();
-		}
+		StaminaWidget->AddToViewport();
+	}
+	// Stamina
+	if (StaminaComponent)
+	{
+		StaminaComponent->OnStaminaChanged.AddDynamic(this, &ATUCharacterPlayer::UpdateStaminaUI);
 	}
 
-	// Stamina
 	CableActionComponent->OnCableAttachedAction.AddDynamic(this, &ATUCharacterPlayer::ConsumeCableStamina);
 }
 
@@ -132,13 +137,9 @@ void ATUCharacterPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (GetCharacterMovement()->IsMovingOnGround())
+	if (GetCharacterMovement()->IsMovingOnGround() && StaminaComponent)
 	{
-		if (CurrentStamina < MaxStamina)
-		{
-			CurrentStamina = FMath::Clamp(CurrentStamina + StaminaRecoveryRate * DeltaTime, 0.0f, MaxStamina);
-			UpdateStaminaUI();
-		}
+		StaminaComponent->RecoverStamina(DeltaTime);
 	}
 }
 
@@ -185,49 +186,11 @@ void ATUCharacterPlayer::Look(const FInputActionValue& Value)
 
 void ATUCharacterPlayer::Dash()
 {
-	if (HasEnoughStamina(DashStaminaCost))
+	if (StaminaComponent && StaminaComponent->HasEnoughStamina(DashStaminaCost))
 	{
-		FVector DashDirection = GetActorForwardVector();
-		LaunchCharacter(DashDirection * DashStrength, true, true);
-
-		ConsumeStamina(DashStaminaCost);
+		LaunchCharacter(GetActorForwardVector() * DashStrength, true, true);
+		StaminaComponent->ConsumeStamina(DashStaminaCost);
 	}
-}
-
-void ATUCharacterPlayer::ConsumeStamina(float Amount)
-{
-	if (!HasEnoughStamina(Amount)) return;
-	
-	CurrentStamina = FMath::Clamp(CurrentStamina - Amount, 0.0f, MaxStamina);
-	UpdateStaminaUI();
-}
-
-bool ATUCharacterPlayer::HasEnoughStamina(float Amount) const
-{
-	return CurrentStamina >= Amount;
-}
-
-void ATUCharacterPlayer::UpdateStaminaUI()
-{
-	if (UFunction* Func = StaminaWidget->FindFunction(TEXT("UpdateStaminaBar")))
-	{
-		struct FParams
-		{
-			float Current;
-			float Max;
-		};
-
-		FParams Params;
-		Params.Current = CurrentStamina;
-		Params.Max = MaxStamina;
-
-		StaminaWidget->ProcessEvent(Func, &Params);
-	}
-}
-
-void ATUCharacterPlayer::ConsumeCableStamina()
-{
-	ConsumeStamina(CableStaminaCost);
 }
 
 void ATUCharacterPlayer::HandleAttachCable()
@@ -255,6 +218,25 @@ void ATUCharacterPlayer::ZoomOutCable()
 {
 	if (CableActionComponent)
 		CableActionComponent->ExtendCable();
+}
+
+void ATUCharacterPlayer::ConsumeCableStamina()
+{
+	if (StaminaComponent)
+		StaminaComponent->ConsumeStamina(CableStaminaCost);
+}
+
+void ATUCharacterPlayer::UpdateStaminaUI(float Current, float Max)
+{
+	if (StaminaWidget)
+	{
+		if (UFunction* Func = StaminaWidget->FindFunction(TEXT("UpdateStaminaBar")))
+		{
+			struct FParams { float Current; float Max; };
+			FParams Params{ Current, Max };
+			StaminaWidget->ProcessEvent(Func, &Params);
+		}
+	}
 }
 
 

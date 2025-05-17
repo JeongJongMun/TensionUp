@@ -4,6 +4,7 @@
 #include "CoreMinimal.h"
 #include "InputActionValue.h"
 #include "TUCharacterBase.h"
+#include "StaminaComponent.h"
 #include "TUCharacterPlayer.generated.h"
 
 UCLASS()
@@ -20,17 +21,14 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "CableAction")
 	TObjectPtr<class UCableActionComponent> CableActionComponent;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stamina")
+	TObjectPtr<class UStaminaComponent> StaminaComponent;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dash")
 	float DashStrength = 1500.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dash")
 	float DashStaminaCost = 20.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
-	float MaxStamina = 100.0f;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
-	float StaminaRecoveryRate = 10.0f;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
 	float CableStaminaCost = 10.0f;
@@ -48,13 +46,11 @@ public:
 	UPROPERTY()
 	TObjectPtr<class UUserWidget> HUDWidget;
 
+	UFUNCTION()
+	void UpdateStaminaUI(float Current, float Max);
+
 private:
-	float CurrentStamina = 100.0f;
-	
 	void Dash();
-	void ConsumeStamina(float Amount);
-	bool HasEnoughStamina(float Amount) const;
-	void UpdateStaminaUI();
 	
 	UFUNCTION()
 	void ConsumeCableStamina();
