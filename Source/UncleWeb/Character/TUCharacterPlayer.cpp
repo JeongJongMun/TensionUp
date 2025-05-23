@@ -6,16 +6,18 @@
 #include "InputMappingContext.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "Blueprint/UserWidget.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "UncleWeb/Component/CableActionComponent.h"
 #include "UncleWeb/Component/StaminaComponent.h"
 #include "UncleWeb/Component/TUDynamicCamera.h"
+#include "UncleWeb/UI/UIManager.h"
+#include "UncleWeb/Util/TUDefines.h"
 
 ATUCharacterPlayer::ATUCharacterPlayer()
 {
 	PrimaryActorTick.bCanEverTick = true;
+	
 	// Camera
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
@@ -93,20 +95,6 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 	{
 		ZoomOutAction = InputActionZoomOutRef.Object;
 	}
-
-	
-	// Widget
-	static ConstructorHelpers::FClassFinder<UUserWidget>HUD(TEXT("WidgetBlueprint'/Game/UI/WBP_Crosshair.WBP_Crosshair_C'"));
-	if (HUD.Succeeded())
-	{
-		HUDClass = HUD.Class;
-	}
-	// Stamina Widget
-	static ConstructorHelpers::FClassFinder<UUserWidget> StaminaHUD(TEXT("WidgetBlueprint'/Game/UI/WBP_Stamina.WBP_Stamina_C'"));
-	if (StaminaHUD.Succeeded())
-	{
-		StaminaWidgetClass = StaminaHUD.Class;
-	}
 }
 
 void ATUCharacterPlayer::BeginPlay()
@@ -120,25 +108,28 @@ void ATUCharacterPlayer::BeginPlay()
 		//Subsystem->RemoveMappingContext(DefaultMappingContext);
 	}
 	
-	// HUD
-	HUDWidget = CreateWidget<UUserWidget>(PlayerController, HUDClass);
-	if (HUDWidget)
+	// UI
+	UIManager = GetWorld()->SpawnActor<AUIManager>(AUIManager::StaticClass());
+	if (UIManager)
 	{
-		HUDWidget->AddToViewport();
+		APlayerController* PC = Cast<APlayerController>(GetController());
+		UIManager->InitializeUI(PC);
 	}
-	// Stamina Widget
-	if (StaminaWidgetClass)
+	else
 	{
-		StaminaWidget = CreateWidget<UUserWidget>(PlayerController, StaminaWidgetClass);
-		StaminaWidget->AddToViewport();
+		UE_LOG(LogTemp, Error, TEXT("[%s] Failed to spawn UIManager"), CURRENT_CONTEXT);
 	}
+	
 	// Stamina
 	if (StaminaComponent)
 	{
 		StaminaComponent->OnStaminaChanged.AddDynamic(this, &ATUCharacterPlayer::UpdateStaminaUI);
 	}
 
-	CableActionComponent->OnCableAttachedAction.AddDynamic(this, &ATUCharacterPlayer::ConsumeCableStamina);
+	if (CableActionComponent)
+	{
+		CableActionComponent->OnCableAttachedAction.AddDynamic(this, &ATUCharacterPlayer::ConsumeCableStamina);
+	}
 
 	// repulsive force
 	GetCapsuleComponent()->OnComponentHit.AddDynamic(this, &ATUCharacterPlayer::OnHit);
@@ -267,15 +258,7 @@ void ATUCharacterPlayer::ConsumeCableStamina()
 		StaminaComponent->ConsumeStamina(CableStaminaCost);
 }
 
-void ATUCharacterPlayer::UpdateStaminaUI(float Current, float Max)
+void ATUCharacterPlayer::UpdateStaminaUI(const float Current, const float Max)
 {
-	if (StaminaWidget)
-	{
-		if (UFunction* Func = StaminaWidget->FindFunction(TEXT("UpdateStaminaBar")))
-		{
-			struct FParams { float Current; float Max; };
-			FParams Params{ Current, Max };
-			StaminaWidget->ProcessEvent(Func, &Params);
-		}
-	}
+	UIManager->UpdateStaminaUI(Current, Max);
 }

@@ -14,76 +14,39 @@ class UNCLEWEB_API ATUCharacterPlayer : public ATUCharacterBase
 public:
 	ATUCharacterPlayer();
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "DynamicCamera")
+	// Component
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "DynamicCameraComponent")
 	TObjectPtr<class UTUDynamicCamera> DynamicCameraComponent;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "CableAction")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "CableActionComponent")
 	TObjectPtr<class UCableActionComponent> CableActionComponent;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stamina")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "StaminaComponent")
 	TObjectPtr<class UStaminaComponent> StaminaComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dash")
 	float DashStrength = 1500.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dash")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
 	float DashStaminaCost = 20.0f;
-
-	//run
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Run")
-	float WalkSpeed = 600.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Run")
-	float RunSpeed = 1000.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
 	float CableStaminaCost = 10.0f;
-
-	// HUD
-	UPROPERTY(EditAnywhere, Category = "Widget")
-	TSubclassOf<class UUserWidget> HUDClass;
-
-	UPROPERTY(EditAnywhere, Category = "Widget")
-	TSubclassOf<class UUserWidget> StaminaWidgetClass;
-
-	UPROPERTY()
-	TObjectPtr<class UUserWidget> StaminaWidget;
-
-	UPROPERTY()
-	TObjectPtr<class UUserWidget> HUDWidget;
-
-	UFUNCTION()
-	void UpdateStaminaUI(float Current, float Max);
-
-	bool bIsRunning = false;
-	void StartRunning();
-	void StopRunning();
-
-private:
-	void Dash();
 	
-	UFUNCTION()
-	void ConsumeCableStamina();
+	// Movement
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float WalkSpeed = 600.0f;
 
-	UFUNCTION()
-	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, 
-			   UPrimitiveComponent* OtherComp, FVector NormalImpulse, 
-			   const FHitResult& Hit);
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float RunSpeed = 1000.0f;
 	
-	void HandleAttachCable();
-	void HandleDetachCable();
-
-	void ZoomInCable();
-	void ZoomOutCable();
-
+	// UI
+	TObjectPtr<class AUIManager> UIManager;
 
 protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
-
-	void Move(const FInputActionValue& Value);
-	void Look(const FInputActionValue& Value);
 	
 	// Camera
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", Meta = (AllowPrivateAccess = "true"))
@@ -119,5 +82,32 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UInputAction> RunAction;
+	
+private:
+	void Move(const FInputActionValue& Value);
+	void Look(const FInputActionValue& Value);
+	void StartRunning();
+	void StopRunning();
+	void Dash();
 
+	UFUNCTION()
+	void UpdateStaminaUI(float Current, float Max);
+	
+	UFUNCTION()
+	void ConsumeCableStamina();
+
+	UFUNCTION()
+	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, 
+			   UPrimitiveComponent* OtherComp, FVector NormalImpulse, 
+			   const FHitResult& Hit);
+	
+	void HandleAttachCable();
+	void HandleDetachCable();
+
+	void ZoomInCable();
+	void ZoomOutCable();
+	
+private:
+	bool bIsRunning = false;
+	
 };
