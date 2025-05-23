@@ -17,6 +17,12 @@ void UTUDynamicCamera::BeginPlay()
 	MovementComponent = OwnerCharacter->GetCharacterMovement();
 }
 
+void UTUDynamicCamera::InitializeCamera()
+{
+	TargetSpringArm->bUsePawnControlRotation = true;
+	TargetSpringArm->SetRelativeLocation(Offset);
+}
+
 void UTUDynamicCamera::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);

@@ -17,6 +17,7 @@ class UNCLEWEB_API UTUDynamicCamera : public UActorComponent
 public:	
 	UTUDynamicCamera();
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	void InitializeCamera();
 
 	TObjectPtr<USpringArmComponent> TargetSpringArm;
 
@@ -31,6 +32,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DynamicCamera")
 	float InterpolationSpeed = 5.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DynamicCamera")
+	FVector Offset = FVector(0.0f, 0.0f, 120.0f);
 	
 protected:
 	virtual void BeginPlay() override;

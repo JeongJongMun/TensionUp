@@ -7,7 +7,6 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Components/CapsuleComponent.h"
-#include "Components/SlateWrapperTypes.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "UncleWeb/Component/CableActionComponent.h"
 #include "UncleWeb/Component/StaminaComponent.h"
@@ -22,8 +21,6 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 	// Camera
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->TargetArmLength = 400.0f;
-	CameraBoom->bUsePawnControlRotation = true;
 
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
@@ -31,6 +28,7 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 
 	DynamicCameraComponent = CreateDefaultSubobject<UTUDynamicCamera>(TEXT("DynamicCameraComponent"));
 	DynamicCameraComponent->TargetSpringArm = CameraBoom;
+	DynamicCameraComponent->InitializeCamera();
 
 	CableActionComponent = CreateDefaultSubobject<UCableActionComponent>(TEXT("CableActionComponent"));
 	CableActionComponent->TargetCable = CreateDefaultSubobject<UCableComponent>(TEXT("CableComponent"));
