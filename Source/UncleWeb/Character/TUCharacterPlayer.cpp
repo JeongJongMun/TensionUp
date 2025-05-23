@@ -9,7 +9,7 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "UncleWeb/Component/CableActionComponent.h"
-#include "UncleWeb/Component/StaminaComponent.h"
+#include "UncleWeb/Component/SteamComponent.h"
 #include "UncleWeb/Component/TUDynamicCamera.h"
 #include "UncleWeb/UI/UIManager.h"
 #include "UncleWeb/Util/TUDefines.h"
@@ -37,7 +37,7 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 	CableActionComponent->TargetCable->CableWidth = 2.0f;
 	CableActionComponent->TargetCable->bAttachEnd = true;
 
-	StaminaComponent = CreateDefaultSubobject<UStaminaComponent>(TEXT("StaminaComponent"));
+	SteamComponent = CreateDefaultSubobject<USteamComponent>(TEXT("SteamComponent"));
 
 	// Input
 	static ConstructorHelpers::FObjectFinder<UInputMappingContext> InputMappingContextRef(TEXT("/Script/EnhancedInput.InputMappingContext'/Game/Input/IMC_Default.IMC_Default'"));
@@ -82,17 +82,16 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 		RunAction = InputActionRunRef.Object;
 	}
 
-	// Zoom In/Out
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionZoomInRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_ZoomIn.IA_ZoomIn'"));
-	if (InputActionZoomInRef.Succeeded())
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionShortenCableRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_ZoomIn.IA_ZoomIn'"));
+	if (InputActionShortenCableRef.Succeeded())
 	{
-		ZoomInAction = InputActionZoomInRef.Object;
+		ShortenCableAction = InputActionShortenCableRef.Object;
 	}
 
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionZoomOutRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_ZoomOut.IA_ZoomOut'"));
-	if (InputActionZoomOutRef.Succeeded())
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionExtendCableRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_ZoomOut.IA_ZoomOut'"));
+	if (InputActionExtendCableRef.Succeeded())
 	{
-		ZoomOutAction = InputActionZoomOutRef.Object;
+		ExtendCableAction = InputActionExtendCableRef.Object;
 	}
 }
 
@@ -100,49 +99,26 @@ void ATUCharacterPlayer::BeginPlay()
 {
 	Super::BeginPlay();
 
-	APlayerController* PlayerController = CastChecked<APlayerController>(GetController());
-	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+	APlayerController* PC = CastChecked<APlayerController>(GetController());
+	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
 	{
 		Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		//Subsystem->RemoveMappingContext(DefaultMappingContext);
 	}
 	
-	// UI
 	UIManager = GetWorld()->SpawnActor<AUIManager>(AUIManager::StaticClass());
-	if (UIManager)
-	{
-		APlayerController* PC = Cast<APlayerController>(GetController());
-		UIManager->InitializeUI(PC);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("[%s] Failed to spawn UIManager"), CURRENT_CONTEXT);
-	}
+	UIManager->InitializeUI(PC);
 	
-	// Stamina
-	if (StaminaComponent)
-	{
-		StaminaComponent->OnStaminaChanged.AddDynamic(this, &ATUCharacterPlayer::UpdateStaminaUI);
-	}
-
-	if (CableActionComponent)
-	{
-		CableActionComponent->OnCableAttachedAction.AddDynamic(this, &ATUCharacterPlayer::ConsumeCableStamina);
-	}
+	SteamComponent->OnSteamChanged.AddDynamic(this, &ATUCharacterPlayer::HandleUpdateSteamUI);
+	CableActionComponent->OnCableAttachedAction.AddDynamic(this, &ATUCharacterPlayer::HandleConsumeCableSteam);
 
 	// repulsive force
 	GetCapsuleComponent()->OnComponentHit.AddDynamic(this, &ATUCharacterPlayer::OnHit);
-	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 }
 
 void ATUCharacterPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	if (GetCharacterMovement()->IsMovingOnGround() && StaminaComponent)
-	{
-		StaminaComponent->RecoverStamina(DeltaTime);
-	}
 	
 	if (CableActionComponent->IsCanAttachCable())
 	{
@@ -167,8 +143,8 @@ void ATUCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	EnhancedInputComponent->BindAction(LeftClickAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleAttachCable);
 	EnhancedInputComponent->BindAction(LeftClickAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::HandleDetachCable);
 	EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::Dash);
-	EnhancedInputComponent->BindAction(ZoomInAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::ZoomInCable);
-	EnhancedInputComponent->BindAction(ZoomOutAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::ZoomOutCable);
+	EnhancedInputComponent->BindAction(ShortenCableAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleShortenCable);
+	EnhancedInputComponent->BindAction(ExtendCableAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleExtendCable);
 	EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::StartRunning);
 	EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::StopRunning);
 }
@@ -197,38 +173,14 @@ void ATUCharacterPlayer::Look(const FInputActionValue& Value)
 
 void ATUCharacterPlayer::Dash()
 {
-	if (StaminaComponent && StaminaComponent->HasEnoughStamina(DashStaminaCost))
+	if (!SteamComponent->HasEnoughSteam(DashSteamCost))
+		return;
+	
+	if (SteamComponent)
 	{
 		LaunchCharacter(GetActorForwardVector() * DashStrength, true, true);
-		StaminaComponent->ConsumeStamina(DashStaminaCost);
+		SteamComponent->ConsumeSteam(DashSteamCost);
 	}
-}
-
-void ATUCharacterPlayer::HandleAttachCable()
-{
-	if (!CableActionComponent) return;
-	
-	CableActionComponent->AttachCable();
-}
-
-void ATUCharacterPlayer::HandleDetachCable()
-{
-	if (!CableActionComponent) return;
-	
-	CableActionComponent->DetachCable();
-}
-
-
-void ATUCharacterPlayer::ZoomInCable()
-{
-	if (CableActionComponent)
-		CableActionComponent->ShortenCable();
-}
-
-void ATUCharacterPlayer::ZoomOutCable()
-{
-	if (CableActionComponent)
-		CableActionComponent->ExtendCable();
 }
 
 void ATUCharacterPlayer::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
@@ -241,7 +193,6 @@ void ATUCharacterPlayer::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherA
 	
 		if (CurrentSpeed > 500.0f && GetCharacterMovement()->IsFalling())
     	{
-    		UE_LOG(LogTemp, Log, TEXT("Hit occurred in speed: %f"), CurrentSpeed);
     		FVector HitNormal = Hit.ImpactNormal;
     		FVector ReflectionDirection = FMath::GetReflectionVector(CurrentVelocity.GetSafeNormal(), HitNormal);
     		GetCharacterMovement()->AddImpulse(ReflectionDirection * CurrentSpeed * 50.0f);
@@ -251,22 +202,43 @@ void ATUCharacterPlayer::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherA
 void ATUCharacterPlayer::StartRunning()
 {
 	bIsRunning = true;
-	GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
+	GetCharacterMovement()->MaxWalkSpeed = MaxRunSpeed;
 }
 
 void ATUCharacterPlayer::StopRunning()
 {
 	bIsRunning = false;
-	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed;
 }
 
-void ATUCharacterPlayer::ConsumeCableStamina()
+// ----- Handler
+void ATUCharacterPlayer::HandleAttachCable()
 {
-	if (StaminaComponent)
-		StaminaComponent->ConsumeStamina(CableStaminaCost);
+	CableActionComponent->AttachCable();
 }
 
-void ATUCharacterPlayer::UpdateStaminaUI(const float Current, const float Max)
+void ATUCharacterPlayer::HandleDetachCable()
 {
-	UIManager->UpdateStaminaUI(Current, Max);
+	CableActionComponent->DetachCable();
+}
+
+
+void ATUCharacterPlayer::HandleShortenCable()
+{
+	CableActionComponent->ShortenCable();
+}
+
+void ATUCharacterPlayer::HandleExtendCable()
+{
+	CableActionComponent->ExtendCable();
+}
+
+void ATUCharacterPlayer::HandleConsumeCableSteam()
+{
+	SteamComponent->ConsumeSteam(CableSteamCost);
+}
+
+void ATUCharacterPlayer::HandleUpdateSteamUI(const float Current, const float Max)
+{
+	UIManager->UpdateSteamUI(Current, Max);
 }

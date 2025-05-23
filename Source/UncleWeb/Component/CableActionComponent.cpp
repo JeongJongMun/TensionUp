@@ -3,6 +3,7 @@
 #include "CableActionComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "UncleWeb/Character/TUCharacterPlayer.h"
 
 UCableActionComponent::UCableActionComponent()
 {
@@ -13,7 +14,7 @@ void UCableActionComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	Owner = CastChecked<ACharacter>(GetOwner());
+	Owner = CastChecked<ATUCharacterPlayer>(GetOwner());
 	CachedPC = CastChecked<APlayerController>(Owner->GetController());
 	ResetCable();
 }

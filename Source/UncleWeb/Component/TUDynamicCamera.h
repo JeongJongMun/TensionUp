@@ -7,39 +7,43 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "TUDynamicCamera.generated.h"
 
-
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS()
 class UNCLEWEB_API UTUDynamicCamera : public UActorComponent
 {
 	GENERATED_BODY()
 	
-
+// --------------------
+// Functions
+// --------------------
 public:	
 	UTUDynamicCamera();
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	void InitializeCamera();
 
-	TObjectPtr<USpringArmComponent> TargetSpringArm;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DynamicCamera")
-	float MinArmLength = 300.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DynamicCamera")
-	float MaxArmLength = 600.0f;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DynamicCamera")
-	float MaxSpeed = 1200.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DynamicCamera")
-	float InterpolationSpeed = 5.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DynamicCamera")
-	FVector Offset = FVector(0.0f, 0.0f, 120.0f);
-	
 protected:
 	virtual void BeginPlay() override;
-
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	
+// --------------------
+// Variables
+// --------------------
+public:
+	TObjectPtr<USpringArmComponent> TargetSpringArm;
+	
 private:
+	UPROPERTY(EditAnywhere, Category = "DynamicCamera")
+	float MinArmLength = 300.0f;
+
+	UPROPERTY(EditAnywhere, Category = "DynamicCamera")
+	float MaxArmLength = 600.0f;
+	
+	UPROPERTY(EditAnywhere, Category = "DynamicCamera")
+	float MaxSpeed = 1200.0f;
+
+	UPROPERTY(EditAnywhere, Category = "DynamicCamera")
+	float InterpolationSpeed = 5.0f;
+
+	UPROPERTY(EditAnywhere, Category = "DynamicCamera")
+	FVector Offset = FVector(0.0f, 0.0f, 120.0f);
+	
 	TObjectPtr<UCharacterMovementComponent> MovementComponent;
-		
 };

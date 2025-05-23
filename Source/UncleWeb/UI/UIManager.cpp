@@ -9,10 +9,10 @@ AUIManager::AUIManager()
 {
     PrimaryActorTick.bCanEverTick = false;
     
-    static ConstructorHelpers::FClassFinder<UUserWidget> StaminaFinder(TEXT("WidgetBlueprint'/Game/UI/WBP_Stamina.WBP_Stamina_C'"));
-    if (StaminaFinder.Succeeded())
+    static ConstructorHelpers::FClassFinder<UUserWidget> SteamFinder(TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/UI/WBP_Steam.WBP_Steam_C'"));
+    if (SteamFinder.Succeeded())
     {
-        StaminaWidgetClass = StaminaFinder.Class;
+        SteamWidgetClass = SteamFinder.Class;
     }
     static ConstructorHelpers::FClassFinder<UUserWidget> CrosshairFinder(TEXT("WidgetBlueprint'/Game/UI/WBP_Crosshair.WBP_Crosshair_C'"));
     if (CrosshairFinder.Succeeded())
@@ -43,9 +43,9 @@ void AUIManager::CreateWidgets()
 {
     if (!CachedPC) return;
     
-    if (StaminaWidgetClass && !StaminaWidget)
+    if (SteamWidgetClass && !SteamWidget)
     {
-        StaminaWidget = CreateWidget<UUserWidget>(CachedPC, StaminaWidgetClass);
+        SteamWidget = CreateWidget<UUserWidget>(CachedPC, SteamWidgetClass);
     }
 
     if (CrosshairWidgetClass && !CrosshairWidget)
@@ -56,9 +56,9 @@ void AUIManager::CreateWidgets()
 
 void AUIManager::AddWidgetsToViewport()
 {
-    if (StaminaWidget)
+    if (SteamWidget)
     {
-        StaminaWidget->AddToViewport();
+        SteamWidget->AddToViewport();
     }
 
     if (CrosshairWidget)
@@ -67,15 +67,19 @@ void AUIManager::AddWidgetsToViewport()
     }
 }
 
-void AUIManager::UpdateStaminaUI(float Current, float Max)
+void AUIManager::UpdateSteamUI(float Current, float Max)
 {
-    if (StaminaWidget)
+    if (SteamWidget)
     {
-        if (UFunction* Func = StaminaWidget->FindFunction(TEXT("UpdateStaminaBar")))
+        if (UFunction* Func = SteamWidget->FindFunction(TEXT("UpdateStaminaBar")))
         {
             struct FParams { float Current; float Max; };
             FParams Params{ Current, Max };
-            StaminaWidget->ProcessEvent(Func, &Params);
+            SteamWidget->ProcessEvent(Func, &Params);
+        }
+        else
+        {
+            UE_LOG(LogTemp, Warning, TEXT("[%s] UpdateStaminaBar function not found in SteamWidget"), CURRENT_CONTEXT);
         }
     }
 }

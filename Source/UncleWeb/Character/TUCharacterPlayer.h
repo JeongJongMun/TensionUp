@@ -2,6 +2,7 @@
 
 #pragma once
 #include "CoreMinimal.h"
+#include "InputAction.h"
 #include "InputActionValue.h"
 #include "TUCharacterBase.h"
 #include "TUCharacterPlayer.generated.h"
@@ -11,79 +12,17 @@ class UNCLEWEB_API ATUCharacterPlayer : public ATUCharacterBase
 {
 	GENERATED_BODY()
 
+// --------------------
+// Functions
+// --------------------
 public:
 	ATUCharacterPlayer();
 
-	// Component
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "DynamicCameraComponent")
-	TObjectPtr<class UTUDynamicCamera> DynamicCameraComponent;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "CableActionComponent")
-	TObjectPtr<class UCableActionComponent> CableActionComponent;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "StaminaComponent")
-	TObjectPtr<class UStaminaComponent> StaminaComponent;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dash")
-	float DashStrength = 1500.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
-	float DashStaminaCost = 20.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
-	float CableStaminaCost = 10.0f;
-	
-	// Movement
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
-	float WalkSpeed = 600.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
-	float RunSpeed = 1000.0f;
-	
-	// UI
-	TObjectPtr<class AUIManager> UIManager;
-
-protected:
+private:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
-	
-	// Camera
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", Meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class USpringArmComponent> CameraBoom;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", Meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UCameraComponent> FollowCamera;
-
-	// Input
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UInputMappingContext> DefaultMappingContext;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UInputAction> JumpAction;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UInputAction> MoveAction;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UInputAction> LookAction;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UInputAction> LeftClickAction;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UInputAction> DashAction;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UInputAction> ZoomInAction;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UInputAction> ZoomOutAction;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UInputAction> RunAction;
-	
-private:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	void StartRunning();
@@ -91,23 +30,68 @@ private:
 	void Dash();
 
 	UFUNCTION()
-	void UpdateStaminaUI(float Current, float Max);
+	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 	
 	UFUNCTION()
-	void ConsumeCableStamina();
-
+	void HandleUpdateSteamUI(float Current, float Max);
+	
 	UFUNCTION()
-	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, 
-			   UPrimitiveComponent* OtherComp, FVector NormalImpulse, 
-			   const FHitResult& Hit);
+	void HandleConsumeCableSteam();
 	
 	void HandleAttachCable();
 	void HandleDetachCable();
 
-	void ZoomInCable();
-	void ZoomOutCable();
+	void HandleShortenCable();
+	void HandleExtendCable();
+
+// --------------------
+// Variables
+// --------------------
+protected:
+	UPROPERTY(VisibleAnywhere, Category = "Component")
+	TObjectPtr<class UTUDynamicCamera> DynamicCameraComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = "Component")
+	TObjectPtr<class UCableActionComponent> CableActionComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = "Component")
+	TObjectPtr<class USteamComponent> SteamComponent;
 	
+	UPROPERTY(VisibleAnywhere, Category = "Camera")
+	TObjectPtr<class USpringArmComponent> CameraBoom;
+
+	UPROPERTY(VisibleAnywhere, Category = "Camera")
+	TObjectPtr<class UCameraComponent> FollowCamera;
+
 private:
-	bool bIsRunning = false;
+	UPROPERTY(EditAnywhere, Category = "Movement")
+	float DashStrength = 1500.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Steam")
+	float DashSteamCost = 20.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Steam")
+	float CableSteamCost = 10.0f;
 	
+	UPROPERTY(EditAnywhere, Category = "Movement")
+	float CableActionAirControl = 0.5f;
+	
+	UPROPERTY(EditAnywhere, Category = "Movement")
+	float CableFallingLateralFriction = 0.0f;
+		
+	UPROPERTY(EditAnywhere, Category = "CableAction")
+	float AirControlChangeInterval = 0.5f;
+	
+	TObjectPtr<class AUIManager> UIManager;
+	TObjectPtr<class UInputMappingContext> DefaultMappingContext;
+	TObjectPtr<UInputAction> JumpAction;
+	TObjectPtr<UInputAction> MoveAction;
+	TObjectPtr<UInputAction> LookAction;
+	TObjectPtr<UInputAction> LeftClickAction;
+	TObjectPtr<UInputAction> DashAction;
+	TObjectPtr<UInputAction> ShortenCableAction;
+	TObjectPtr<UInputAction> ExtendCableAction;
+	TObjectPtr<UInputAction> RunAction;
+	
+	bool bIsRunning = false;
 };

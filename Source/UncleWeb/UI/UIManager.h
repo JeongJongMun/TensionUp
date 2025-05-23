@@ -11,39 +11,35 @@ UCLASS()
 class UNCLEWEB_API AUIManager : public AActor
 {
 	GENERATED_BODY()
-	
+
+// --------------------
+// Functions
+// --------------------
 public:
 	AUIManager();
 
 	void InitializeUI(APlayerController* PC);
-	void UpdateStaminaUI(float Current, float Max);
+	void UpdateSteamUI(float Current, float Max);
 	void SetActiveCrosshair(ESlateVisibility Visibility);
 	void SetCrosshairColor(ECrosshairStateType State);
 
 protected:
 	virtual void BeginPlay() override;
 
-	// Widget Classes
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
-	TSubclassOf<UUserWidget> StaminaWidgetClass;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
-	TSubclassOf<UUserWidget> CrosshairWidgetClass;
-
-	// Widget Instances
-	UPROPERTY()
-	TObjectPtr<UUserWidget> StaminaWidget;
-
-	UPROPERTY()
-	TObjectPtr<UUserWidget> CrosshairWidget;
-
-	UPROPERTY()
-	TObjectPtr<APlayerController> CachedPC;
-
 private:
 	void CreateWidgets();
 	void AddWidgetsToViewport();
 
+// --------------------
+// Variables
+// --------------------
+private:
+	TSubclassOf<UUserWidget> SteamWidgetClass;
+	TSubclassOf<UUserWidget> CrosshairWidgetClass;
+	TObjectPtr<UUserWidget> SteamWidget;
+	TObjectPtr<UUserWidget> CrosshairWidget;
+	TObjectPtr<APlayerController> CachedPC;
+	
 	ECrosshairStateType CurrentCrosshairState = ECrosshairStateType::Default;
 	FLinearColor DefaultCrosshairColor = FLinearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	FLinearColor ActiveCrosshairColor = FLinearColor(1.0f, 0.0f, 0.0f, 1.0f);
