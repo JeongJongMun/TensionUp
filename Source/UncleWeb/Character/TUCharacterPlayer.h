@@ -4,7 +4,6 @@
 #include "CoreMinimal.h"
 #include "InputActionValue.h"
 #include "TUCharacterBase.h"
-#include "StaminaComponent.h"
 #include "TUCharacterPlayer.generated.h"
 
 UCLASS()

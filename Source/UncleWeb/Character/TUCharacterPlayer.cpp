@@ -1,17 +1,17 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "TUCharacterPlayer.h"
-#include "CableActionComponent.h"
-#include "StaminaComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "InputMappingContext.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Blueprint/UserWidget.h"
-#include "TUDynamicCamera.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "UncleWeb/Component/CableActionComponent.h"
+#include "UncleWeb/Component/StaminaComponent.h"
+#include "UncleWeb/Component/TUDynamicCamera.h"
 
 ATUCharacterPlayer::ATUCharacterPlayer()
 {

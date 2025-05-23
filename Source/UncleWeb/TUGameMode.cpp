@@ -1,7 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "TUGameMode.h"
-#include "TUCharacterPlayer.h"
+#include "Character/TUCharacterPlayer.h"
 #include "UObject/ConstructorHelpers.h"
 
 ATUGameMode::ATUGameMode()
