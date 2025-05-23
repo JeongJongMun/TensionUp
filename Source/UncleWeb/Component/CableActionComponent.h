@@ -28,7 +28,8 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "CableAction")
 	FOnCableDetachedAction OnCableDetachedAction;
-	
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "CableComponent")
 	TObjectPtr<UCableComponent> TargetCable;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CableAction")
@@ -61,7 +62,7 @@ private:
 	FVector CableAttachPoint = FVector::ZeroVector;
 
 	bool IsCanAttachCable(FHitResult &HitResult);
-	void CalculateCableSwing();
+	void CalculateCableSwing(float DeltaTime);
 	void ApplyDetachDrivingForce();
 	void SetCable(const FVector& AttachLocation, AActor* HitActor);
 	void ResetCable();
