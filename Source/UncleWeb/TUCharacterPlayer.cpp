@@ -10,6 +10,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "Blueprint/UserWidget.h"
 #include "TUDynamicCamera.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 ATUCharacterPlayer::ATUCharacterPlayer()
@@ -139,6 +140,8 @@ void ATUCharacterPlayer::BeginPlay()
 
 	CableActionComponent->OnCableAttachedAction.AddDynamic(this, &ATUCharacterPlayer::ConsumeCableStamina);
 
+	// repulsive force
+	GetCapsuleComponent()->OnComponentHit.AddDynamic(this, &ATUCharacterPlayer::OnHit);
 	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 }
 
@@ -229,6 +232,23 @@ void ATUCharacterPlayer::ZoomOutCable()
 		CableActionComponent->ExtendCable();
 }
 
+void ATUCharacterPlayer::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+	FVector NormalImpulse, const FHitResult& Hit)
+{
+	
+	UPrimitiveComponent* RootComp = Cast<UPrimitiveComponent>(GetRootComponent());
+	FVector CurrentVelocity = RootComp->GetPhysicsLinearVelocity();
+	float CurrentSpeed = CurrentVelocity.Size();
+	
+		if (CurrentSpeed > 500.0f && GetCharacterMovement()->IsFalling())
+    	{
+    		UE_LOG(LogTemp, Log, TEXT("Hit occurred in speed: %f"), CurrentSpeed);
+    		FVector HitNormal = Hit.ImpactNormal;
+    		FVector ReflectionDirection = FMath::GetReflectionVector(CurrentVelocity.GetSafeNormal(), HitNormal);
+    		GetCharacterMovement()->AddImpulse(ReflectionDirection * CurrentSpeed * 50.0f);
+    	}
+}
+    
 void ATUCharacterPlayer::StartRunning()
 {
 	bIsRunning = true;
@@ -259,5 +279,3 @@ void ATUCharacterPlayer::UpdateStaminaUI(float Current, float Max)
 		}
 	}
 }
-
-

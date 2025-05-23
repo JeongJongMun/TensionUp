@@ -14,7 +14,10 @@ Plugins
 *.xcodeproj
 *.xcworkspace
 
-// 100MB 넘는 파일/폴더 추가
+# User Defined Settings
 Content/Characters/Mannequins
 Content/Characters/Mannequin_UE4
 Content/StarterContent
+.vscode/*
+.idea/*
+.svn/*
