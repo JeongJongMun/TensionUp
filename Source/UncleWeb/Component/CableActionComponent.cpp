@@ -14,6 +14,7 @@ void UCableActionComponent::BeginPlay()
 	Super::BeginPlay();
 	
 	Owner = CastChecked<ACharacter>(GetOwner());
+	CachedPC = CastChecked<APlayerController>(Owner->GetController());
 	ResetCable();
 }
 
@@ -26,37 +27,30 @@ void UCableActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 		CalculateCableSwing();
 	}
 }
-
-bool UCableActionComponent::FindCableAttachPoint(FVector& OutLocation, AActor*& OutHitActor)
+bool UCableActionComponent::IsCanAttachCable(FHitResult &HitResult)
 {
-	APlayerController* PC = CastChecked<APlayerController>(Owner->GetController());
-
 	int32 ViewportSizeX, ViewportSizeY;
-	PC->GetViewportSize(ViewportSizeX, ViewportSizeY);
-    FVector WorldLocation, WorldDirection;
-	if (PC->DeprojectScreenPositionToWorld(ViewportSizeX * 0.5f, ViewportSizeY * 0.5f, WorldLocation, WorldDirection))
-    {
-        FVector Start = WorldLocation;
-        FVector End = Start + WorldDirection * CableMaxLength;
+	CachedPC->GetViewportSize(ViewportSizeX, ViewportSizeY);
+	FVector WorldLocation, WorldDirection;
+	if (CachedPC->DeprojectScreenPositionToWorld(ViewportSizeX * 0.5f, ViewportSizeY * 0.5f, WorldLocation, WorldDirection))
+	{
+		FVector Start = WorldLocation;
+		FVector End = Start + WorldDirection * CableMaxLength;
+		
+		FCollisionQueryParams QueryParams;
+		QueryParams.AddIgnoredActor(Owner);
         
-        DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 2.0f, 0, 1.0f);
-        
-        FCollisionQueryParams QueryParams;
-        QueryParams.AddIgnoredActor(Owner);
-        
-        FHitResult HitResult;
-    	bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, QueryParams);
-        if (bHit)
-        {
-            DrawDebugPoint(GetWorld(), HitResult.ImpactPoint, 10.0f, FColor::Green, false, 2.0f);
+		bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, QueryParams);
+		return bHit;
+	}
 
-            OutLocation = HitResult.ImpactPoint;
-        	OutHitActor = HitResult.GetActor();
-            return true;
-        }
-    }
+	return false;
+}
 
-    return false;
+bool UCableActionComponent::IsCanAttachCable()
+{
+	FHitResult HitResult;
+	return IsCanAttachCable(HitResult);
 }
 
 void UCableActionComponent::AttachCable()
@@ -70,11 +64,10 @@ void UCableActionComponent::AttachCable()
 		return;
 	}
 	
-	FVector AttachLocation;
-	AActor* HitActor = nullptr;
-	if (FindCableAttachPoint(AttachLocation, HitActor))
+	FHitResult HitResult;
+	if (IsCanAttachCable(HitResult))
 	{
-		SetCable(AttachLocation, HitActor);
+		SetCable(HitResult.ImpactPoint, HitResult.GetActor());
 		OnCableAttachedAction.Broadcast();
 	}
 }

@@ -7,6 +7,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SlateWrapperTypes.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "UncleWeb/Component/CableActionComponent.h"
 #include "UncleWeb/Component/StaminaComponent.h"
@@ -143,6 +144,15 @@ void ATUCharacterPlayer::Tick(float DeltaTime)
 	if (GetCharacterMovement()->IsMovingOnGround() && StaminaComponent)
 	{
 		StaminaComponent->RecoverStamina(DeltaTime);
+	}
+	
+	if (CableActionComponent->IsCanAttachCable())
+	{
+		UIManager->SetCrosshairColor(ECrosshairStateType::Active);
+	}
+	else
+	{
+		UIManager->SetCrosshairColor(ECrosshairStateType::Default);
 	}
 }
 

@@ -15,6 +15,13 @@ enum class EDirectionType : uint8
 	Backward
 };
 
+enum class ECrosshairStateType : uint8
+{
+	None,
+	Default,
+	Active,
+};
+
 class UNCLEWEB_API TUDefines
 {
 public:

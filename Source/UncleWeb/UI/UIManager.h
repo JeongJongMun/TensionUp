@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "UncleWeb/Util/TUDefines.h"
 #include "UIManager.generated.h"
 
 UCLASS()
@@ -17,6 +18,7 @@ public:
 	void InitializeUI(APlayerController* PC);
 	void UpdateStaminaUI(float Current, float Max);
 	void SetActiveCrosshair(ESlateVisibility Visibility);
+	void SetCrosshairColor(ECrosshairStateType State);
 
 protected:
 	virtual void BeginPlay() override;
@@ -41,4 +43,8 @@ protected:
 private:
 	void CreateWidgets();
 	void AddWidgetsToViewport();
+
+	ECrosshairStateType CurrentCrosshairState = ECrosshairStateType::Default;
+	FLinearColor DefaultCrosshairColor = FLinearColor(1.0f, 1.0f, 1.0f, 1.0f);
+	FLinearColor ActiveCrosshairColor = FLinearColor(1.0f, 0.0f, 0.0f, 1.0f);
 };

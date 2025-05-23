@@ -21,6 +21,7 @@ public:
 	void DetachCable();
 	void ShortenCable();
 	void ExtendCable();
+	bool IsCanAttachCable();
 	
 	UPROPERTY(BlueprintAssignable, Category = "CableAction")
 	FOnCableAttachedAction OnCableAttachedAction;
@@ -48,20 +49,19 @@ public:
 	UPROPERTY(EditAnywhere, Category = "CableAction")
 	float InitialCableLengthRatio = 0.7f;
 
-
-
 protected:
 	virtual void BeginPlay() override;
 
 private:
+	TObjectPtr<APlayerController> CachedPC;
 	TObjectPtr<ACharacter> Owner;
 	bool bIsCableAttached = false;
 	float CurrentCableLength = 0.0f;
 	float TargetCableLength = 0.0f;
 	FVector CableAttachPoint = FVector::ZeroVector;
 
+	bool IsCanAttachCable(FHitResult &HitResult);
 	void CalculateCableSwing();
-	bool FindCableAttachPoint(FVector& OutLocation, AActor*& OutHitActor);
 	void ApplyDetachDrivingForce();
 	void SetCable(const FVector& AttachLocation, AActor* HitActor);
 	void ResetCable();
