@@ -96,8 +96,8 @@ void UCableActionComponent::ApplyDetachDrivingForce()
 	bool bIsSPressed = PC->IsInputKeyDown(EKeys::S);
 	bool bIsDPressed = PC->IsInputKeyDown(EKeys::D);
 	bool bIsSpacePressed = PC->IsInputKeyDown(EKeys::SpaceBar);
-
-	if (!bIsWPressed && !bIsAPressed && !bIsSPressed && !bIsDPressed && !bIsSpacePressed)
+	
+	if (!bIsSpacePressed || (!bIsWPressed && !bIsAPressed && !bIsSPressed && !bIsDPressed))
 		return;
 
 	FVector CableDirection = (CableAttachPoint - Owner->GetActorLocation()).GetSafeNormal();
@@ -110,17 +110,14 @@ void UCableActionComponent::ApplyDetachDrivingForce()
 	if (bIsSPressed) InputDirection -= ForwardDir;
 	if (bIsDPressed) InputDirection += RightDir;
 	InputDirection.Normalize();
-    
-	// 입력 방향의 접선 성분 계산
+	
 	float InputRadialComponent = FVector::DotProduct(InputDirection, CableDirection);
 	FVector InputTangential = InputDirection - (CableDirection * InputRadialComponent);
 	InputTangential.Normalize();
-    
+
 	FVector Force = InputTangential * CableDrivingForce;
-	// FVector Force = InputTangential * 1e7;
     
-	Owner->GetCharacterMovement()->AddForce(Force);
-	UE_LOG(LogTemp, Log, TEXT("[%s] ControlForce: %s"), *FString(__FUNCTION__), *Force.ToString());
+	Owner->LaunchCharacter(Force, true, true);
 }
 
 void UCableActionComponent::SetCable(const FVector& AttachLocation, AActor* HitActor)
@@ -140,7 +137,6 @@ void UCableActionComponent::SetCable(const FVector& AttachLocation, AActor* HitA
 	TargetCable->EndLocation = LocalAttachLocation;
 	TargetCable->SetVisibility(true);
 }
-
 
 void UCableActionComponent::ResetCable()
 {
@@ -184,7 +180,7 @@ void UCableActionComponent::CalculateCableSwing(float DeltaTime)
 		FVector SwingAcceleration = FVector::CrossProduct(UpdatedDirection, FVector::CrossProduct(GravityInfluence, UpdatedDirection));
 		
 		// 새 속도 설정 (접선 방향만)
-		Owner->GetCharacterMovement()->Velocity = TangentialVelocity + (SwingAcceleration * 0.016f); // 약 1프레임 가속도
+		Owner->GetCharacterMovement()->Velocity = TangentialVelocity + (SwingAcceleration * 0.016f); // Approximately 1 frame of acceleration
 	}
 }
 
