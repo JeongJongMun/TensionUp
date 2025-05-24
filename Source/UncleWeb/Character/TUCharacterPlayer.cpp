@@ -186,17 +186,21 @@ void ATUCharacterPlayer::Dash()
 void ATUCharacterPlayer::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 	FVector NormalImpulse, const FHitResult& Hit)
 {
-	
 	UPrimitiveComponent* RootComp = Cast<UPrimitiveComponent>(GetRootComponent());
 	FVector CurrentVelocity = RootComp->GetPhysicsLinearVelocity();
 	float CurrentSpeed = CurrentVelocity.Size();
+
+	// if IncidenceAngle close to 1, it means the character is hitting the wall almost perpendicular
+	float IncidenceAngle = FVector::DotProduct(CurrentVelocity.GetSafeNormal(), -Hit.ImpactNormal);
+	bool bIsFalling = GetCharacterMovement()->IsFalling();
 	
-		if (CurrentSpeed > 500.0f && GetCharacterMovement()->IsFalling())
-    	{
-    		FVector HitNormal = Hit.ImpactNormal;
-    		FVector ReflectionDirection = FMath::GetReflectionVector(CurrentVelocity.GetSafeNormal(), HitNormal);
-    		GetCharacterMovement()->AddImpulse(ReflectionDirection * CurrentSpeed * 50.0f);
-    	}
+	if (CurrentSpeed < 500.0f || !bIsFalling || IncidenceAngle < 0.5f)
+		return;
+
+	FVector ReflectionDirection = FMath::GetReflectionVector(CurrentVelocity.GetSafeNormal(), Hit.ImpactNormal);
+	
+	LaunchCharacter(ReflectionDirection * CurrentSpeed * RepulsiveForceScaleFactor, true, true);
+	UE_LOG(LogTemp, Log, TEXT("[%s] Hit occurred in speed: %f"), CURRENT_CONTEXT, CurrentSpeed);
 }
     
 void ATUCharacterPlayer::StartRunning()

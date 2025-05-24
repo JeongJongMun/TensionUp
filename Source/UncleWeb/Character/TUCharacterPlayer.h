@@ -81,6 +81,9 @@ private:
 		
 	UPROPERTY(EditAnywhere, Category = "CableAction")
 	float AirControlChangeInterval = 0.5f;
+
+	UPROPERTY(EditAnywhere, Category = "RepulsiveForce")
+	float RepulsiveForceScaleFactor = 1.0f;
 	
 	TObjectPtr<class AUIManager> UIManager;
 	TObjectPtr<class UInputMappingContext> DefaultMappingContext;
