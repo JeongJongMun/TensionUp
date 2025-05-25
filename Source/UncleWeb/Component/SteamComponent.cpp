@@ -18,9 +18,29 @@ void USteamComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if (Owner->GetCharacterMovement()->IsMovingOnGround())
+	bool bNowOnGround = Owner->GetCharacterMovement()->IsMovingOnGround();
+
+	if (bNowOnGround)
 	{
-		RecoverSteam(DeltaTime);
+		if (!bIsOnGround)
+		{
+			TimeSinceGrounded = 0.0f;
+			bIsOnGround = true;
+		}
+		else
+		{
+			TimeSinceGrounded += DeltaTime;
+
+			if (TimeSinceGrounded >= SteamRecoveryDelay)
+			{
+				RecoverSteam(DeltaTime);
+			}
+		}
+	}
+	else
+	{
+		bIsOnGround = false;
+		TimeSinceGrounded = 0.0f;
 	}
 }
 

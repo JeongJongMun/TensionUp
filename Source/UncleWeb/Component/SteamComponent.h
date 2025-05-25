@@ -37,7 +37,13 @@ private:
 	float MaxSteam = 100.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|Steam")
+	float SteamRecoveryDelay = 1.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Config|Steam")
 	float SteamRecoveryRate = 10.0f;
+	
+	float TimeSinceGrounded = 0.0f;
+	bool bIsOnGround = false;
 	
 	TObjectPtr<ATUCharacterPlayer> Owner;
 	float CurrentSteam = 100.0f;
