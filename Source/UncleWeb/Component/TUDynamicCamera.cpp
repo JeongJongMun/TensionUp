@@ -20,7 +20,7 @@ void UTUDynamicCamera::BeginPlay()
 void UTUDynamicCamera::InitializeCamera()
 {
 	TargetSpringArm->bUsePawnControlRotation = true;
-	TargetSpringArm->SetRelativeLocation(Offset);
+	TargetSpringArm->SetRelativeLocation(CameraOffset);
 }
 
 void UTUDynamicCamera::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -33,6 +33,6 @@ void UTUDynamicCamera::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 	float Alpha = FMath::Clamp(CurrentSpeed / MaxSpeed, 0.0f, 1.0f);
 	float TargetLength = FMath::Lerp(MinArmLength, MaxArmLength, Alpha);
 
-	float NewLength = FMath::FInterpTo(TargetSpringArm->TargetArmLength, TargetLength, DeltaTime, InterpolationSpeed);
+	float NewLength = FMath::FInterpTo(TargetSpringArm->TargetArmLength, TargetLength, DeltaTime, CameraInterpolationSpeed);
 	TargetSpringArm->TargetArmLength = NewLength;
 }

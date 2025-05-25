@@ -30,20 +30,20 @@ public:
 	TObjectPtr<USpringArmComponent> TargetSpringArm;
 	
 private:
-	UPROPERTY(EditAnywhere, Category = "DynamicCamera")
+	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
 	float MinArmLength = 300.0f;
 
-	UPROPERTY(EditAnywhere, Category = "DynamicCamera")
+	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
 	float MaxArmLength = 600.0f;
 	
-	UPROPERTY(EditAnywhere, Category = "DynamicCamera")
+	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
 	float MaxSpeed = 1200.0f;
 
-	UPROPERTY(EditAnywhere, Category = "DynamicCamera")
-	float InterpolationSpeed = 5.0f;
+	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
+	float CameraInterpolationSpeed = 5.0f;
 
-	UPROPERTY(EditAnywhere, Category = "DynamicCamera")
-	FVector Offset = FVector(0.0f, 0.0f, 120.0f);
+	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
+	FVector CameraOffset = FVector(0.0f, 0.0f, 120.0f);
 	
 	TObjectPtr<UCharacterMovementComponent> MovementComponent;
 };

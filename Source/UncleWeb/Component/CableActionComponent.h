@@ -48,22 +48,22 @@ public:
 	FOnCableDetachedAction OnCableDetachedAction;
 
 private:
-	UPROPERTY(EditAnywhere, Category = "CableAction")
+	UPROPERTY(EditAnywhere, Category = "Config|Cable")
 	float CableMaxLength = 2000.0f;
 
-	UPROPERTY(EditAnywhere, Category = "CableAction")
+	UPROPERTY(EditAnywhere, Category = "Config|Cable")
+	float CableMinLength = 300.0f;
+	
+	UPROPERTY(EditAnywhere, Category = "Config|Cable")
 	float CableDrivingForce = 1000.0f;
 
-	UPROPERTY(EditAnywhere, Category = "CableAction")
+	UPROPERTY(EditAnywhere, Category = "Config|Cable")
 	float CableAdjustSpeed = 200.0f;
 
-	UPROPERTY(EditAnywhere, Category = "CableAction")
-	float CableMinLength = 300.0f;
-
-	UPROPERTY(EditAnywhere, Category = "CableAction")
+	UPROPERTY(EditAnywhere, Category = "Config|Cable")
 	float CableInterpSpeed = 5.0f;
 
-	UPROPERTY(EditAnywhere, Category = "CableAction")
+	UPROPERTY(EditAnywhere, Category = "Config|Cable")
 	float InitialCableLengthRatio = 0.7f;
 	
 	TObjectPtr<APlayerController> CachedPC;

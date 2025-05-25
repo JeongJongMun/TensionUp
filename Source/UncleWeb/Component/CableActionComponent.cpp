@@ -59,16 +59,11 @@ void UCableActionComponent::AttachCable()
 	if (!Owner->GetCharacterMovement()->IsFalling())
 		return;
 	
-    if (bIsCableAttached)
-	{
-		DetachCable();
-		return;
-	}
+	DetachCable();
 	
 	FHitResult HitResult;
 	if (IsCanAttachCable(HitResult))
 	{
-		
 		SetCable(HitResult.ImpactPoint, HitResult.GetActor());
 		OnCableAttachedAction.Broadcast();
 	}

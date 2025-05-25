@@ -110,7 +110,8 @@ void ATUCharacterPlayer::BeginPlay()
 	UIManager->InitializeUI(PC);
 	
 	SteamComponent->OnSteamChanged.AddDynamic(this, &ATUCharacterPlayer::HandleUpdateSteamUI);
-	CableActionComponent->OnCableAttachedAction.AddDynamic(this, &ATUCharacterPlayer::HandleConsumeCableSteam);
+	CableActionComponent->OnCableAttachedAction.AddDynamic(this, &ATUCharacterPlayer::OnCableAttached);
+	CableActionComponent->OnCableDetachedAction.AddDynamic(this, &ATUCharacterPlayer::OnCableDetached);
 
 	// repulsive force
 	GetCapsuleComponent()->OnComponentHit.AddDynamic(this, &ATUCharacterPlayer::OnHit);
@@ -226,7 +227,6 @@ void ATUCharacterPlayer::HandleDetachCable()
 	CableActionComponent->DetachCable();
 }
 
-
 void ATUCharacterPlayer::HandleShortenCable()
 {
 	CableActionComponent->ShortenCable();
@@ -237,12 +237,23 @@ void ATUCharacterPlayer::HandleExtendCable()
 	CableActionComponent->ExtendCable();
 }
 
-void ATUCharacterPlayer::HandleConsumeCableSteam()
-{
-	SteamComponent->ConsumeSteam(CableSteamCost);
-}
-
 void ATUCharacterPlayer::HandleUpdateSteamUI(const float Current, const float Max)
 {
 	UIManager->UpdateSteamUI(Current, Max);
+}
+
+void ATUCharacterPlayer::OnCableAttached()
+{
+	FTimerHandle TimerHandle;
+	Owner->GetWorldTimerManager().SetTimer(TimerHandle, [this]()
+	{
+		GetCharacterMovement()->AirControl = CableActionAirControl;
+	}, AirControlChangeIntervalSeconds, false);
+	
+	SteamComponent->ConsumeSteam(CableSteamCost);
+}
+
+void ATUCharacterPlayer::OnCableDetached()
+{
+	GetCharacterMovement()->AirControl = JumpAirControl;
 }

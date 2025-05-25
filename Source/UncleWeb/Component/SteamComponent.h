@@ -33,10 +33,10 @@ public:
 	FOnSteamChanged OnSteamChanged;
 
 private:
-	UPROPERTY(EditAnywhere, Category = "Steam")
+	UPROPERTY(EditAnywhere, Category = "Config|Steam")
 	float MaxSteam = 100.0f;
 
-	UPROPERTY(EditAnywhere, Category = "Steam")
+	UPROPERTY(EditAnywhere, Category = "Config|Steam")
 	float SteamRecoveryRate = 10.0f;
 	
 	TObjectPtr<ATUCharacterPlayer> Owner;

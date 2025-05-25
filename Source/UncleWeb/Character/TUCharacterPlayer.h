@@ -17,7 +17,7 @@ class UNCLEWEB_API ATUCharacterPlayer : public ATUCharacterBase
 // --------------------
 public:
 	ATUCharacterPlayer();
-
+	
 private:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual void BeginPlay() override;
@@ -36,7 +36,10 @@ private:
 	void HandleUpdateSteamUI(float Current, float Max);
 	
 	UFUNCTION()
-	void HandleConsumeCableSteam();
+	void OnCableAttached();
+	
+	UFUNCTION()
+	void OnCableDetached();
 	
 	void HandleAttachCable();
 	void HandleDetachCable();
@@ -63,26 +66,27 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Camera")
 	TObjectPtr<class UCameraComponent> FollowCamera;
 
+	
 private:
-	UPROPERTY(EditAnywhere, Category = "Movement")
+	UPROPERTY(EditAnywhere, Category = "Config|Dash")
 	float DashStrength = 1500.0f;
 
-	UPROPERTY(EditAnywhere, Category = "Steam")
+	UPROPERTY(EditAnywhere, Category = "Config|Steam")
 	float DashSteamCost = 20.0f;
 
-	UPROPERTY(EditAnywhere, Category = "Steam")
+	UPROPERTY(EditAnywhere, Category = "Config|Steam")
 	float CableSteamCost = 10.0f;
 	
-	UPROPERTY(EditAnywhere, Category = "Movement")
+	UPROPERTY(EditAnywhere, Category = "Config|Player")
 	float CableActionAirControl = 0.5f;
 	
-	UPROPERTY(EditAnywhere, Category = "Movement")
+	UPROPERTY(EditAnywhere, Category = "Config|Player")
 	float CableFallingLateralFriction = 0.0f;
 		
-	UPROPERTY(EditAnywhere, Category = "CableAction")
-	float AirControlChangeInterval = 0.5f;
+	UPROPERTY(EditAnywhere, Category = "Config|Player")
+	float AirControlChangeIntervalSeconds = 0.5f;
 
-	UPROPERTY(EditAnywhere, Category = "RepulsiveForce")
+	UPROPERTY(EditAnywhere, Category = "Config|RepulsiveForce")
 	float RepulsiveForceScaleFactor = 1.0f;
 	
 	TObjectPtr<class AUIManager> UIManager;
