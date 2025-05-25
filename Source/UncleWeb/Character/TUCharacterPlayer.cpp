@@ -179,7 +179,11 @@ void ATUCharacterPlayer::Dash()
 	
 	if (SteamComponent)
 	{
-		LaunchCharacter(GetActorForwardVector() * DashStrength, true, true);
+		FRotator CameraRotation = FollowCamera->GetComponentRotation();
+		FRotator YawRotation(0, CameraRotation.Yaw, 0);
+		FVector DashDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+		LaunchCharacter(DashDirection * DashStrength, true, true);
+
 		SteamComponent->ConsumeSteam(DashSteamCost);
 	}
 }
