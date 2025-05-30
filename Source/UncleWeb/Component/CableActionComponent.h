@@ -4,7 +4,6 @@
 #include "CoreMinimal.h"
 #include "CableComponent.h"
 #include "Components/ActorComponent.h"
-#include "UncleWeb/Character/TUCharacterPlayer.h"
 #include "CableActionComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCableAttachedAction);
@@ -26,6 +25,7 @@ public:
 	void ShortenCable();
 	void ExtendCable();
 	bool IsCanAttachCable();
+	bool IsCableAttached() const { return bIsCableAttached; }
 	
 protected:
 	virtual void BeginPlay() override;
@@ -67,7 +67,7 @@ private:
 	float InitialCableLengthRatio = 0.7f;
 	
 	TObjectPtr<APlayerController> CachedPC;
-	TObjectPtr<ATUCharacterPlayer> Owner;
+	TObjectPtr<class ATUCharacterPlayer> Owner;
 	bool bIsCableAttached = false;
 	float CurrentCableLength = 0.0f;
 	float TargetCableLength = 0.0f;

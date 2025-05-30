@@ -1,13 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "TUCharacterPlayer.h"
-#include "Camera/CameraComponent.h"
-#include "GameFramework/SpringArmComponent.h"
 #include "InputMappingContext.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/SpringArmComponent.h"
 #include "UncleWeb/Component/CableActionComponent.h"
 #include "UncleWeb/Component/SteamComponent.h"
 #include "UncleWeb/Component/TUDynamicCamera.h"
@@ -93,6 +93,11 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 	{
 		ExtendCableAction = InputActionExtendCableRef.Object;
 	}
+}
+
+bool ATUCharacterPlayer::IsCableAttached() const
+{
+	return CableActionComponent && CableActionComponent->IsCableAttached();
 }
 
 void ATUCharacterPlayer::BeginPlay()
