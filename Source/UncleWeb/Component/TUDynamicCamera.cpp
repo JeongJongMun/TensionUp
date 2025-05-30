@@ -2,6 +2,10 @@
 
 #include "TUDynamicCamera.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/PawnMovementComponent.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "UncleWeb/Character/TUCharacterPlayer.h"
+#include "UncleWeb/Util/TUDefines.h"
 
 UTUDynamicCamera::UTUDynamicCamera()
 {
@@ -13,8 +17,7 @@ void UTUDynamicCamera::BeginPlay()
 {
 	Super::BeginPlay();
 
-	ACharacter* OwnerCharacter = CastChecked<ACharacter>(GetOwner());
-	MovementComponent = OwnerCharacter->GetCharacterMovement();
+	Owner = CastChecked<ATUCharacterPlayer>(GetOwner());
 }
 
 void UTUDynamicCamera::InitializeCamera()
@@ -27,12 +30,42 @@ void UTUDynamicCamera::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if (!TargetSpringArm || !MovementComponent) return;
+	if (!TargetSpringArm || !Owner->GetMovementComponent()) return;
 
-	float CurrentSpeed = MovementComponent->Velocity.Size();
-	float Alpha = FMath::Clamp(CurrentSpeed / MaxSpeed, 0.0f, 1.0f);
-	float TargetLength = FMath::Lerp(MinArmLength, MaxArmLength, Alpha);
+	const float CurrentSpeed = Owner->GetMovementComponent()->Velocity.Size();
+	float TargetLength;
+	if (Owner->IsCableAttached())
+		TargetLength = CalculateTargetArmLength(CurrentSpeed);
+	else
+		TargetLength = MinSpringArmLength;
 
-	float NewLength = FMath::FInterpTo(TargetSpringArm->TargetArmLength, TargetLength, DeltaTime, CameraInterpolationSpeed);
+	const float NewLength = FMath::FInterpTo(TargetSpringArm->TargetArmLength, TargetLength, DeltaTime, CameraInterpolationSpeed);
 	TargetSpringArm->TargetArmLength = NewLength;
+	
+	static int32 Counter = 0;
+	if (++Counter % 20 == 0)
+		UE_LOG(LogTemp, Log, TEXT("[%s] Current Speed: %f / Current Spring Arm Length: %f"), CURRENT_CONTEXT, CurrentSpeed, NewLength);
+}
+
+float UTUDynamicCamera::CalculateTargetArmLength(const float CurrentSpeed) const
+{
+	if (CurrentSpeed <= SpeedThreshold_A)
+		return MinSpringArmLength;
+    
+	if (CurrentSpeed <= SpeedThreshold_B)
+	{
+		const float Alpha = (CurrentSpeed - SpeedThreshold_A) / (SpeedThreshold_B - SpeedThreshold_A);
+		return FMath::Lerp(MinSpringArmLength, MidSpringArmLength, Alpha);
+	}
+    
+	if (CurrentSpeed <= SpeedThreshold_C)
+		return MidSpringArmLength;
+    
+	if (CurrentSpeed <= SpeedThreshold_D)
+	{
+		const float Alpha = (CurrentSpeed - SpeedThreshold_C) / (SpeedThreshold_D - SpeedThreshold_C);
+		return FMath::Lerp(MidSpringArmLength, MaxSpringArmLength, Alpha);
+	}
+    
+	return MaxSpringArmLength;
 }

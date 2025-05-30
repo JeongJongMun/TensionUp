@@ -17,6 +17,7 @@ class UNCLEWEB_API ATUCharacterPlayer : public ATUCharacterBase
 // --------------------
 public:
 	ATUCharacterPlayer();
+	bool IsCableAttached() const;
 	
 private:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
