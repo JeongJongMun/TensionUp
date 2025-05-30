@@ -28,6 +28,8 @@ private:
 	void StartRunning();
 	void StopRunning();
 	void Dash();
+	void TryParkour();
+	void HandleJumpOrParkour();
 
 	UFUNCTION()
 	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
@@ -88,6 +90,19 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Config|RepulsiveForce")
 	float RepulsiveForceScaleFactor = 1.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Parkour")
+	float ParkourMaxDistance = 100.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Parkour")
+	float ParkourMaxHeight = 100.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Parkour")
+	float ParkourVaultUpForce = 200.f;
+
+	UPROPERTY(EditAnywhere, Category = "Parkour")
+	float ParkourVaultForwardForce = 400.f;
+
 	
 	TObjectPtr<class AUIManager> UIManager;
 	TObjectPtr<class UInputMappingContext> DefaultMappingContext;
