@@ -53,6 +53,9 @@ private:
 	void HandleJumpPressed();
 	void HandleJumpReleased();
 
+	void HandleStartSteamBooster();
+	void HandleStopSteamBooster();
+
 	// --------------------
 	// Variables
 	// --------------------
@@ -118,6 +121,7 @@ private:
 	TObjectPtr<UInputAction> ShortenCableAction;
 	TObjectPtr<UInputAction> ExtendCableAction;
 	TObjectPtr<UInputAction> RunAction;
+	TObjectPtr<UInputAction> SteamBoostAction;
 
 	bool bIsRunning = false;
 	bool bIsTryingParkour = false;
