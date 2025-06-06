@@ -11,13 +11,15 @@
 #include "UncleWeb/Component/CableActionComponent.h"
 #include "UncleWeb/Component/SteamComponent.h"
 #include "UncleWeb/Component/TUDynamicCamera.h"
+#include "DrawDebugHelpers.h"
+
 #include "UncleWeb/UI/UIManager.h"
 #include "UncleWeb/Util/TUDefines.h"
 
 ATUCharacterPlayer::ATUCharacterPlayer()
 {
 	PrimaryActorTick.bCanEverTick = true;
-	
+
 	// Camera
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
@@ -110,10 +112,10 @@ void ATUCharacterPlayer::BeginPlay()
 		Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		//Subsystem->RemoveMappingContext(DefaultMappingContext);
 	}
-	
+
 	UIManager = GetWorld()->SpawnActor<AUIManager>(AUIManager::StaticClass());
 	UIManager->InitializeUI(PC);
-	
+
 	SteamComponent->OnSteamChanged.AddDynamic(this, &ATUCharacterPlayer::HandleUpdateSteamUI);
 	CableActionComponent->OnCableAttachedAction.AddDynamic(this, &ATUCharacterPlayer::OnCableAttached);
 	CableActionComponent->OnCableDetachedAction.AddDynamic(this, &ATUCharacterPlayer::OnCableDetached);
@@ -125,7 +127,7 @@ void ATUCharacterPlayer::BeginPlay()
 void ATUCharacterPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
+
 	if (CableActionComponent->IsCanAttachCable())
 	{
 		UIManager->SetCrosshairColor(ECrosshairStateType::Active);
@@ -149,11 +151,13 @@ void ATUCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	EnhancedInputComponent->BindAction(LeftClickAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleAttachCable);
 	EnhancedInputComponent->BindAction(LeftClickAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::HandleDetachCable);
 	EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::Dash);
-	// Temporary Disabled 
-	// EnhancedInputComponent->BindAction(ShortenCableAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleShortenCable);
-	// EnhancedInputComponent->BindAction(ExtendCableAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleExtendCable);
+	EnhancedInputComponent->BindAction(ShortenCableAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleShortenCable);
+	EnhancedInputComponent->BindAction(ExtendCableAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleExtendCable);
 	EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::StartRunning);
 	EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::StopRunning);
+	//for parkour
+	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleJumpPressed);
+	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::HandleJumpReleased);
 }
 
 void ATUCharacterPlayer::Move(const FInputActionValue& Value)
@@ -182,7 +186,7 @@ void ATUCharacterPlayer::Dash()
 {
 	if (!SteamComponent->HasEnoughSteam(DashSteamCost))
 		return;
-	
+
 	if (SteamComponent)
 	{
 		FRotator CameraRotation = FollowCamera->GetComponentRotation();
@@ -194,9 +198,24 @@ void ATUCharacterPlayer::Dash()
 	}
 }
 
+void ATUCharacterPlayer::HandleJumpOrParkour()
+{
+	if (GetCharacterMovement()->IsFalling())
+	{
+		TryParkour();
+	}
+	else
+	{
+		Jump();
+	}
+}
+
+
 void ATUCharacterPlayer::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 	FVector NormalImpulse, const FHitResult& Hit)
 {
+	if (bIsTryingParkour) return;
+
 	UPrimitiveComponent* RootComp = Cast<UPrimitiveComponent>(GetRootComponent());
 	FVector CurrentVelocity = RootComp->GetPhysicsLinearVelocity();
 	float CurrentSpeed = CurrentVelocity.Size();
@@ -204,16 +223,16 @@ void ATUCharacterPlayer::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherA
 	// if IncidenceAngle close to 1, it means the character is hitting the wall almost perpendicular
 	float IncidenceAngle = FVector::DotProduct(CurrentVelocity.GetSafeNormal(), -Hit.ImpactNormal);
 	bool bIsFalling = GetCharacterMovement()->IsFalling();
-	
-	if (CurrentSpeed < 500.0f || !bIsFalling || IncidenceAngle < 0.5f)
+
+	if (bIsJumpInputActive || bIsTryingParkour || CurrentSpeed < 500.0f || !bIsFalling || IncidenceAngle < 0.5f)
 		return;
 
 	FVector ReflectionDirection = FMath::GetReflectionVector(CurrentVelocity.GetSafeNormal(), Hit.ImpactNormal);
-	
+
 	LaunchCharacter(ReflectionDirection * CurrentSpeed * RepulsiveForceScaleFactor, true, true);
 	UE_LOG(LogTemp, Log, TEXT("[%s] Hit occurred in speed: %f"), CURRENT_CONTEXT, CurrentSpeed);
 }
-    
+
 void ATUCharacterPlayer::StartRunning()
 {
 	bIsRunning = true;
@@ -256,14 +275,113 @@ void ATUCharacterPlayer::OnCableAttached()
 {
 	FTimerHandle TimerHandle;
 	Owner->GetWorldTimerManager().SetTimer(TimerHandle, [this]()
-	{
-		GetCharacterMovement()->AirControl = CableActionAirControl;
-	}, AirControlChangeIntervalSeconds, false);
-	
+		{
+			GetCharacterMovement()->AirControl = CableActionAirControl;
+		}, AirControlChangeIntervalSeconds, false);
+
 	SteamComponent->ConsumeSteam(CableSteamCost);
 }
 
 void ATUCharacterPlayer::OnCableDetached()
 {
 	GetCharacterMovement()->AirControl = JumpAirControl;
+}
+
+void ATUCharacterPlayer::HandleJumpPressed()
+{
+	bIsJumpInputActive = true;
+	HandleJumpOrParkour();
+}
+
+void ATUCharacterPlayer::HandleJumpReleased()
+{
+	bIsJumpInputActive = false;
+	StopJumping();
+}
+
+void ATUCharacterPlayer::TryParkour()
+{
+	if (!GetCharacterMovement()->IsFalling()) return;
+
+	bIsTryingParkour = true;
+
+	FVector TraceStart = GetActorLocation() + FVector(0, 0, 35.f);
+	// Define the maximum distance and height for parkour
+	FVector BoxHalfSize = FVector(30.f, 50.f, 40.f);
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+
+	// Define the directions to trace in
+	TArray<FVector> Directions;
+	Directions.Add(GetActorForwardVector());
+	Directions.Add(GetActorForwardVector().RotateAngleAxis(30.f, FVector::UpVector)); // left
+	Directions.Add(GetActorForwardVector().RotateAngleAxis(-30.f, FVector::UpVector)); // right
+
+	FHitResult BestHit;
+	bool bAnyHit = false;
+	float ClosestDistance = TNumericLimits<float>::Max();
+
+	for (const FVector& Dir : Directions)
+	{
+		FVector TraceEnd = TraceStart + Dir * ParkourMaxDistance;
+		FRotator Orientation = Dir.Rotation();
+
+		FHitResult Hit;
+		bool bHit = GetWorld()->SweepSingleByChannel(
+			Hit,
+			TraceStart,
+			TraceEnd,
+			FQuat(Orientation),
+			ECC_Visibility,
+			FCollisionShape::MakeBox(BoxHalfSize),
+			Params
+		);
+
+		DrawDebugBox(GetWorld(), TraceEnd, BoxHalfSize, FQuat(Orientation), bHit ? FColor::Green : FColor::Red, false, 1.f);
+
+		if (bHit)
+		{
+			float Distance = FVector::Dist(GetActorLocation(), Hit.ImpactPoint);
+			if (Distance < ClosestDistance)
+			{
+				ClosestDistance = Distance;
+				BestHit = Hit;
+				bAnyHit = true;
+			}
+		}
+	}
+	if (bAnyHit)
+	{
+		const FHitResult& Hit = BestHit;
+
+		FVector PlayerFeet = GetActorLocation();
+		FVector PlayerEyes = PlayerFeet + FVector(0, 0, 100.f);
+		const float ObstacleTopZ = Hit.ImpactPoint.Z + 100.f;
+
+		if (ObstacleTopZ > PlayerEyes.Z + 10.f)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Too High - No Parkour"));
+			bIsTryingParkour = false;
+			return;
+		}
+
+		float ObstacleHeight = ObstacleTopZ - PlayerFeet.Z;
+
+		if (ObstacleTopZ > PlayerEyes.Z - 30.f && ObstacleHeight <= ParkourMaxHeight)
+		{
+			FVector Direction = (-Hit.ImpactNormal + FVector::UpVector).GetSafeNormal();
+			FVector VaultVelocity = Direction * ParkourVaultForwardForce;
+			VaultVelocity.Z += ParkourVaultUpForce;
+
+			LaunchCharacter(VaultVelocity, true, true);
+			UE_LOG(LogTemp, Warning, TEXT(">> Parkour Success"));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT(">> No obstacle found in directions"));
+	}
+
+
+	bIsTryingParkour = false;
 }
