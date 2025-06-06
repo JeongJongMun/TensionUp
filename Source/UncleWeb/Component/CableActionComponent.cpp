@@ -25,7 +25,7 @@ void UCableActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 
 	if (bIsCableAttached)
 	{
-		CalculateCableSwing(DeltaTime);
+		OnCableAttaching(DeltaTime);
 	}
 }
 bool UCableActionComponent::IsCanAttachCable(FHitResult &HitResult)
@@ -54,35 +54,34 @@ bool UCableActionComponent::IsCanAttachCable()
 	return IsCanAttachCable(HitResult);
 }
 
-void UCableActionComponent::AttachCable()
+void UCableActionComponent::TryAttachCable()
 {
 	if (!Owner->GetCharacterMovement()->IsFalling())
 		return;
 	
-	DetachCable();
+	TryDetachCable();
 	
 	FHitResult HitResult;
 	if (IsCanAttachCable(HitResult))
 	{
 		SetCable(HitResult.ImpactPoint, HitResult.GetActor());
+		
 		OnCableAttachedAction.Broadcast();
 	}
 }
 
-void UCableActionComponent::DetachCable()
+void UCableActionComponent::TryDetachCable()
 {
 	if (!bIsCableAttached)
 		return;
 	
-	ApplyDetachDrivingForce();
-
-	FTimerHandle DetachTimerHandle;
-	Owner->GetWorldTimerManager().SetTimer(DetachTimerHandle, this, &UCableActionComponent::ResetCable, 0.01f, false);
+	OnDrivingForce();
+	ResetCable();
 
 	OnCableDetachedAction.Broadcast();
 }
 
-void UCableActionComponent::ApplyDetachDrivingForce()
+void UCableActionComponent::OnDrivingForce()
 {
 	APlayerController* PC = CastChecked<APlayerController>(Owner->GetController());
 	
@@ -143,40 +142,55 @@ void UCableActionComponent::ResetCable()
 	TargetCable->SetVisibility(false);
 }
 
-void UCableActionComponent::CalculateCableSwing(float DeltaTime)
+void UCableActionComponent::OnCableAttaching(const float DeltaTime)
 {
-	// Smooth interpolation of cable length
 	if (!FMath::IsNearlyEqual(CurrentCableLength, TargetCableLength, 1.0f))
 	{
-		CurrentCableLength = FMath::FInterpTo(CurrentCableLength, TargetCableLength, DeltaTime, CableInterpSpeed);
-		TargetCable->CableLength = CurrentCableLength;
+		OnCableLengthAdjust(DeltaTime);
 	}
-
-	FVector CharacterLocation = Owner->GetActorLocation();
-	FVector ToSwingPoint = CableAttachPoint - CharacterLocation;
-	float CurrentDistance = ToSwingPoint.Size();
+	
+	const FVector CharacterLocation = Owner->GetActorLocation();
+	const FVector ToSwingPoint = CableAttachPoint - CharacterLocation;
+	const float CurrentDistance = ToSwingPoint.Size();
 	
 	if (FMath::Abs(CurrentDistance - CurrentCableLength) > 0.1f)
 	{
-		FVector CableDirection = ToSwingPoint.GetSafeNormal();
-		FVector CorrectPosition = CableAttachPoint - (CableDirection * CurrentCableLength);
-		FVector CurrentVelocity = Owner->GetVelocity();
-
-		FVector NewPosition = FMath::VInterpTo(CharacterLocation, CorrectPosition, DeltaTime, CableInterpSpeed);
+		// Set Position
+		const FVector CableDirection = ToSwingPoint.GetSafeNormal();
+		const FVector CorrectPosition = CableAttachPoint - (CableDirection * CurrentCableLength);
+		const FVector NewPosition = FMath::VInterpTo(CharacterLocation, CorrectPosition, DeltaTime, CableInterpSpeed);
 		Owner->SetActorLocation(NewPosition);
 		
-		// 케이블 방향의 속도 성분 제거 (원의 접선 방향 속도만 유지)
-		FVector UpdatedDirection = (CableAttachPoint - CorrectPosition).GetSafeNormal();
-		float RadialVelocity = FVector::DotProduct(CurrentVelocity, UpdatedDirection);
-		FVector TangentialVelocity = CurrentVelocity - (UpdatedDirection * RadialVelocity);
+		// Remove Radial Velocity, Keep Tangential Velocity
+		const FVector UpdatedDirection = (CableAttachPoint - CorrectPosition).GetSafeNormal();
+		const FVector CurrentVelocity = Owner->GetVelocity();
+		const float RadialVelocity = FVector::DotProduct(CurrentVelocity, UpdatedDirection);
+		const FVector TangentialVelocity = CurrentVelocity - (UpdatedDirection * RadialVelocity);
 		
-		// 원심력에 의한 추가 접선 속도 (스윙감 향상)
-		FVector GravityInfluence = FVector(0, 0, GetWorld()->GetGravityZ());
-		FVector SwingAcceleration = FVector::CrossProduct(UpdatedDirection, FVector::CrossProduct(GravityInfluence, UpdatedDirection));
+		// Pendulum movement
+		const FVector GravityInfluence = FVector(0, 0, GetWorld()->GetGravityZ());
+		const FVector SwingAcceleration = FVector::CrossProduct(UpdatedDirection, FVector::CrossProduct(GravityInfluence, UpdatedDirection));
+		FVector NewVelocity = TangentialVelocity + (SwingAcceleration * DeltaTime);
+
+		// Steam Booster
+		if (bIsSteamBoosterActive)
+		{
+			const FVector SteamBoosterDirection = Owner->GetActorForwardVector();
+			NewVelocity += SteamBoosterDirection.GetSafeNormal() * SteamBoosterForce * DeltaTime;
+			
+			OnSteamBoosterActive.Broadcast();
+		}
 		
-		// 새 속도 설정 (접선 방향만)
-		Owner->GetCharacterMovement()->Velocity = TangentialVelocity + (SwingAcceleration * 0.016f); // Approximately 1 frame of acceleration
+		Owner->GetCharacterMovement()->Velocity = NewVelocity;
 	}
+
+	OnCableAttachingAction.Broadcast();
+}
+
+void UCableActionComponent::OnCableLengthAdjust(const float DeltaTime)
+{
+	CurrentCableLength = FMath::FInterpTo(CurrentCableLength, TargetCableLength, DeltaTime, CableInterpSpeed);
+	TargetCable->CableLength = CurrentCableLength;
 }
 
 void UCableActionComponent::ShortenCable()

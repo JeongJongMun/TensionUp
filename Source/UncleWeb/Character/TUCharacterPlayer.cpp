@@ -95,11 +95,17 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 	{
 		ExtendCableAction = InputActionExtendCableRef.Object;
 	}
+
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionSteamBoostRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_SteamBooster.IA_SteamBooster'"));
+	if (InputActionSteamBoostRef.Succeeded())
+	{
+		SteamBoostAction = InputActionSteamBoostRef.Object;
+	}
 }
 
 bool ATUCharacterPlayer::IsCableAttached() const
 {
-	return CableActionComponent && CableActionComponent->IsCableAttached();
+	return CableActionComponent && CableActionComponent->IsCableAttaching();
 }
 
 void ATUCharacterPlayer::BeginPlay()
@@ -159,6 +165,10 @@ void ATUCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	//for parkour
 	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleJumpPressed);
 	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::HandleJumpReleased);
+
+	EnhancedInputComponent->BindAction(SteamBoostAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleStartSteamBooster);
+	EnhancedInputComponent->BindAction(SteamBoostAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::HandleStopSteamBooster);
+	EnhancedInputComponent->BindAction(SteamBoostAction, ETriggerEvent::Canceled, this, &ATUCharacterPlayer::HandleStopSteamBooster);
 }
 
 void ATUCharacterPlayer::Move(const FInputActionValue& Value)
@@ -249,12 +259,12 @@ void ATUCharacterPlayer::StopRunning()
 // ----- Handler
 void ATUCharacterPlayer::HandleAttachCable()
 {
-	CableActionComponent->AttachCable();
+	CableActionComponent->TryAttachCable();
 }
 
 void ATUCharacterPlayer::HandleDetachCable()
 {
-	CableActionComponent->DetachCable();
+	CableActionComponent->TryDetachCable();
 }
 
 void ATUCharacterPlayer::HandleShortenCable()
@@ -286,6 +296,7 @@ void ATUCharacterPlayer::OnCableAttached()
 void ATUCharacterPlayer::OnCableDetached()
 {
 	GetCharacterMovement()->AirControl = JumpAirControl;
+	HandleStopSteamBooster();
 }
 
 void ATUCharacterPlayer::HandleJumpPressed()
@@ -298,6 +309,19 @@ void ATUCharacterPlayer::HandleJumpReleased()
 {
 	bIsJumpInputActive = false;
 	StopJumping();
+}
+
+void ATUCharacterPlayer::HandleStartSteamBooster()
+{
+	if (!CableActionComponent->IsCableAttaching())
+		return;
+
+	CableActionComponent->SetIsSteamBoosterActive(true);
+}
+
+void ATUCharacterPlayer::HandleStopSteamBooster()
+{
+	CableActionComponent->SetIsSteamBoosterActive(false);	
 }
 
 void ATUCharacterPlayer::TryParkour()
