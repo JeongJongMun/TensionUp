@@ -142,6 +142,16 @@ void ATUCharacterPlayer::Tick(float DeltaTime)
 	{
 		UIManager->SetCrosshairColor(ECrosshairStateType::Default);
 	}
+
+	if (CableActionComponent->IsSteamBoosterActive())
+	{
+		SteamComponent->ConsumeSteam(SteamBoosterCost * DeltaTime);
+
+		if (!SteamComponent->HasEnoughSteam(SteamBoosterCost))
+		{
+			HandleStopSteamBooster();
+		}
+	}
 }
 
 void ATUCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -313,7 +323,7 @@ void ATUCharacterPlayer::HandleJumpReleased()
 
 void ATUCharacterPlayer::HandleStartSteamBooster()
 {
-	if (!CableActionComponent->IsCableAttaching())
+	if (!CableActionComponent->IsCableAttaching() || !SteamComponent->HasEnoughSteam(SteamBoosterCost))
 		return;
 
 	CableActionComponent->SetIsSteamBoosterActive(true);

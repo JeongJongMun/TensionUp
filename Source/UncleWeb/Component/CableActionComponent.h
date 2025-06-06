@@ -34,6 +34,7 @@ public:
 	bool IsCanAttachCable();
 	bool IsCableAttaching() const { return bIsCableAttached; }
 	void SetIsSteamBoosterActive(const bool bActive) { bIsSteamBoosterActive = bActive; }
+	bool IsSteamBoosterActive() const { return bIsSteamBoosterActive; }
 	
 protected:
 	virtual void BeginPlay() override;

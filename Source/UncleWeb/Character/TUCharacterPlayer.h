@@ -86,6 +86,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Config|Steam")
 	float CableSteamCost = 10.0f;
 
+	UPROPERTY(EditAnywhere, Category = "Config|Steam")
+	float SteamBoosterCost = 10.0f;
+
 	UPROPERTY(EditAnywhere, Category = "Config|Player")
 	float CableActionAirControl = 0.5f;
 
