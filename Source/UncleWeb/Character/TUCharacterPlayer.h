@@ -12,13 +12,13 @@ class UNCLEWEB_API ATUCharacterPlayer : public ATUCharacterBase
 {
 	GENERATED_BODY()
 
-// --------------------
-// Functions
-// --------------------
+	// --------------------
+	// Functions
+	// --------------------
 public:
 	ATUCharacterPlayer();
 	bool IsCableAttached() const;
-	
+
 private:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual void BeginPlay() override;
@@ -34,25 +34,25 @@ private:
 
 	UFUNCTION()
 	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
-	
+
 	UFUNCTION()
 	void HandleUpdateSteamUI(float Current, float Max);
-	
+
 	UFUNCTION()
 	void OnCableAttached();
-	
+
 	UFUNCTION()
 	void OnCableDetached();
-	
+
 	void HandleAttachCable();
 	void HandleDetachCable();
 
 	void HandleShortenCable();
 	void HandleExtendCable();
 
-// --------------------
-// Variables
-// --------------------
+	// --------------------
+	// Variables
+	// --------------------
 protected:
 	UPROPERTY(VisibleAnywhere, Category = "Component")
 	TObjectPtr<class UTUDynamicCamera> DynamicCameraComponent;
@@ -62,14 +62,14 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, Category = "Component")
 	TObjectPtr<class USteamComponent> SteamComponent;
-	
+
 	UPROPERTY(VisibleAnywhere, Category = "Camera")
 	TObjectPtr<class USpringArmComponent> CameraBoom;
 
 	UPROPERTY(VisibleAnywhere, Category = "Camera")
 	TObjectPtr<class UCameraComponent> FollowCamera;
 
-	
+
 private:
 	UPROPERTY(EditAnywhere, Category = "Config|Dash")
 	float DashStrength = 1500.0f;
@@ -79,13 +79,13 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Config|Steam")
 	float CableSteamCost = 10.0f;
-	
+
 	UPROPERTY(EditAnywhere, Category = "Config|Player")
 	float CableActionAirControl = 0.5f;
-	
+
 	UPROPERTY(EditAnywhere, Category = "Config|Player")
 	float CableFallingLateralFriction = 0.0f;
-		
+
 	UPROPERTY(EditAnywhere, Category = "Config|Player")
 	float AirControlChangeIntervalSeconds = 0.5f;
 
@@ -104,7 +104,7 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Parkour")
 	float ParkourVaultForwardForce = 400.f;
 
-	
+
 	TObjectPtr<class AUIManager> UIManager;
 	TObjectPtr<class UInputMappingContext> DefaultMappingContext;
 	TObjectPtr<UInputAction> JumpAction;
@@ -115,6 +115,7 @@ private:
 	TObjectPtr<UInputAction> ShortenCableAction;
 	TObjectPtr<UInputAction> ExtendCableAction;
 	TObjectPtr<UInputAction> RunAction;
-	
+
 	bool bIsRunning = false;
+	bool bIsTryingParkour = false;
 };

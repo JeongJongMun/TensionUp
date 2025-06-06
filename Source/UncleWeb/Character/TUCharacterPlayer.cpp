@@ -151,9 +151,8 @@ void ATUCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	EnhancedInputComponent->BindAction(LeftClickAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleAttachCable);
 	EnhancedInputComponent->BindAction(LeftClickAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::HandleDetachCable);
 	EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::Dash);
-	// Temporary Disabled 
-	// EnhancedInputComponent->BindAction(ShortenCableAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleShortenCable);
-	// EnhancedInputComponent->BindAction(ExtendCableAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleExtendCable);
+	EnhancedInputComponent->BindAction(ShortenCableAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleShortenCable);
+	EnhancedInputComponent->BindAction(ExtendCableAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleExtendCable);
 	EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::StartRunning);
 	EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::StopRunning);
 	//for parkour
@@ -215,6 +214,8 @@ void ATUCharacterPlayer::HandleJumpOrParkour()
 void ATUCharacterPlayer::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 	FVector NormalImpulse, const FHitResult& Hit)
 {
+	if (bIsTryingParkour) return;
+
 	UPrimitiveComponent* RootComp = Cast<UPrimitiveComponent>(GetRootComponent());
 	FVector CurrentVelocity = RootComp->GetPhysicsLinearVelocity();
 	float CurrentSpeed = CurrentVelocity.Size();
@@ -288,21 +289,16 @@ void ATUCharacterPlayer::OnCableDetached()
 
 void ATUCharacterPlayer::TryParkour()
 {
-	//UE_LOG(LogTemp, Warning, TEXT("TryParkour!"));
+	if (!GetCharacterMovement()->IsFalling()) return;
 
-	if (!GetCharacterMovement()->IsFalling())
-		return;
+	bIsTryingParkour = true;
 
-	// 기준 위치를 약간 상향 (허리 또는 가슴 위치)
 	FVector TraceStart = GetActorLocation() + FVector(0, 0, 35);
-	FVector TraceEnd = TraceStart + GetActorForwardVector() * ParkourMaxDistance;
+	FVector CameraForward = FollowCamera->GetForwardVector();
+	FVector TraceEnd = TraceStart + CameraForward * ParkourMaxDistance;
+	FVector BoxHalfSize = FVector(10.f, 30.f, 30.f);
 
-	// 박스 크기 설정 (X는 작게, YZ는 캐릭터 어깨보다 조금 작게)
-	FVector BoxHalfSize = FVector(10.f, 30.f, 30.f); // 전방 얇은 박스
-
-	// 회전은 Forward 방향 기준
-	FRotator Orientation = GetActorRotation();
-
+	FRotator Orientation = CameraForward.Rotation(); // Get the rotation of the camera to align the box with the direction of the camera
 	FCollisionQueryParams Params;
 	Params.AddIgnoredActor(this);
 
@@ -322,9 +318,6 @@ void ATUCharacterPlayer::TryParkour()
 	if (bHit)
 	{
 		float ObstacleHeight = Hit.ImpactPoint.Z - GetActorLocation().Z;
-
-		UE_LOG(LogTemp, Warning, TEXT("Wall detected. Height: %f"), ObstacleHeight);
-
 		if (ObstacleHeight > 0.f && ObstacleHeight <= ParkourMaxHeight)
 		{
 			FVector Direction = (Hit.ImpactNormal * -1.f + FVector::UpVector).GetSafeNormal();
@@ -332,15 +325,8 @@ void ATUCharacterPlayer::TryParkour()
 			VaultVelocity.Z += ParkourVaultUpForce;
 
 			LaunchCharacter(VaultVelocity, true, true);
-			UE_LOG(LogTemp, Warning, TEXT(">> Parkour!!!"));
-		}
-		else
-		{
-			//UE_LOG(LogTemp, Warning, TEXT("no wall height: %f"), ObstacleHeight);
 		}
 	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("no wall (BoxTrace)"));
-	}
+
+	bIsTryingParkour = false;
 }
