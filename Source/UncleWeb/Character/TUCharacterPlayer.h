@@ -95,16 +95,16 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Config|RepulsiveForce")
 	float RepulsiveForceScaleFactor = 1.0f;
 
-	UPROPERTY(EditAnywhere, Category = "Parkour")
+	UPROPERTY(EditAnywhere, Category = "Config|Parkour")
 	float ParkourMaxDistance = 150.0f;
 
-	UPROPERTY(EditAnywhere, Category = "Parkour")
+	UPROPERTY(EditAnywhere, Category = "Config|Parkour")
 	float ParkourMaxHeight = 150.0f;
 
-	UPROPERTY(EditAnywhere, Category = "Parkour")
+	UPROPERTY(EditAnywhere, Category = "Config|Parkour")
 	float ParkourVaultUpForce = 200.f;
 
-	UPROPERTY(EditAnywhere, Category = "Parkour")
+	UPROPERTY(EditAnywhere, Category = "Config|Parkour")
 	float ParkourVaultForwardForce = 400.f;
 
 

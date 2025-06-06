@@ -156,7 +156,6 @@ void ATUCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::StartRunning);
 	EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::StopRunning);
 	//for parkour
-	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::TryParkour);
 	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleJumpPressed);
 	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::HandleJumpReleased);
 }
@@ -307,11 +306,12 @@ void ATUCharacterPlayer::TryParkour()
 	bIsTryingParkour = true;
 
 	FVector TraceStart = GetActorLocation() + FVector(0, 0, 35.f);
+	// Define the maximum distance and height for parkour
 	FVector BoxHalfSize = FVector(30.f, 50.f, 40.f);
 	FCollisionQueryParams Params;
 	Params.AddIgnoredActor(this);
 
-	// Parkour parameters
+	// Define the directions to trace in
 	TArray<FVector> Directions;
 	Directions.Add(GetActorForwardVector());
 	Directions.Add(GetActorForwardVector().RotateAngleAxis(30.f, FVector::UpVector)); // left
