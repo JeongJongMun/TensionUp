@@ -306,62 +306,80 @@ void ATUCharacterPlayer::TryParkour()
 
 	bIsTryingParkour = true;
 
-	FVector TraceStart = GetActorLocation() + FVector(0, 0, 35);
-	FVector CameraForward = FollowCamera->GetForwardVector();
-	FVector TraceEnd = TraceStart + CameraForward * ParkourMaxDistance;
-	FVector BoxHalfSize = FVector(30.f, 50.f, 60.f);
-
-	FRotator Orientation = CameraForward.Rotation(); // Get the rotation of the camera to align the box with the direction of the camera
+	FVector TraceStart = GetActorLocation() + FVector(0, 0, 35.f);
+	FVector BoxHalfSize = FVector(30.f, 50.f, 40.f);
 	FCollisionQueryParams Params;
 	Params.AddIgnoredActor(this);
 
-	FHitResult Hit;
-	bool bHit = GetWorld()->SweepSingleByChannel(
-		Hit,
-		TraceStart,
-		TraceEnd,
-		FQuat(Orientation),
-		ECC_Visibility,
-		FCollisionShape::MakeBox(BoxHalfSize),
-		Params
-	);
+	// Parkour parameters
+	TArray<FVector> Directions;
+	Directions.Add(GetActorForwardVector());
+	Directions.Add(GetActorForwardVector().RotateAngleAxis(30.f, FVector::UpVector)); // left
+	Directions.Add(GetActorForwardVector().RotateAngleAxis(-30.f, FVector::UpVector)); // right
 
-	DrawDebugBox(GetWorld(), TraceEnd, BoxHalfSize, FQuat(Orientation), FColor::Green, false, 1.0f);
+	FHitResult BestHit;
+	bool bAnyHit = false;
+	float ClosestDistance = TNumericLimits<float>::Max();
 
-	if (bHit)
+	for (const FVector& Dir : Directions)
 	{
-		FVector PlayerFeet = GetActorLocation();
-		//FVector PlayerHead = PlayerFeet + FVector(0, 0, 50); // player head
-		FVector PlayerEyes = GetActorLocation() + FVector(0, 0, 100.f);
+		FVector TraceEnd = TraceStart + Dir * ParkourMaxDistance;
+		FRotator Orientation = Dir.Rotation();
 
-		//const float ObstacleTopZ = Hit.ImpactPoint.Z + Hit.ImpactNormal.Z * 50.f; // 벽 위 대략 높이
-		//bool bIsOverlappingTop = ObstacleTopZ > PlayerHead.Z;
-		const float ObstacleTopZ = Hit.ImpactPoint.Z + 100.f;
-		bool bIsOverlappingTop = ObstacleTopZ > PlayerEyes.Z - 30.f;
+		FHitResult Hit;
+		bool bHit = GetWorld()->SweepSingleByChannel(
+			Hit,
+			TraceStart,
+			TraceEnd,
+			FQuat(Orientation),
+			ECC_Visibility,
+			FCollisionShape::MakeBox(BoxHalfSize),
+			Params
+		);
 
-		UE_LOG(LogTemp, Warning, TEXT("=== Parkour Check ==="));
-		UE_LOG(LogTemp, Warning, TEXT("ObstacleTopZ: %f"), ObstacleTopZ);
-		UE_LOG(LogTemp, Warning, TEXT("PlayerEyesZ: %f"), PlayerEyes.Z);
+		DrawDebugBox(GetWorld(), TraceEnd, BoxHalfSize, FQuat(Orientation), bHit ? FColor::Green : FColor::Red, false, 1.f);
 
-		if (!bIsOverlappingTop)
+		if (bHit)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("wall height no. x"));
+			float Distance = FVector::Dist(GetActorLocation(), Hit.ImpactPoint);
+			if (Distance < ClosestDistance)
+			{
+				ClosestDistance = Distance;
+				BestHit = Hit;
+				bAnyHit = true;
+			}
+		}
+	}
+	if (bAnyHit)
+	{
+		const FHitResult& Hit = BestHit;
+
+		FVector PlayerFeet = GetActorLocation();
+		FVector PlayerEyes = PlayerFeet + FVector(0, 0, 100.f);
+		const float ObstacleTopZ = Hit.ImpactPoint.Z + 100.f;
+
+		if (ObstacleTopZ > PlayerEyes.Z + 10.f)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Too High - No Parkour"));
 			bIsTryingParkour = false;
 			return;
 		}
+
 		float ObstacleHeight = ObstacleTopZ - PlayerFeet.Z;
-		UE_LOG(LogTemp, Warning, TEXT("ObstacleHeight: %f"), ObstacleTopZ - PlayerFeet.Z);
-		//UE_LOG(LogTemp, Warning, TEXT("ObstacleHeight: %f, PlayerHead: %f, ObstacleTopZ: %f"), ObstacleHeight, PlayerHead.Z, ObstacleTopZ);
-		//UE_LOG(LogTemp, Warning, TEXT("ObstacleHeight: %f, PlayerEyes: %f, ObstacleTopZ: %f"), ObstacleHeight, PlayerEyes.Z, ObstacleTopZ);
-		if (ObstacleHeight <= ParkourMaxHeight)
+
+		if (ObstacleTopZ > PlayerEyes.Z - 30.f && ObstacleHeight <= ParkourMaxHeight)
 		{
-			FVector Direction = (Hit.ImpactNormal * -1.f + FVector::UpVector).GetSafeNormal();
+			FVector Direction = (-Hit.ImpactNormal + FVector::UpVector).GetSafeNormal();
 			FVector VaultVelocity = Direction * ParkourVaultForwardForce;
 			VaultVelocity.Z += ParkourVaultUpForce;
 
 			LaunchCharacter(VaultVelocity, true, true);
-			UE_LOG(LogTemp, Warning, TEXT(">> Parkour"));
+			UE_LOG(LogTemp, Warning, TEXT(">> Parkour Success"));
 		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT(">> No obstacle found in directions"));
 	}
 
 
