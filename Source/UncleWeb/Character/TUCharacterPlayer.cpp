@@ -157,7 +157,8 @@ void ATUCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::StopRunning);
 	//for parkour
 	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::TryParkour);
-
+	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleJumpPressed);
+	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::HandleJumpReleased);
 }
 
 void ATUCharacterPlayer::Move(const FInputActionValue& Value)
@@ -224,7 +225,7 @@ void ATUCharacterPlayer::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherA
 	float IncidenceAngle = FVector::DotProduct(CurrentVelocity.GetSafeNormal(), -Hit.ImpactNormal);
 	bool bIsFalling = GetCharacterMovement()->IsFalling();
 
-	if (CurrentSpeed < 500.0f || !bIsFalling || IncidenceAngle < 0.5f)
+	if (bIsJumpInputActive || bIsTryingParkour || CurrentSpeed < 500.0f || !bIsFalling || IncidenceAngle < 0.5f)
 		return;
 
 	FVector ReflectionDirection = FMath::GetReflectionVector(CurrentVelocity.GetSafeNormal(), Hit.ImpactNormal);
@@ -287,6 +288,18 @@ void ATUCharacterPlayer::OnCableDetached()
 	GetCharacterMovement()->AirControl = JumpAirControl;
 }
 
+void ATUCharacterPlayer::HandleJumpPressed()
+{
+	bIsJumpInputActive = true;
+	HandleJumpOrParkour();
+}
+
+void ATUCharacterPlayer::HandleJumpReleased()
+{
+	bIsJumpInputActive = false;
+	StopJumping();
+}
+
 void ATUCharacterPlayer::TryParkour()
 {
 	if (!GetCharacterMovement()->IsFalling()) return;
@@ -296,7 +309,7 @@ void ATUCharacterPlayer::TryParkour()
 	FVector TraceStart = GetActorLocation() + FVector(0, 0, 35);
 	FVector CameraForward = FollowCamera->GetForwardVector();
 	FVector TraceEnd = TraceStart + CameraForward * ParkourMaxDistance;
-	FVector BoxHalfSize = FVector(10.f, 30.f, 30.f);
+	FVector BoxHalfSize = FVector(30.f, 50.f, 60.f);
 
 	FRotator Orientation = CameraForward.Rotation(); // Get the rotation of the camera to align the box with the direction of the camera
 	FCollisionQueryParams Params;
@@ -317,16 +330,40 @@ void ATUCharacterPlayer::TryParkour()
 
 	if (bHit)
 	{
-		float ObstacleHeight = Hit.ImpactPoint.Z - GetActorLocation().Z;
-		if (ObstacleHeight > 0.f && ObstacleHeight <= ParkourMaxHeight)
+		FVector PlayerFeet = GetActorLocation();
+		//FVector PlayerHead = PlayerFeet + FVector(0, 0, 50); // player head
+		FVector PlayerEyes = GetActorLocation() + FVector(0, 0, 100.f);
+
+		//const float ObstacleTopZ = Hit.ImpactPoint.Z + Hit.ImpactNormal.Z * 50.f; // 벽 위 대략 높이
+		//bool bIsOverlappingTop = ObstacleTopZ > PlayerHead.Z;
+		const float ObstacleTopZ = Hit.ImpactPoint.Z + 100.f;
+		bool bIsOverlappingTop = ObstacleTopZ > PlayerEyes.Z - 30.f;
+
+		UE_LOG(LogTemp, Warning, TEXT("=== Parkour Check ==="));
+		UE_LOG(LogTemp, Warning, TEXT("ObstacleTopZ: %f"), ObstacleTopZ);
+		UE_LOG(LogTemp, Warning, TEXT("PlayerEyesZ: %f"), PlayerEyes.Z);
+
+		if (!bIsOverlappingTop)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("wall height no. x"));
+			bIsTryingParkour = false;
+			return;
+		}
+		float ObstacleHeight = ObstacleTopZ - PlayerFeet.Z;
+		UE_LOG(LogTemp, Warning, TEXT("ObstacleHeight: %f"), ObstacleTopZ - PlayerFeet.Z);
+		//UE_LOG(LogTemp, Warning, TEXT("ObstacleHeight: %f, PlayerHead: %f, ObstacleTopZ: %f"), ObstacleHeight, PlayerHead.Z, ObstacleTopZ);
+		//UE_LOG(LogTemp, Warning, TEXT("ObstacleHeight: %f, PlayerEyes: %f, ObstacleTopZ: %f"), ObstacleHeight, PlayerEyes.Z, ObstacleTopZ);
+		if (ObstacleHeight <= ParkourMaxHeight)
 		{
 			FVector Direction = (Hit.ImpactNormal * -1.f + FVector::UpVector).GetSafeNormal();
 			FVector VaultVelocity = Direction * ParkourVaultForwardForce;
 			VaultVelocity.Z += ParkourVaultUpForce;
 
 			LaunchCharacter(VaultVelocity, true, true);
+			UE_LOG(LogTemp, Warning, TEXT(">> Parkour"));
 		}
 	}
+
 
 	bIsTryingParkour = false;
 }

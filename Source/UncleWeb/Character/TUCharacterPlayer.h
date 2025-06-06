@@ -50,6 +50,9 @@ private:
 	void HandleShortenCable();
 	void HandleExtendCable();
 
+	void HandleJumpPressed();
+	void HandleJumpReleased();
+
 	// --------------------
 	// Variables
 	// --------------------
@@ -93,10 +96,10 @@ private:
 	float RepulsiveForceScaleFactor = 1.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Parkour")
-	float ParkourMaxDistance = 100.0f;
+	float ParkourMaxDistance = 150.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Parkour")
-	float ParkourMaxHeight = 100.0f;
+	float ParkourMaxHeight = 150.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Parkour")
 	float ParkourVaultUpForce = 200.f;
@@ -118,4 +121,5 @@ private:
 
 	bool bIsRunning = false;
 	bool bIsTryingParkour = false;
+	bool bIsJumpInputActive = false;
 };
