@@ -13,6 +13,11 @@ UCableActionComponent::UCableActionComponent()
 void UCableActionComponent::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (UMaterialInterface* CableMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Script/Engine.Material'/Game/Materials/M_Cable.M_Cable'")))
+	{
+		TargetCable->SetMaterial(0, CableMat);
+	}
 	
 	Owner = CastChecked<ATUCharacterPlayer>(GetOwner());
 	CachedPC = CastChecked<APlayerController>(Owner->GetController());
