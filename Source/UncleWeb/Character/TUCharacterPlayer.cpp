@@ -32,12 +32,11 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 	DynamicCameraComponent->TargetSpringArm = CameraBoom;
 	DynamicCameraComponent->InitializeCamera();
 
+	CableComponent = CreateDefaultSubobject<UCableComponent>(TEXT("CableComponent"));
+	CableComponent->SetupAttachment(GetMesh(), TEXT("cable_r"));
+	
 	CableActionComponent = CreateDefaultSubobject<UCableActionComponent>(TEXT("CableActionComponent"));
-	CableActionComponent->TargetCable = CreateDefaultSubobject<UCableComponent>(TEXT("CableComponent"));
-	CableActionComponent->TargetCable->SetupAttachment(GetRootComponent(), "Swing");
-	CableActionComponent->TargetCable->NumSegments = 1;
-	CableActionComponent->TargetCable->CableWidth = 2.0f;
-	CableActionComponent->TargetCable->bAttachEnd = true;
+	CableActionComponent->TargetCable = CableComponent;
 
 	SteamComponent = CreateDefaultSubobject<USteamComponent>(TEXT("SteamComponent"));
 
@@ -101,11 +100,43 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 	{
 		SteamBoostAction = InputActionSteamBoostRef.Object;
 	}
+
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> SwingAnimMontageRef(TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_Swing.MT_Player_Swing''"));
+	if (SwingAnimMontageRef.Succeeded())
+	{
+		MontageSwing = SwingAnimMontageRef.Object;
+	}
 }
 
 bool ATUCharacterPlayer::IsCableAttached() const
 {
 	return CableActionComponent && CableActionComponent->IsCableAttaching();
+}
+
+void ATUCharacterPlayer::PlayAnimation(const FName SectionName)
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (!AnimInstance || !MontageSwing)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[%s] AnimInstance or AnimMontage is null"), CURRENT_CONTEXT);
+		return;
+	}
+
+	if (AnimInstance->Montage_IsPlaying(MontageSwing))
+	{
+		FName CurrentSection = AnimInstance->Montage_GetCurrentSection(MontageSwing);
+		if (CurrentSection != NAME_None && CurrentSection != SectionName)
+		{
+			AnimInstance->Montage_Stop(0.5f, MontageSwing);
+			AnimInstance->Montage_Play(MontageSwing);
+			AnimInstance->Montage_JumpToSection(SectionName, MontageSwing); 
+		}
+	}
+	else
+	{
+		AnimInstance->Montage_Play(MontageSwing);
+		AnimInstance->Montage_JumpToSection(SectionName, MontageSwing); 
+	}
 }
 
 void ATUCharacterPlayer::BeginPlay()
@@ -301,6 +332,7 @@ void ATUCharacterPlayer::OnCableAttached()
 		}, AirControlChangeIntervalSeconds, false);
 
 	SteamComponent->ConsumeSteam(CableSteamCost);
+	PlayAnimation(TEXT("Default"));
 }
 
 void ATUCharacterPlayer::OnCableDetached()

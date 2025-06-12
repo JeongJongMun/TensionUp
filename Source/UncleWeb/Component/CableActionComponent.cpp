@@ -18,6 +18,10 @@ void UCableActionComponent::BeginPlay()
 	{
 		TargetCable->SetMaterial(0, CableMat);
 	}
+	TargetCable->NumSegments = 1;
+	TargetCable->CableWidth = 2.0f;
+	TargetCable->bAttachStart = true;
+	TargetCable->bAttachEnd = true;
 	
 	Owner = CastChecked<ATUCharacterPlayer>(GetOwner());
 	CachedPC = CastChecked<APlayerController>(Owner->GetController());

@@ -18,6 +18,7 @@ class UNCLEWEB_API ATUCharacterPlayer : public ATUCharacterBase
 public:
 	ATUCharacterPlayer();
 	bool IsCableAttached() const;
+	void PlayAnimation(const FName SectionName);
 
 private:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
@@ -77,6 +78,12 @@ protected:
 
 
 private:
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<class UCableComponent> CableComponent;
+	
+	UPROPERTY()
+	TObjectPtr<UAnimMontage> MontageSwing;
+	
 	UPROPERTY(EditAnywhere, Category = "Config|Dash")
 	float DashStrength = 1500.0f;
 
