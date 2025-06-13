@@ -76,6 +76,15 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Camera")
 	TObjectPtr<class UCameraComponent> FollowCamera;
 
+	UPROPERTY()
+	TObjectPtr<UParticleSystemComponent> FootSteamEffectR;
+
+	UPROPERTY()
+	TObjectPtr<UParticleSystemComponent> FootSteamEffectL;
+
+	UPROPERTY()
+	TObjectPtr<UParticleSystem> SteamParticleSystem;
+
 
 private:
 	UPROPERTY(EditAnywhere)
@@ -136,4 +145,8 @@ private:
 	bool bIsRunning = false;
 	bool bIsTryingParkour = false;
 	bool bIsJumpInputActive = false;
+
+	FName CableSocketName = TEXT("cable_r");
+	FName SteamEffectSocketNameL = TEXT("foot_l_Socket");
+	FName SteamEffectSocketNameR = TEXT("foot_r_Socket");
 };

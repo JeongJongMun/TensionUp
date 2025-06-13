@@ -12,6 +12,7 @@
 #include "UncleWeb/Component/SteamComponent.h"
 #include "UncleWeb/Component/TUDynamicCamera.h"
 #include "DrawDebugHelpers.h"
+#include "Particles/ParticleSystemComponent.h"
 
 #include "UncleWeb/UI/UIManager.h"
 #include "UncleWeb/Util/TUDefines.h"
@@ -19,6 +20,21 @@
 ATUCharacterPlayer::ATUCharacterPlayer()
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	FootSteamEffectL = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("FootSteamEffect_L"));
+	FootSteamEffectR = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("FootSteamEffect_R"));
+	FootSteamEffectL->SetupAttachment(GetMesh(), SteamEffectSocketNameL);
+	FootSteamEffectR->SetupAttachment(GetMesh(), SteamEffectSocketNameR);
+	FootSteamEffectL->SetAutoActivate(false);
+	FootSteamEffectR->SetAutoActivate(false);
+
+	static ConstructorHelpers::FObjectFinder<UParticleSystem> SteamParticleObj(TEXT("/Script/Engine.ParticleSystem'/Game/VFX/P_Flamethrower.P_Flamethrower'"));
+	if (SteamParticleObj.Succeeded())
+	{
+		SteamParticleSystem = SteamParticleObj.Object;
+		FootSteamEffectL->SetTemplate(SteamParticleSystem);
+		FootSteamEffectR->SetTemplate(SteamParticleSystem);
+	}
 
 	// Camera
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -33,7 +49,7 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 	DynamicCameraComponent->InitializeCamera();
 
 	CableComponent = CreateDefaultSubobject<UCableComponent>(TEXT("CableComponent"));
-	CableComponent->SetupAttachment(GetMesh(), TEXT("cable_r"));
+	CableComponent->SetupAttachment(GetMesh(), CableSocketName);
 	
 	CableActionComponent = CreateDefaultSubobject<UCableActionComponent>(TEXT("CableActionComponent"));
 	CableActionComponent->TargetCable = CableComponent;
@@ -101,10 +117,14 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 		SteamBoostAction = InputActionSteamBoostRef.Object;
 	}
 
-	static ConstructorHelpers::FObjectFinder<UAnimMontage> SwingAnimMontageRef(TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_Swing.MT_Player_Swing''"));
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> SwingAnimMontageRef(TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_Swing.MT_Player_Swing'"));
 	if (SwingAnimMontageRef.Succeeded())
 	{
 		MontageSwing = SwingAnimMontageRef.Object;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("[%s] Failed to load MontageSwing animation"), *GetName());
 	}
 }
 
@@ -359,11 +379,21 @@ void ATUCharacterPlayer::HandleStartSteamBooster()
 		return;
 
 	CableActionComponent->SetIsSteamBoosterActive(true);
+	if (FootSteamEffectL && FootSteamEffectR)
+	{
+		FootSteamEffectL->Activate();
+		FootSteamEffectR->Activate();
+	}
 }
 
 void ATUCharacterPlayer::HandleStopSteamBooster()
 {
 	CableActionComponent->SetIsSteamBoosterActive(false);	
+	if (FootSteamEffectL && FootSteamEffectR)
+	{
+		FootSteamEffectL->Deactivate();
+		FootSteamEffectR->Deactivate();
+	}
 }
 
 void ATUCharacterPlayer::TryParkour()
