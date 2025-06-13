@@ -13,9 +13,9 @@
 #include "UncleWeb/Component/TUDynamicCamera.h"
 #include "DrawDebugHelpers.h"
 #include "Particles/ParticleSystemComponent.h"
-
 #include "UncleWeb/UI/UIManager.h"
 #include "UncleWeb/Util/TUDefines.h"
+#include "Kismet/KismetMathLibrary.h"
 
 ATUCharacterPlayer::ATUCharacterPlayer()
 {
@@ -201,6 +201,19 @@ void ATUCharacterPlayer::Tick(float DeltaTime)
 		if (!SteamComponent->HasEnoughSteam(SteamBoosterCost))
 		{
 			HandleStopSteamBooster();
+		}
+	}
+
+	if (ParkourState == EParkourState::Climbing)
+	{
+		ClimbInterpAlpha += DeltaTime * ClimbSpeed;
+		FVector NewLocation = FMath::Lerp(ParkourStartLocation, ParkourTargetLocation, ClimbInterpAlpha);
+		SetActorLocation(NewLocation);
+
+		if (ClimbInterpAlpha >= 1.0f)
+		{
+			ParkourState = EParkourState::ClimbFinished;
+			GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 		}
 	}
 }
@@ -407,24 +420,20 @@ void ATUCharacterPlayer::RotateToCameraDirection()
 		SetActorRotation(TargetRotation);
 	}
 }
-
 void ATUCharacterPlayer::TryParkour()
 {
 	if (!GetCharacterMovement()->IsFalling()) return;
 
-	bIsTryingParkour = true;
-
-	FVector TraceStart = GetActorLocation() + FVector(0, 0, 35.f);
-	// Define the maximum distance and height for parkour
+	FVector TraceStart = GetActorLocation() + FVector(0, 0, 50.f);
 	FVector BoxHalfSize = FVector(30.f, 50.f, 40.f);
 	FCollisionQueryParams Params;
 	Params.AddIgnoredActor(this);
 
-	// Define the directions to trace in
-	TArray<FVector> Directions;
-	Directions.Add(GetActorForwardVector());
-	Directions.Add(GetActorForwardVector().RotateAngleAxis(30.f, FVector::UpVector)); // left
-	Directions.Add(GetActorForwardVector().RotateAngleAxis(-30.f, FVector::UpVector)); // right
+	TArray<FVector> Directions = {
+		GetActorForwardVector(),
+		GetActorForwardVector().RotateAngleAxis(30.f, FVector::UpVector),
+		GetActorForwardVector().RotateAngleAxis(-30.f, FVector::UpVector)
+	};
 
 	FHitResult BestHit;
 	bool bAnyHit = false;
@@ -434,8 +443,8 @@ void ATUCharacterPlayer::TryParkour()
 	{
 		FVector TraceEnd = TraceStart + Dir * ParkourMaxDistance;
 		FRotator Orientation = Dir.Rotation();
-
 		FHitResult Hit;
+
 		bool bHit = GetWorld()->SweepSingleByChannel(
 			Hit,
 			TraceStart,
@@ -459,38 +468,34 @@ void ATUCharacterPlayer::TryParkour()
 			}
 		}
 	}
+
 	if (bAnyHit)
 	{
-		const FHitResult& Hit = BestHit;
+		const FVector SurfaceNormal = BestHit.ImpactNormal;
+		FVector AttachPoint = BestHit.ImpactPoint + SurfaceNormal * 30.f;
+		FVector TargetTop = AttachPoint + FVector(0, 0, 120.f);
+		float EyeHeight = GetActorLocation().Z + BaseEyeHeight;
 
-		FVector PlayerFeet = GetActorLocation();
-		FVector PlayerEyes = PlayerFeet + FVector(0, 0, 100.f);
-		const float ObstacleTopZ = Hit.ImpactPoint.Z + 100.f;
-
-		if (ObstacleTopZ > PlayerEyes.Z + 10.f)
+		if (TargetTop.Z > EyeHeight + 100.f)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Too High - No Parkour"));
-			bIsTryingParkour = false;
+			UE_LOG(LogTemp, Warning, TEXT("Too High - Cannot climb"));
 			return;
 		}
 
-		float ObstacleHeight = ObstacleTopZ - PlayerFeet.Z;
+		ParkourStartLocation = GetActorLocation();
+		ParkourTargetLocation = TargetTop;
+		ClimbInterpAlpha = 0.f;
+		ParkourState = EParkourState::Climbing;
 
-		if (ObstacleTopZ > PlayerEyes.Z - 30.f && ObstacleHeight <= ParkourMaxHeight)
-		{
-			FVector Direction = (-Hit.ImpactNormal + FVector::UpVector).GetSafeNormal();
-			FVector VaultVelocity = Direction * ParkourVaultForwardForce;
-			VaultVelocity.Z += ParkourVaultUpForce;
-
-			LaunchCharacter(VaultVelocity, true, true);
-			UE_LOG(LogTemp, Warning, TEXT(">> Parkour Success"));
-		}
+		GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
+		FRotator LookAtRotation = UKismetMathLibrary::MakeRotFromX(-SurfaceNormal);
+		SetActorRotation(LookAtRotation);
+		UE_LOG(LogTemp, Log, TEXT("Start Climbing Parkour"));
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT(">> No obstacle found in directions"));
+		UE_LOG(LogTemp, Warning, TEXT("No climbable surface found"));
 	}
-
-
 	bIsTryingParkour = false;
 }
+

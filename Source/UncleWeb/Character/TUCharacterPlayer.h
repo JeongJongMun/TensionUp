@@ -5,6 +5,7 @@
 #include "InputAction.h"
 #include "InputActionValue.h"
 #include "TUCharacterBase.h"
+#include "ParkourTypes.h"
 #include "TUCharacterPlayer.generated.h"
 
 UCLASS()
@@ -147,6 +148,12 @@ private:
 	bool bIsRunning = false;
 	bool bIsTryingParkour = false;
 	bool bIsJumpInputActive = false;
+
+	EParkourState ParkourState = EParkourState::None;
+	FVector ParkourStartLocation;
+	FVector ParkourTargetLocation;
+	float ClimbInterpAlpha = 0.f;
+	float ClimbSpeed = 1.0f;
 
 	FName CableSocketName = TEXT("cable_r");
 	FName SteamEffectSocketNameL = TEXT("foot_l_Socket");
