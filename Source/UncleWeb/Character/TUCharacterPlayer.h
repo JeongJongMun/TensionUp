@@ -57,6 +57,8 @@ private:
 	void HandleStartSteamBooster();
 	void HandleStopSteamBooster();
 
+	void RotateToCameraDirection();
+
 	// --------------------
 	// Variables
 	// --------------------

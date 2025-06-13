@@ -353,6 +353,7 @@ void ATUCharacterPlayer::OnCableAttached()
 
 	SteamComponent->ConsumeSteam(CableSteamCost);
 	PlayAnimation(TEXT("Default"));
+	RotateToCameraDirection();
 }
 
 void ATUCharacterPlayer::OnCableDetached()
@@ -393,6 +394,17 @@ void ATUCharacterPlayer::HandleStopSteamBooster()
 	{
 		FootSteamEffectL->Deactivate();
 		FootSteamEffectR->Deactivate();
+	}
+}
+
+void ATUCharacterPlayer::RotateToCameraDirection()
+{
+	if (const TObjectPtr<APlayerController> PC = Cast<APlayerController>(GetController()))
+	{
+		const FRotator CameraRotation = PC->GetControlRotation();
+		const FRotator TargetRotation = FRotator(0.0f, CameraRotation.Yaw, 0.0f);
+        
+		SetActorRotation(TargetRotation);
 	}
 }
 
