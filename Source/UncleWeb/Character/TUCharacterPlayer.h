@@ -5,7 +5,6 @@
 #include "InputAction.h"
 #include "InputActionValue.h"
 #include "TUCharacterBase.h"
-#include "ParkourTypes.h"
 #include "TUCharacterPlayer.generated.h"
 
 UCLASS()
@@ -31,7 +30,6 @@ private:
 	void StartRunning();
 	void StopRunning();
 	void Dash();
-	void TryParkour();
 	void HandleJumpOrParkour();
 
 	UFUNCTION()
@@ -72,6 +70,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, Category = "Component")
 	TObjectPtr<class USteamComponent> SteamComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = "Component")
+	TObjectPtr<class UParkourComponent> ParkourComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = "Camera")
 	TObjectPtr<class USpringArmComponent> CameraBoom;
@@ -120,17 +121,6 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Config|RepulsiveForce")
 	float RepulsiveForceScaleFactor = 1.0f;
 
-	UPROPERTY(EditAnywhere, Category = "Config|Parkour")
-	float ParkourMaxDistance = 150.0f;
-
-	UPROPERTY(EditAnywhere, Category = "Config|Parkour")
-	float ParkourMaxHeight = 150.0f;
-
-	UPROPERTY(EditAnywhere, Category = "Config|Parkour")
-	float ParkourVaultUpForce = 200.f;
-
-	UPROPERTY(EditAnywhere, Category = "Config|Parkour")
-	float ParkourVaultForwardForce = 400.f;
 
 
 	TObjectPtr<class AUIManager> UIManager;
@@ -148,12 +138,6 @@ private:
 	bool bIsRunning = false;
 	bool bIsTryingParkour = false;
 	bool bIsJumpInputActive = false;
-
-	EParkourState ParkourState = EParkourState::None;
-	FVector ParkourStartLocation;
-	FVector ParkourTargetLocation;
-	float ClimbInterpAlpha = 0.f;
-	float ClimbSpeed = 1.0f;
 
 	FName CableSocketName = TEXT("cable_r");
 	FName SteamEffectSocketNameL = TEXT("foot_l_Socket");
