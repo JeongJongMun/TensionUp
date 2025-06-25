@@ -34,7 +34,7 @@ void UParkourComponent::TryParkour()
 	if (!OwnerCharacter || !OwnerCharacter->GetCharacterMovement()->IsFalling()) return;
 
 	FVector TraceStart = OwnerCharacter->GetActorLocation() + FVector(0, 0, 50.f);
-	FVector BoxHalfSize = FVector(30.f, 50.f, 40.f);
+	FVector BoxHalfSize = BoxTraceHalfSize;
 	FCollisionQueryParams Params;
 	Params.AddIgnoredActor(OwnerCharacter);
 
@@ -58,7 +58,10 @@ void UParkourComponent::TryParkour()
 			Hit, TraceStart, TraceEnd, FQuat(Orientation),
 			ECC_Visibility, FCollisionShape::MakeBox(BoxHalfSize), Params);
 
-		DrawDebugBox(GetWorld(), TraceEnd, BoxHalfSize, FQuat(Orientation), bHit ? FColor::Green : FColor::Red, false, 1.f);
+		if (bDrawDebugBox)
+		{
+			DrawDebugBox(GetWorld(), TraceEnd, BoxHalfSize, FQuat(Orientation), bHit ? FColor::Green : FColor::Red, false, 1.f);
+		}
 
 		if (bHit)
 		{
@@ -75,11 +78,11 @@ void UParkourComponent::TryParkour()
 	if (bAnyHit)
 	{
 		const FVector SurfaceNormal = BestHit.ImpactNormal;
-		FVector AttachPoint = BestHit.ImpactPoint + SurfaceNormal * 30.f;
-		FVector TargetTop = AttachPoint + FVector(0, 0, 120.f);
+		FVector AttachPoint = BestHit.ImpactPoint + SurfaceNormal * AttachOffset;
+		FVector TargetTop = AttachPoint + FVector(0, 0, ClimbHeightOffset);
 		float EyeHeight = OwnerCharacter->GetActorLocation().Z + OwnerCharacter->BaseEyeHeight;
 
-		if (TargetTop.Z > EyeHeight + 100.f)
+		if (TargetTop.Z > EyeHeight + ClimbHeightLimit)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Too High - Cannot climb"));
 			return;
@@ -105,5 +108,4 @@ void UParkourComponent::BeginClimb(const FVector& SurfaceNormal, const FVector& 
 	FRotator LookAtRotation = UKismetMathLibrary::MakeRotFromX(-SurfaceNormal);
 	OwnerCharacter->SetActorRotation(LookAtRotation);
 
-	// 여기에 나중에 애니메이션 재생도 가능!
 }

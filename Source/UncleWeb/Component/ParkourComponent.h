@@ -13,6 +13,9 @@ class UNCLEWEB_API UParkourComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:
+	// --------------------
+	// Functions
+	// --------------------
 	UParkourComponent();
 
 	void Initialize(ATUCharacterPlayer* InOwner);
@@ -22,6 +25,11 @@ public:
 	EParkourState GetParkourState() const { return ParkourState; }
 
 private:
+	void BeginClimb(const FVector& SurfaceNormal, const FVector& HitPoint);
+
+	// --------------------
+	// Variables
+	// --------------------
 	UPROPERTY()
 	ATUCharacterPlayer* OwnerCharacter;
 
@@ -31,13 +39,23 @@ private:
 	float ClimbInterpAlpha = 0.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|Parkour")
-	float ParkourMaxDistance = 150.0f;
+	FVector BoxTraceHalfSize = FVector(30.f, 50.f, 40.f);
 
 	UPROPERTY(EditAnywhere, Category = "Config|Parkour")
-	float ParkourMaxHeight = 150.0f;
+	float AttachOffset = 30.f;
+
+	UPROPERTY(EditAnywhere, Category = "Config|Parkour")
+	float ClimbHeightOffset = 120.f;
+
+	UPROPERTY(EditAnywhere, Category = "Config|Parkour")
+	float ClimbHeightLimit = 100.f;
+
+	UPROPERTY(EditAnywhere, Category = "Config|Parkour")
+	float ParkourMaxDistance = 150.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|Parkour")
 	float ClimbSpeed = 1.0f;
 
-	void BeginClimb(const FVector& SurfaceNormal, const FVector& HitPoint);
+	UPROPERTY(EditAnywhere, Category = "Config|Parkour")
+	bool bDrawDebugBox = true;
 };
