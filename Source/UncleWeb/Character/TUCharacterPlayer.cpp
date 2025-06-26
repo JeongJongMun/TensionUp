@@ -11,6 +11,7 @@
 #include "UncleWeb/Component/CableActionComponent.h"
 #include "UncleWeb/Component/SteamComponent.h"
 #include "UncleWeb/Component/TUDynamicCamera.h"
+#include "UncleWeb/Component/ParkourComponent.h"
 #include "DrawDebugHelpers.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "UncleWeb/UI/UIManager.h"
@@ -55,6 +56,8 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 	CableActionComponent->TargetCable = CableComponent;
 
 	SteamComponent = CreateDefaultSubobject<USteamComponent>(TEXT("SteamComponent"));
+
+	ParkourComponent = CreateDefaultSubobject<UParkourComponent>(TEXT("ParkourComponent"));
 
 	// Input
 	static ConstructorHelpers::FObjectFinder<UInputMappingContext> InputMappingContextRef(TEXT("/Script/EnhancedInput.InputMappingContext'/Game/Input/IMC_Default.IMC_Default'"));
@@ -163,6 +166,8 @@ void ATUCharacterPlayer::BeginPlay()
 {
 	Super::BeginPlay();
 
+	ParkourComponent->Initialize(this);
+
 	APlayerController* PC = CastChecked<APlayerController>(GetController());
 	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
 	{
@@ -204,18 +209,8 @@ void ATUCharacterPlayer::Tick(float DeltaTime)
 		}
 	}
 
-	if (ParkourState == EParkourState::Climbing)
-	{
-		ClimbInterpAlpha += DeltaTime * ClimbSpeed;
-		FVector NewLocation = FMath::Lerp(ParkourStartLocation, ParkourTargetLocation, ClimbInterpAlpha);
-		SetActorLocation(NewLocation);
+	ParkourComponent->TickParkour(DeltaTime);
 
-		if (ClimbInterpAlpha >= 1.0f)
-		{
-			ParkourState = EParkourState::ClimbFinished;
-			GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
-		}
-	}
 }
 
 void ATUCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -282,19 +277,6 @@ void ATUCharacterPlayer::Dash()
 		SteamComponent->ConsumeSteam(DashSteamCost);
 	}
 }
-
-void ATUCharacterPlayer::HandleJumpOrParkour()
-{
-	if (GetCharacterMovement()->IsFalling())
-	{
-		TryParkour();
-	}
-	else
-	{
-		Jump();
-	}
-}
-
 
 void ATUCharacterPlayer::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 	FVector NormalImpulse, const FHitResult& Hit)
@@ -387,6 +369,20 @@ void ATUCharacterPlayer::HandleJumpReleased()
 	StopJumping();
 }
 
+void ATUCharacterPlayer::HandleJumpOrParkour()
+{
+	if (GetCharacterMovement()->IsFalling())
+	{
+		ParkourComponent->TryParkour();
+	}
+	else
+	{
+		Jump();
+	}
+}
+
+
+
 void ATUCharacterPlayer::HandleStartSteamBooster()
 {
 	if (!CableActionComponent->IsCableAttaching() || !SteamComponent->HasEnoughSteam(SteamBoosterCost))
@@ -420,82 +416,3 @@ void ATUCharacterPlayer::RotateToCameraDirection()
 		SetActorRotation(TargetRotation);
 	}
 }
-void ATUCharacterPlayer::TryParkour()
-{
-	if (!GetCharacterMovement()->IsFalling()) return;
-
-	FVector TraceStart = GetActorLocation() + FVector(0, 0, 50.f);
-	FVector BoxHalfSize = FVector(30.f, 50.f, 40.f);
-	FCollisionQueryParams Params;
-	Params.AddIgnoredActor(this);
-
-	TArray<FVector> Directions = {
-		GetActorForwardVector(),
-		GetActorForwardVector().RotateAngleAxis(30.f, FVector::UpVector),
-		GetActorForwardVector().RotateAngleAxis(-30.f, FVector::UpVector)
-	};
-
-	FHitResult BestHit;
-	bool bAnyHit = false;
-	float ClosestDistance = TNumericLimits<float>::Max();
-
-	for (const FVector& Dir : Directions)
-	{
-		FVector TraceEnd = TraceStart + Dir * ParkourMaxDistance;
-		FRotator Orientation = Dir.Rotation();
-		FHitResult Hit;
-
-		bool bHit = GetWorld()->SweepSingleByChannel(
-			Hit,
-			TraceStart,
-			TraceEnd,
-			FQuat(Orientation),
-			ECC_Visibility,
-			FCollisionShape::MakeBox(BoxHalfSize),
-			Params
-		);
-
-		DrawDebugBox(GetWorld(), TraceEnd, BoxHalfSize, FQuat(Orientation), bHit ? FColor::Green : FColor::Red, false, 1.f);
-
-		if (bHit)
-		{
-			float Distance = FVector::Dist(GetActorLocation(), Hit.ImpactPoint);
-			if (Distance < ClosestDistance)
-			{
-				ClosestDistance = Distance;
-				BestHit = Hit;
-				bAnyHit = true;
-			}
-		}
-	}
-
-	if (bAnyHit)
-	{
-		const FVector SurfaceNormal = BestHit.ImpactNormal;
-		FVector AttachPoint = BestHit.ImpactPoint + SurfaceNormal * 30.f;
-		FVector TargetTop = AttachPoint + FVector(0, 0, 120.f);
-		float EyeHeight = GetActorLocation().Z + BaseEyeHeight;
-
-		if (TargetTop.Z > EyeHeight + 100.f)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Too High - Cannot climb"));
-			return;
-		}
-
-		ParkourStartLocation = GetActorLocation();
-		ParkourTargetLocation = TargetTop;
-		ClimbInterpAlpha = 0.f;
-		ParkourState = EParkourState::Climbing;
-
-		GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
-		FRotator LookAtRotation = UKismetMathLibrary::MakeRotFromX(-SurfaceNormal);
-		SetActorRotation(LookAtRotation);
-		UE_LOG(LogTemp, Log, TEXT("Start Climbing Parkour"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("No climbable surface found"));
-	}
-	bIsTryingParkour = false;
-}
-
