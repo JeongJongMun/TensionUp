@@ -43,8 +43,8 @@ void UTUDynamicCamera::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 	TargetSpringArm->TargetArmLength = NewLength;
 	
 	static int32 Counter = 0;
-	if (++Counter % 20 == 0)
-		UE_LOG(LogTemp, Log, TEXT("[%s] Current Speed: %f / Current Spring Arm Length: %f"), CURRENT_CONTEXT, CurrentSpeed, NewLength);
+	//if (++Counter % 20 == 0)
+		//UE_LOG(LogTemp, Log, TEXT("[%s] Current Speed: %f / Current Spring Arm Length: %f"), CURRENT_CONTEXT, CurrentSpeed, NewLength);
 }
 
 float UTUDynamicCamera::CalculateTargetArmLength(const float CurrentSpeed) const

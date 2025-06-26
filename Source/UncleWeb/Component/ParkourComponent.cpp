@@ -2,6 +2,7 @@
 #include "UncleWeb/Character/TUCharacterPlayer.h"
 #include "DrawDebugHelpers.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 UParkourComponent::UParkourComponent()
@@ -78,34 +79,108 @@ void UParkourComponent::TryParkour()
 	if (bAnyHit)
 	{
 		const FVector SurfaceNormal = BestHit.ImpactNormal;
-		FVector AttachPoint = BestHit.ImpactPoint + SurfaceNormal * AttachOffset;
-		FVector TargetTop = AttachPoint + FVector(0, 0, ClimbHeightOffset);
-		float EyeHeight = OwnerCharacter->GetActorLocation().Z + OwnerCharacter->BaseEyeHeight;
+		const FVector ImpactPoint = BestHit.ImpactPoint;
 
-		if (TargetTop.Z > EyeHeight + ClimbHeightLimit)
+		if (!IsSurfaceClearAboveForClimb(ImpactPoint, Params))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Too High - Cannot climb"));
+			UE_LOG(LogTemp, Warning, TEXT("Surface blocked above - Cannot climb"));
 			return;
 		}
 
-		BeginClimb(SurfaceNormal, BestHit.ImpactPoint);
+		BeginParkour(SurfaceNormal, ImpactPoint);
 	}
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("No climbable surface found"));
 	}
+	// for debug purposes, draw the best hit point and the target climb point
+	if (bDrawDebugBox)
+	{
+		FVector EyeReference = OwnerCharacter->GetActorLocation() + FVector(0, 0, OwnerCharacter->BaseEyeHeight);
+		FVector ClimbLimitZ = EyeReference + FVector(0, 0, ClimbHeightLimit);
+
+		FVector AttachPoint = BestHit.ImpactPoint + BestHit.ImpactNormal * AttachOffset;
+		FVector TargetTop = AttachPoint + FVector(0, 0, ClimbHeightOffset);
+
+		DrawDebugSphere(GetWorld(), TargetTop, 10.f, 12, FColor::Yellow, false, 1.f);
+		DrawDebugSphere(GetWorld(), ClimbLimitZ, 10.f, 12, FColor::Magenta, false, 1.f);
+	}
 }
 
-void UParkourComponent::BeginClimb(const FVector& SurfaceNormal, const FVector& HitPoint)
+bool UParkourComponent::IsSurfaceClearAboveForClimb(const FVector& ImpactPoint, const FCollisionQueryParams& Params) const
+{
+	if (!OwnerCharacter) return false;
+
+	FVector EyeLocation = OwnerCharacter->GetActorLocation() + FVector(0, 0, OwnerCharacter->BaseEyeHeight);
+
+	FVector ClimbTargetLocation = ImpactPoint + FVector(0, 0, ClimbHeightOffset);
+
+	if (ClimbTargetLocation.Z <= EyeLocation.Z)
+	{
+		return false;
+	}
+
+	if (ClimbTargetLocation.Z > EyeLocation.Z + ClimbHeightLimit)
+	{
+		return false;
+	}
+
+	FVector CheckStart = ClimbTargetLocation;
+	FVector CheckEnd = CheckStart + FVector(0, 0, OwnerCharacter->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() + 20.f); // 캐릭터 높이 + 여유공간
+
+	FHitResult Hit;
+	bool bBlocked = GetWorld()->LineTraceSingleByChannel(Hit, CheckStart, CheckEnd, ECC_Visibility, Params);
+
+	FVector ForwardCheckStart = ClimbTargetLocation + OwnerCharacter->GetActorForwardVector() * 30.f; // 벽에서 약간 앞쪽
+	FVector ForwardCheckEnd = ForwardCheckStart + FVector(0, 0, OwnerCharacter->GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
+
+	FHitResult ForwardHit;
+	bool bForwardBlocked = GetWorld()->LineTraceSingleByChannel(ForwardHit, ForwardCheckStart, ForwardCheckEnd, ECC_Visibility, Params);
+	
+	//for debug purposes, draw the check lines
+	/*
+	if (bDrawDebugBox)
+	{
+		DrawDebugLine(GetWorld(), CheckStart, CheckEnd, bBlocked ? FColor::Red : FColor::Green, false, 2.f, 0, 2.f);
+		if (bBlocked)
+		{
+			DrawDebugPoint(GetWorld(), Hit.ImpactPoint, 12.f, FColor::Red, false, 2.f);
+		}
+
+		DrawDebugLine(GetWorld(), ForwardCheckStart, ForwardCheckEnd, bForwardBlocked ? FColor::Orange : FColor::Blue, false, 2.f, 0, 2.f);
+		if (bForwardBlocked)
+		{
+			DrawDebugPoint(GetWorld(), ForwardHit.ImpactPoint, 10.f, FColor::Orange, false, 2.f);
+		}
+	}*/
+
+	return !bBlocked && !bForwardBlocked;
+}
+
+
+void UParkourComponent::BeginParkour(const FVector& SurfaceNormal, const FVector& HitPoint)
 {
 	ParkourStartLocation = OwnerCharacter->GetActorLocation();
-	ParkourTargetLocation = HitPoint + FVector(0, 0, 120.f);
+	ParkourTargetLocation = HitPoint + FVector(0, 0, ClimbHeightOffset);
 	ClimbInterpAlpha = 0.0f;
 	ParkourState = EParkourState::Climbing;
 
 	OwnerCharacter->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
 
-	FRotator LookAtRotation = UKismetMathLibrary::MakeRotFromX(-SurfaceNormal);
-	OwnerCharacter->SetActorRotation(LookAtRotation);
+	FRotator ForwardRotation = OwnerCharacter->GetActorForwardVector().Rotation();
+	OwnerCharacter->SetActorRotation(ForwardRotation);
 
+	if (ClimbUpMontage && OwnerCharacter->GetMesh())
+	{
+		float MontageLength = ClimbUpMontage->GetPlayLength();
+		if (MontageLength > 0.f)
+		{
+			ClimbSpeed = 1.f / MontageLength;
+		}
+
+		if (UAnimInstance* AnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance())
+		{
+			AnimInstance->Montage_Play(ClimbUpMontage);
+		}
+	}
 }

@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "ParkourTypes.h"
+#include "Animation/AnimMontage.h"
 #include "ParkourComponent.generated.h"
 
 class ATUCharacterPlayer;
@@ -25,7 +26,10 @@ public:
 	EParkourState GetParkourState() const { return ParkourState; }
 
 private:
-	void BeginClimb(const FVector& SurfaceNormal, const FVector& HitPoint);
+	void BeginParkour(const FVector& SurfaceNormal, const FVector& HitPoint);
+	bool IsSurfaceClearAboveForClimb(const FVector& ImpactPoint, const FCollisionQueryParams& Params) const;
+
+
 
 	// --------------------
 	// Variables
@@ -39,10 +43,10 @@ private:
 	float ClimbInterpAlpha = 0.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|Parkour")
-	FVector BoxTraceHalfSize = FVector(30.f, 50.f, 40.f);
+	FVector BoxTraceHalfSize = FVector(30.f, 50.f, 50.f);
 
 	UPROPERTY(EditAnywhere, Category = "Config|Parkour")
-	float AttachOffset = 30.f;
+	float AttachOffset = 20.f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|Parkour")
 	float ClimbHeightOffset = 120.f;
@@ -58,4 +62,7 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Config|Parkour")
 	bool bDrawDebugBox = true;
+
+	UPROPERTY(EditAnywhere, Category = "Config|Parkour")
+	UAnimMontage* ClimbUpMontage;
 };
