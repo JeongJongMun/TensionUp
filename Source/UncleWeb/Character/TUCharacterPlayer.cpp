@@ -349,7 +349,7 @@ void ATUCharacterPlayer::OnCableAttached()
 
 void ATUCharacterPlayer::OnCableDetached()
 {
-	GetCharacterMovement()->AirControl = JumpAirControl;
+	GetCharacterMovement()->AirControl = AirControl;
 	HandleStopSteamBooster();
 }
 

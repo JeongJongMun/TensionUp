@@ -21,8 +21,8 @@ ATUCharacterBase::ATUCharacterBase()
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f);
 	GetCharacterMovement()->JumpZVelocity = ZumpVelocity;
-	GetCharacterMovement()->AirControl = JumpAirControl;
-	GetCharacterMovement()->FallingLateralFriction = JumpFallingLateralFriction;
+	GetCharacterMovement()->AirControl = AirControl;
+	GetCharacterMovement()->FallingLateralFriction = FallingLateralFriction;
 	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed;
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;

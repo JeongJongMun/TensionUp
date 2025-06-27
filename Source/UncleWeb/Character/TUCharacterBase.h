@@ -31,8 +31,8 @@ protected:
 	float ZumpVelocity = 500.0f;
 	
 	UPROPERTY(EditAnywhere, Category = "Config|Player")
-	float JumpAirControl = 0.35f;
+	float AirControl = 0.35f;
 	
 	UPROPERTY(EditAnywhere, Category = "Config|Player")
-	float JumpFallingLateralFriction = 0.0f;
+	float FallingLateralFriction = 0.0f;
 };
