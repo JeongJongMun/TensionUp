@@ -169,6 +169,8 @@ void UCableActionComponent::OnCableAttaching(const float DeltaTime)
 		const FVector CorrectPosition = CableAttachPoint - (CableDirection * CurrentCableLength);
 		const FVector NewPosition = FMath::VInterpTo(CharacterLocation, CorrectPosition, DeltaTime, CableInterpSpeed);
 		Owner->SetActorLocation(NewPosition);
+
+		SetOwnerRotationToCable(CableDirection, DeltaTime);
 		
 		// Remove Radial Velocity, Keep Tangential Velocity
 		const FVector UpdatedDirection = (CableAttachPoint - CorrectPosition).GetSafeNormal();
@@ -194,6 +196,24 @@ void UCableActionComponent::OnCableAttaching(const float DeltaTime)
 	}
 
 	OnCableAttachingAction.Broadcast();
+}
+
+void UCableActionComponent::SetOwnerRotationToCable(const FVector& CableDirection, float DeltaTime)
+{
+	if (!Owner || !Owner->GetMesh()) return;
+	
+	const FRotator CurrentRotation = Owner->GetActorRotation();
+
+	const FVector TargetUp = CableDirection.GetSafeNormal();
+	const FVector Forward = Owner->GetActorForwardVector();
+
+	const FMatrix RotMatrix = FRotationMatrix::MakeFromZX(TargetUp, Forward);
+	const FRotator TargetRotator = RotMatrix.Rotator();
+
+	const FRotator NewRotator = FMath::RInterpTo(CurrentRotation, TargetRotator, DeltaTime, CableInterpSpeed);
+	const FRotator FinalRotator(NewRotator.Pitch, CurrentRotation.Yaw, NewRotator.Roll);
+
+	Owner->SetActorRotation(FinalRotator);
 }
 
 void UCableActionComponent::OnCableLengthAdjust(const float DeltaTime)

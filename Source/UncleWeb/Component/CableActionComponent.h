@@ -46,6 +46,7 @@ private:
 	void OnDrivingForce();
 	void SetCable(const FVector& AttachLocation, AActor* HitActor);
 	void ResetCable();
+	void SetOwnerRotationToCable(const FVector& CableDirection, float DeltaTime);
 
 // --------------------
 // Variables
