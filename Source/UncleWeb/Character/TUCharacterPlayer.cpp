@@ -125,10 +125,6 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 	{
 		MontageSwing = SwingAnimMontageRef.Object;
 	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("[%s] Failed to load MontageSwing animation"), *GetName());
-	}
 }
 
 bool ATUCharacterPlayer::IsCableAttached() const
