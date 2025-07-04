@@ -29,12 +29,14 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	void TryAttachCable();
 	void TryDetachCable();
-	void ShortenCable();
-	void ExtendCable();
 	bool IsCanAttachCable();
 	bool IsCableAttaching() const { return bIsCableAttached; }
 	void SetIsSteamBoosterActive(const bool bActive) { bIsSteamBoosterActive = bActive; }
 	bool IsSteamBoosterActive() const { return bIsSteamBoosterActive; }
+	
+	// Deprecated : Cable Length Adjust Func
+	void ShortenCable();
+	void ExtendCable();
 	
 protected:
 	virtual void BeginPlay() override;
@@ -42,11 +44,14 @@ protected:
 private:
 	bool IsCanAttachCable(FHitResult &HitResult);
 	void OnCableAttaching(float DeltaTime);
-	void OnCableLengthAdjust(float DeltaTime);
 	void OnDrivingForce();
-	void SetCable(const FVector& AttachLocation, AActor* HitActor);
+	void SetCable(const FVector& HitLocation, AActor* HitActor);
 	void ResetCable();
 	void SetOwnerRotationToCable(const FVector& CableDirection, float DeltaTime);
+	void OnLaunchCable(const float DeltaTime);
+
+	// Deprecated : Cable Length Adjust Func
+	void OnCableLengthAdjust(float DeltaTime);
 
 // --------------------
 // Variables
@@ -83,11 +88,27 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Config|Cable")
 	float SteamBoosterForce = 1000.0f;
 	
+	UPROPERTY(EditAnywhere, Category = "Config|Cable")
+	float CableLaunchSpeed = 2000.0f;
+
+	UPROPERTY()
 	TObjectPtr<APlayerController> CachedPC;
+	
+	UPROPERTY()
 	TObjectPtr<class ATUCharacterPlayer> Owner;
+	
+	UPROPERTY()
+	TObjectPtr<AActor> AttachedActor;
+	
 	bool bIsCableAttached = false;
 	bool bIsSteamBoosterActive = false;
-	float CurrentCableLength = 0.0f;
+	bool bIsCableLaunching = false;
+	
 	float TargetCableLength = 0.0f;
-	FVector CableAttachPoint = FVector::ZeroVector;
+	float LaunchProgress = 0.0f;
+	
+	FVector AttachedLocation = FVector::ZeroVector;
+
+	// Deprecated : Cable Length Adjust Func
+	float CurrentCableLength = 0.0f;
 };
