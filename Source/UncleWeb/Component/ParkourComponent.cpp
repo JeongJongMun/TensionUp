@@ -15,9 +15,10 @@ void UParkourComponent::Initialize(ATUCharacterPlayer* InOwner)
 	OwnerCharacter = InOwner;
 }
 
-/*
+
 void UParkourComponent::TickParkour(float DeltaTime)
 {
+	/*
 	if (!OwnerCharacter || ParkourState != EParkourState::Climbing) return;
 
 	ClimbInterpAlpha += DeltaTime * ClimbSpeed;
@@ -29,8 +30,9 @@ void UParkourComponent::TickParkour(float DeltaTime)
 		ParkourState = EParkourState::ClimbFinished;
 		OwnerCharacter->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 	}
+	*/
 }
-*/
+
 
 void UParkourComponent::TryParkour()
 {
@@ -138,7 +140,7 @@ bool UParkourComponent::IsSurfaceClearAboveForClimb(const FVector& ImpactPoint, 
 
 	FHitResult ForwardHit;
 	bool bForwardBlocked = GetWorld()->LineTraceSingleByChannel(ForwardHit, ForwardCheckStart, ForwardCheckEnd, ECC_Visibility, Params);
-	
+
 	//for debug purposes, draw the check lines
 	/*
 	if (bDrawDebugBox)
