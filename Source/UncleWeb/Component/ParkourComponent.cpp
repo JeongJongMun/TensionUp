@@ -17,17 +17,17 @@ void UParkourComponent::Initialize(ATUCharacterPlayer* InOwner)
 
 void UParkourComponent::TickParkour(float DeltaTime)
 {
-	if (!OwnerCharacter || ParkourState != EParkourState::Climbing) return;
-
-	ClimbInterpAlpha += DeltaTime * ClimbSpeed;
-	FVector NewLocation = FMath::Lerp(ParkourStartLocation, ParkourTargetLocation, ClimbInterpAlpha);
-	OwnerCharacter->SetActorLocation(NewLocation);
-
-	if (ClimbInterpAlpha >= 1.0f)
-	{
-		ParkourState = EParkourState::ClimbFinished;
-		OwnerCharacter->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
-	}
+	// if (!OwnerCharacter || ParkourState != EParkourState::Climbing) return;
+	//
+	// ClimbInterpAlpha += DeltaTime * ClimbSpeed;
+	// FVector NewLocation = FMath::Lerp(ParkourStartLocation, ParkourTargetLocation, ClimbInterpAlpha);
+	// //OwnerCharacter->SetActorLocation(NewLocation);
+	//
+	// if (ClimbInterpAlpha >= 1.0f)
+	// {
+	// 	ParkourState = EParkourState::ClimbFinished;
+	// 	OwnerCharacter->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+	// }
 }
 
 void UParkourComponent::TryParkour()
@@ -126,12 +126,12 @@ bool UParkourComponent::IsSurfaceClearAboveForClimb(const FVector& ImpactPoint, 
 	}
 
 	FVector CheckStart = ClimbTargetLocation;
-	FVector CheckEnd = CheckStart + FVector(0, 0, OwnerCharacter->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() + 20.f); // 캐릭터 높이 + 여유공간
+	FVector CheckEnd = CheckStart + FVector(0, 0, OwnerCharacter->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() + 20.f);
 
 	FHitResult Hit;
 	bool bBlocked = GetWorld()->LineTraceSingleByChannel(Hit, CheckStart, CheckEnd, ECC_Visibility, Params);
 
-	FVector ForwardCheckStart = ClimbTargetLocation + OwnerCharacter->GetActorForwardVector() * 30.f; // 벽에서 약간 앞쪽
+	FVector ForwardCheckStart = ClimbTargetLocation + OwnerCharacter->GetActorForwardVector() * 30.f;
 	FVector ForwardCheckEnd = ForwardCheckStart + FVector(0, 0, OwnerCharacter->GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
 
 	FHitResult ForwardHit;
