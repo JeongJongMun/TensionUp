@@ -176,8 +176,8 @@ void ATUCharacterPlayer::BeginPlay()
 	UIManager->InitializeUI(PC);
 
 	SteamComponent->OnSteamChanged.AddDynamic(this, &ATUCharacterPlayer::HandleUpdateSteamUI);
-	CableActionComponent->OnCableAttachedAction.AddDynamic(this, &ATUCharacterPlayer::OnCableAttached);
-	CableActionComponent->OnCableDetachedAction.AddDynamic(this, &ATUCharacterPlayer::OnCableDetached);
+	CableActionComponent->OnBeginLaunchAction.AddDynamic(this, &ATUCharacterPlayer::OnBeginLaunch);
+	CableActionComponent->OnBeginRetractAction.AddDynamic(this, &ATUCharacterPlayer::OnBeginRetract);
 
 	// repulsive force
 	GetCapsuleComponent()->OnComponentHit.AddDynamic(this, &ATUCharacterPlayer::OnHit);
@@ -187,7 +187,7 @@ void ATUCharacterPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (CableActionComponent->IsCanAttachCable())
+	if (CableActionComponent->IsCanLaunchCable())
 	{
 		UIManager->SetCrosshairColor(ECrosshairStateType::Active);
 	}
@@ -220,10 +220,10 @@ void ATUCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::StopJumping);
 	EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ATUCharacterPlayer::Move);
 	EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ATUCharacterPlayer::Look);
-	EnhancedInputComponent->BindAction(LeftClickAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleAttachCable);
-	EnhancedInputComponent->BindAction(LeftClickAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::HandleDetachCable);
+	EnhancedInputComponent->BindAction(LeftClickAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleLaunchCable);
+	EnhancedInputComponent->BindAction(LeftClickAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::HandleRetractCable);
 	EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::Dash);
-	// Temporary Disabled
+	// Deprecated : Cable Length Adjust Func
 	// EnhancedInputComponent->BindAction(ShortenCableAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleShortenCable);
 	// EnhancedInputComponent->BindAction(ExtendCableAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleExtendCable);
 	EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::StartRunning);
@@ -310,14 +310,14 @@ void ATUCharacterPlayer::StopRunning()
 }
 
 // ----- Handler
-void ATUCharacterPlayer::HandleAttachCable()
+void ATUCharacterPlayer::HandleLaunchCable()
 {
-	CableActionComponent->TryAttachCable();
+	CableActionComponent->TryLaunchCable();
 }
 
-void ATUCharacterPlayer::HandleDetachCable()
+void ATUCharacterPlayer::HandleRetractCable()
 {
-	CableActionComponent->TryDetachCable();
+	CableActionComponent->TryRetractCable();
 }
 
 void ATUCharacterPlayer::HandleShortenCable()
@@ -335,7 +335,7 @@ void ATUCharacterPlayer::HandleUpdateSteamUI(const float Current, const float Ma
 	UIManager->UpdateSteamUI(Current, Max);
 }
 
-void ATUCharacterPlayer::OnCableAttached()
+void ATUCharacterPlayer::OnBeginLaunch()
 {
 	FTimerHandle TimerHandle;
 	Owner->GetWorldTimerManager().SetTimer(TimerHandle, [this]()
@@ -351,7 +351,7 @@ void ATUCharacterPlayer::OnCableAttached()
 	GetCharacterMovement()->bUseControllerDesiredRotation = false;
 }
 
-void ATUCharacterPlayer::OnCableDetached()
+void ATUCharacterPlayer::OnBeginRetract()
 {
 	GetCharacterMovement()->AirControl = AirControl;
 	HandleStopSteamBooster();

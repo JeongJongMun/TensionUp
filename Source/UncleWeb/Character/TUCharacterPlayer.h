@@ -39,13 +39,13 @@ private:
 	void HandleUpdateSteamUI(float Current, float Max);
 
 	UFUNCTION()
-	void OnCableAttached();
+	void OnBeginLaunch();
 
 	UFUNCTION()
-	void OnCableDetached();
+	void OnBeginRetract();
 
-	void HandleAttachCable();
-	void HandleDetachCable();
+	void HandleLaunchCable();
+	void HandleRetractCable();
 
 	void HandleShortenCable();
 	void HandleExtendCable();

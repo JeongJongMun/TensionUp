@@ -32,16 +32,17 @@ void UCableActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if (bIsCableAttached)
+	if (CurrentCableState == ECableState::Launching || CurrentCableState == ECableState::Retracting)
 	{
-		OnCableAttaching(DeltaTime);
-		if (bIsCableLaunching)
-		{
-			OnLaunchCable(DeltaTime);
-		}
+		PlayCableVfx(DeltaTime);
+	}
+	
+	if (CurrentCableState == ECableState::Launching || CurrentCableState == ECableState::Attaching)
+	{
+		OnWhileAttach(DeltaTime);
 	}
 }
-bool UCableActionComponent::IsCanAttachCable(FHitResult &HitResult)
+bool UCableActionComponent::IsCanLaunchCable(FHitResult &HitResult)
 {
 	int32 ViewportSizeX, ViewportSizeY;
 	CachedPC->GetViewportSize(ViewportSizeX, ViewportSizeY);
@@ -61,55 +62,54 @@ bool UCableActionComponent::IsCanAttachCable(FHitResult &HitResult)
 	return false;
 }
 
-bool UCableActionComponent::IsCanAttachCable()
+bool UCableActionComponent::IsCanLaunchCable()
 {
 	FHitResult HitResult;
-	return IsCanAttachCable(HitResult);
+	return IsCanLaunchCable(HitResult);
 }
 
-void UCableActionComponent::TryAttachCable()
+void UCableActionComponent::TryLaunchCable()
 {
 	if (!Owner->GetCharacterMovement()->IsFalling())
 		return;
-	
-	TryDetachCable();
+
+	if (CurrentCableState != ECableState::Idle)
+		return;
 	
 	FHitResult HitResult;
-	if (IsCanAttachCable(HitResult))
+	if (IsCanLaunchCable(HitResult))
 	{
-		SetCable(HitResult.ImpactPoint, HitResult.GetActor());
+		LaunchCable(HitResult.ImpactPoint, HitResult.GetActor());
 		
-		OnCableAttachedAction.Broadcast();
+		OnBeginLaunchAction.Broadcast();
 	}
 }
 
-void UCableActionComponent::TryDetachCable()
+void UCableActionComponent::TryRetractCable()
 {
-	if (!bIsCableAttached)
+	if (CurrentCableState != ECableState::Launching && CurrentCableState != ECableState::Attaching)
 		return;
 	
-	OnDrivingForce();
-	ResetCable();
+	TryDrivingForce();
+	RetractCable();
 
-	OnCableDetachedAction.Broadcast();
+	OnBeginRetractAction.Broadcast();
 }
 
-void UCableActionComponent::OnDrivingForce()
+void UCableActionComponent::TryDrivingForce()
 {
-	APlayerController* PC = CastChecked<APlayerController>(Owner->GetController());
-	
-	bool bIsWPressed = PC->IsInputKeyDown(EKeys::W);
-	bool bIsAPressed = PC->IsInputKeyDown(EKeys::A);
-	bool bIsSPressed = PC->IsInputKeyDown(EKeys::S);
-	bool bIsDPressed = PC->IsInputKeyDown(EKeys::D);
-	bool bIsSpacePressed = PC->IsInputKeyDown(EKeys::SpaceBar);
+	const bool bIsWPressed = CachedPC->IsInputKeyDown(EKeys::W);
+	const bool bIsAPressed = CachedPC->IsInputKeyDown(EKeys::A);
+	const bool bIsSPressed = CachedPC->IsInputKeyDown(EKeys::S);
+	const bool bIsDPressed = CachedPC->IsInputKeyDown(EKeys::D);
+	const bool bIsSpacePressed = CachedPC->IsInputKeyDown(EKeys::SpaceBar);
 	
 	if (!bIsSpacePressed || (!bIsWPressed && !bIsAPressed && !bIsSPressed && !bIsDPressed))
 		return;
 
-	FVector CableDirection = (AttachedLocation - Owner->GetActorLocation()).GetSafeNormal();
-	FVector ForwardDir = Owner->GetActorForwardVector();
-	FVector RightDir = Owner->GetActorRightVector();
+	const FVector CableDirection = (AttachedLocation - Owner->GetActorLocation()).GetSafeNormal();
+	const FVector ForwardDir = Owner->GetActorForwardVector();
+	const FVector RightDir = Owner->GetActorRightVector();
     
 	FVector InputDirection = FVector::ZeroVector;
 	if (bIsWPressed) InputDirection += ForwardDir;
@@ -117,41 +117,41 @@ void UCableActionComponent::OnDrivingForce()
 	if (bIsSPressed) InputDirection -= ForwardDir;
 	if (bIsDPressed) InputDirection += RightDir;
 	InputDirection.Normalize();
-	
-	float InputRadialComponent = FVector::DotProduct(InputDirection, CableDirection);
+
+	const float InputRadialComponent = FVector::DotProduct(InputDirection, CableDirection);
 	FVector InputTangential = InputDirection - (CableDirection * InputRadialComponent);
 	InputTangential.Normalize();
 
-	FVector Force = InputTangential * CableDrivingForce;
+	const FVector Force = InputTangential * CableDrivingForce;
     
 	Owner->LaunchCharacter(Force, true, true);
 }
 
-void UCableActionComponent::SetCable(const FVector& HitLocation, AActor* HitActor)
+void UCableActionComponent::LaunchCable(const FVector& HitLocation, AActor* HitActor)
 {
+	if (CurrentCableState != ECableState::Idle)
+		return;
+	
 	AttachedActor = HitActor;
 	AttachedLocation = HitLocation;
 	TargetCableLength = FVector::Distance(Owner->GetActorLocation(), HitLocation);
+
+	CurrentCableState = ECableState::Launching;
+	VfxProgress = 0.0f;
 	
 	TargetCable->SetAttachEndTo(HitActor, NAME_None);
+	TargetCable->EndLocation = AttachedActor->GetTransform().InverseTransformPosition(Owner->GetActorLocation());
 	TargetCable->SetVisibility(true);
-	
-	bIsCableAttached = true;
-	bIsCableLaunching = true;
 }
 
 void UCableActionComponent::ResetCable()
 {
 	AttachedActor = nullptr;
 	
-	bIsCableAttached = false;
-	bIsCableLaunching = false;
-	
 	AttachedLocation = FVector::ZeroVector;
 	TargetCable->EndLocation = FVector::ZeroVector;
 	
 	TargetCableLength = 0.0f;
-	LaunchProgress = 0.0f;
 	
 	TargetCable->SetAttachEndToComponent(nullptr);
 	TargetCable->SetVisibility(false);
@@ -160,23 +160,65 @@ void UCableActionComponent::ResetCable()
 	// CurrentCableLength = 0.0f;
 }
 
-void UCableActionComponent::OnLaunchCable(const float DeltaTime)
+void UCableActionComponent::RetractCable()
 {
-	LaunchProgress += (CableLaunchSpeed * DeltaTime) / TargetCableLength;
-	LaunchProgress = FMath::Clamp(LaunchProgress, 0.0f, 1.0f);
+	CurrentCableState = ECableState::Retracting;
+	VfxProgress = 0.0f;
+}
 
-	const FVector CurrentEndLocation = FMath::Lerp(Owner->GetActorLocation(), AttachedLocation, LaunchProgress);
+void UCableActionComponent::PlayCableVfx(const float DeltaTime)
+{
+	if (!AttachedActor)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("CableActionComponent::PlayCableVfx - AttachedActor is null!"));
+		return;
+	}
+	
+	FVector StartPos, EndPos;
+	
+	switch (CurrentCableState)
+	{
+		case ECableState::Launching:
+			StartPos = Owner->GetActorLocation();
+			EndPos = AttachedLocation;
+			OnWhileLaunchAction.Broadcast();
+			break;
+	            
+		case ECableState::Retracting:
+			StartPos = AttachedLocation;
+			EndPos = Owner->GetActorLocation();
+			OnWhileRetractAction.Broadcast();
+			break;
+	            
+		default:
+			return;
+	}
+	
+	VfxProgress += (CableLaunchSpeed * DeltaTime) / TargetCableLength;
+	VfxProgress = FMath::Clamp(VfxProgress, 0.0f, 1.0f);
+
+	const FVector CurrentEndLocation = FMath::Lerp(StartPos, EndPos, VfxProgress);
 	TargetCable->EndLocation = AttachedActor->GetTransform().InverseTransformPosition(CurrentEndLocation);
 
-	if (LaunchProgress >= 1.0f)
+	if (VfxProgress >= 1.0f)
 	{
-		TargetCable->EndLocation = AttachedActor->GetTransform().InverseTransformPosition(AttachedLocation);
-		LaunchProgress = 1.0f;
-		bIsCableLaunching = false;
+		TargetCable->EndLocation = AttachedActor->GetTransform().InverseTransformPosition(EndPos);
+
+		if (CurrentCableState == ECableState::Launching)
+		{
+			CurrentCableState = ECableState::Attaching;
+			OnEndLaunchAction.Broadcast();
+		}
+		else if (CurrentCableState == ECableState::Retracting)
+		{
+			CurrentCableState = ECableState::Idle;
+			ResetCable();
+			OnEndRetractAction.Broadcast();
+		}
 	}
 }
 
-void UCableActionComponent::OnCableAttaching(const float DeltaTime)
+void UCableActionComponent::OnWhileAttach(const float DeltaTime)
 {
 	// Deprecated : Cable Length Adjust Func
 	// if (!FMath::IsNearlyEqual(CurrentCableLength, TargetCableLength, 1.0f))
@@ -209,19 +251,18 @@ void UCableActionComponent::OnCableAttaching(const float DeltaTime)
 		const FVector SwingAcceleration = FVector::CrossProduct(UpdatedDirection, FVector::CrossProduct(GravityInfluence, UpdatedDirection));
 		FVector NewVelocity = TangentialVelocity + (SwingAcceleration * DeltaTime);
 
-		// Steam Booster
 		if (bIsSteamBoosterActive)
 		{
 			const FVector SteamBoosterDirection = Owner->GetActorForwardVector();
 			NewVelocity += SteamBoosterDirection.GetSafeNormal() * SteamBoosterForce * DeltaTime;
 			
-			OnSteamBoosterActive.Broadcast();
+			OnWhileSteamBoosterAction.Broadcast();
 		}
 		
 		Owner->GetCharacterMovement()->Velocity = NewVelocity;
 	}
 
-	OnCableAttachingAction.Broadcast();
+	OnWhileAttachAction.Broadcast();
 }
 
 void UCableActionComponent::SetOwnerRotationToCable(const FVector& CableDirection, float DeltaTime)
@@ -249,16 +290,17 @@ void UCableActionComponent::OnCableLengthAdjust(const float DeltaTime)
 	TargetCable->CableLength = CurrentCableLength;
 }
 
+
 void UCableActionComponent::ShortenCable()
 {
-	if (!bIsCableAttached) return;
+	if (CurrentCableState != ECableState::Attaching) return;
 
 	TargetCableLength = FMath::Clamp(TargetCableLength - CableAdjustSpeed, CableMinLength, CableMaxLength);
 }
 
 void UCableActionComponent::ExtendCable()
 {
-	if (!bIsCableAttached) return;
+	if (CurrentCableState != ECableState::Attaching) return;
 
 	TargetCableLength = FMath::Clamp(TargetCableLength + CableAdjustSpeed, CableMinLength, CableMaxLength);
 }

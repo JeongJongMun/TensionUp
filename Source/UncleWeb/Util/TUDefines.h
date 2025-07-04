@@ -4,6 +4,15 @@
 #include "CoreMinimal.h"
 #define CURRENT_CONTEXT *FString(__FUNCTION__)
 
+UENUM()
+enum class ECableState : uint8
+{
+	Idle,
+	Launching,
+	Attaching,
+	Retracting,
+};
+
 enum class EDirectionType : uint8
 {
 	None,
