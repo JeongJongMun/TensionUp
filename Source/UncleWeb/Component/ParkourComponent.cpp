@@ -195,12 +195,14 @@ void UParkourComponent::BeginParkour(const FVector& SurfaceNormal, const FVector
 void UParkourComponent::AnimNotify_ParkourClimbEnd()
 {
 	if (!OwnerCharacter) return;
+	if (ParkourState != EParkourState::Climbing) return;
 
 	// if Climbing -> set the character location to the target location
 	if (ParkourState == EParkourState::Climbing)
 	{
+		ParkourState = EParkourState::ClimbFinished; // set the state to finished
 		OwnerCharacter->SetActorLocation(ParkourTargetLocation);
 		OwnerCharacter->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
-		ParkourState = EParkourState::ClimbFinished;
 	}
+
 }
