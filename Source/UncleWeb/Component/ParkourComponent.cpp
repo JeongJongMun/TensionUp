@@ -15,20 +15,24 @@ void UParkourComponent::Initialize(ATUCharacterPlayer* InOwner)
 	OwnerCharacter = InOwner;
 }
 
+
 void UParkourComponent::TickParkour(float DeltaTime)
 {
+	/*
 	if (!OwnerCharacter || ParkourState != EParkourState::Climbing) return;
 	
 	ClimbInterpAlpha += DeltaTime * ClimbSpeed;
 	FVector NewLocation = FMath::Lerp(ParkourStartLocation, ParkourTargetLocation, ClimbInterpAlpha);
-	OwnerCharacter->SetActorLocation(NewLocation);
-	
+	//OwnerCharacter->SetActorLocation(NewLocation);
+
 	if (ClimbInterpAlpha >= 1.0f)
 	{
 		ParkourState = EParkourState::ClimbFinished;
 		OwnerCharacter->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 	}
+	*/
 }
+
 
 void UParkourComponent::TryParkour()
 {
@@ -126,17 +130,17 @@ bool UParkourComponent::IsSurfaceClearAboveForClimb(const FVector& ImpactPoint, 
 	}
 
 	FVector CheckStart = ClimbTargetLocation;
-	FVector CheckEnd = CheckStart + FVector(0, 0, OwnerCharacter->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() + 20.f);
+	FVector CheckEnd = CheckStart + FVector(0, 0, OwnerCharacter->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() + 20.f); // character height + some offset
 
 	FHitResult Hit;
 	bool bBlocked = GetWorld()->LineTraceSingleByChannel(Hit, CheckStart, CheckEnd, ECC_Visibility, Params);
 
-	FVector ForwardCheckStart = ClimbTargetLocation + OwnerCharacter->GetActorForwardVector() * 30.f;
+	FVector ForwardCheckStart = ClimbTargetLocation + OwnerCharacter->GetActorForwardVector() * 30.f; // little offset forward
 	FVector ForwardCheckEnd = ForwardCheckStart + FVector(0, 0, OwnerCharacter->GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
 
 	FHitResult ForwardHit;
 	bool bForwardBlocked = GetWorld()->LineTraceSingleByChannel(ForwardHit, ForwardCheckStart, ForwardCheckEnd, ECC_Visibility, Params);
-	
+
 	//for debug purposes, draw the check lines
 	/*
 	if (bDrawDebugBox)
@@ -162,7 +166,7 @@ void UParkourComponent::BeginParkour(const FVector& SurfaceNormal, const FVector
 {
 	ParkourStartLocation = OwnerCharacter->GetActorLocation();
 	ParkourTargetLocation = HitPoint + FVector(0, 0, ClimbHeightOffset);
-	ClimbInterpAlpha = 0.0f;
+	//ClimbInterpAlpha = 0.0f;
 	ParkourState = EParkourState::Climbing;
 
 	OwnerCharacter->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
@@ -172,15 +176,33 @@ void UParkourComponent::BeginParkour(const FVector& SurfaceNormal, const FVector
 
 	if (ClimbUpMontage && OwnerCharacter->GetMesh())
 	{
+		/*
 		float MontageLength = ClimbUpMontage->GetPlayLength();
 		if (MontageLength > 0.f)
 		{
 			ClimbSpeed = 1.f / MontageLength;
 		}
+		*/
 
 		if (UAnimInstance* AnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance())
 		{
 			AnimInstance->Montage_Play(ClimbUpMontage);
 		}
+
+
 	}
+}
+void UParkourComponent::AnimNotify_ParkourClimbEnd()
+{
+	if (!OwnerCharacter) return;
+	if (ParkourState != EParkourState::Climbing) return;
+
+	// if Climbing -> set the character location to the target location
+	if (ParkourState == EParkourState::Climbing)
+	{
+		ParkourState = EParkourState::ClimbFinished; // set the state to finished
+		OwnerCharacter->SetActorLocation(ParkourTargetLocation);
+		OwnerCharacter->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+	}
+
 }

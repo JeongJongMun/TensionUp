@@ -23,7 +23,12 @@ public:
 	void TryParkour();
 	void TickParkour(float DeltaTime);
 
+	// Check if the character is currently in a parkour state
 	EParkourState GetParkourState() const { return ParkourState; }
+
+	// anim notify functions
+	UFUNCTION(BlueprintCallable)
+	void AnimNotify_ParkourClimbEnd();
 
 private:
 	void BeginParkour(const FVector& SurfaceNormal, const FVector& HitPoint);
@@ -40,7 +45,8 @@ private:
 	EParkourState ParkourState = EParkourState::None;
 	FVector ParkourStartLocation;
 	FVector ParkourTargetLocation;
-	float ClimbInterpAlpha = 0.0f;
+
+	//float ClimbInterpAlpha = 0.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|Parkour")
 	FVector BoxTraceHalfSize = FVector(30.f, 50.f, 50.f);
@@ -57,8 +63,8 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Config|Parkour")
 	float ParkourMaxDistance = 150.0f;
 
-	UPROPERTY(EditAnywhere, Category = "Config|Parkour")
-	float ClimbSpeed = 1.0f;
+	//UPROPERTY(EditAnywhere, Category = "Config|Parkour")
+	//float ClimbSpeed = 1.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|Parkour")
 	bool bDrawDebugBox = true;
