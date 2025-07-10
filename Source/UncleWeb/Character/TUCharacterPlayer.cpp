@@ -120,8 +120,7 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 		SteamBoostAction = InputActionSteamBoostRef.Object;
 	}
 
-	static ConstructorHelpers::FObjectFinder<UAnimMontage> SwingAnimMontageRef(TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_Swing1.MT_Player_Swing1'"));
-	// static ConstructorHelpers::FObjectFinder<UAnimMontage> SwingAnimMontageRef(TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_Swing.MT_Player_Swing'"));
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> SwingAnimMontageRef(TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_Swing.MT_Player_Swing'"));
 	if (SwingAnimMontageRef.Succeeded())
 	{
 		MontageSwing = SwingAnimMontageRef.Object;
