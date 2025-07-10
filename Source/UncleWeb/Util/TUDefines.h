@@ -4,6 +4,16 @@
 #include "CoreMinimal.h"
 #define CURRENT_CONTEXT *FString(__FUNCTION__)
 
+
+UENUM()
+enum class EPlayerAnimationMontageType : uint8
+{
+	None,
+	Parkour,
+	Swinging,
+	SwingEnd,
+};
+
 UENUM()
 enum class ECableState : uint8
 {

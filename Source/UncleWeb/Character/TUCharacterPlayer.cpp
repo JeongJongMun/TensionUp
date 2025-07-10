@@ -120,10 +120,19 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 		SteamBoostAction = InputActionSteamBoostRef.Object;
 	}
 
-	static ConstructorHelpers::FObjectFinder<UAnimMontage> SwingAnimMontageRef(TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_Swing.MT_Player_Swing'"));
-	if (SwingAnimMontageRef.Succeeded())
+
+	// Animations
+	TMap<EPlayerAnimationMontageType, FString> AnimMontagePaths = {
+		{ EPlayerAnimationMontageType::Swinging, TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_Swing.MT_Player_Swing'") },
+		{ EPlayerAnimationMontageType::SwingEnd, TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_SwingEnd.MT_Player_SwingEnd'") }
+	};
+
+	for (const auto& [Type, Path] : AnimMontagePaths)
 	{
-		MontageSwing = SwingAnimMontageRef.Object;
+		if (ConstructorHelpers::FObjectFinder<UAnimMontage> MontageFinder(*Path); MontageFinder.Succeeded())
+		{
+			AnimMontageMap.Add(Type, MontageFinder.Object);
+		}
 	}
 }
 
@@ -132,29 +141,32 @@ bool ATUCharacterPlayer::IsCableAttached() const
 	return CableActionComponent && CableActionComponent->IsCableAttaching();
 }
 
-void ATUCharacterPlayer::PlayAnimation(const FName SectionName)
+void ATUCharacterPlayer::PlayAnimation(const EPlayerAnimationMontageType AnimType, float InPlayRate, const FName SectionName)
 {
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (!AnimInstance || !MontageSwing)
+	if (const TObjectPtr<UAnimMontage> AnimMontage = AnimMontageMap.FindRef(AnimType))
 	{
-		UE_LOG(LogTemp, Error, TEXT("[%s] AnimInstance or AnimMontage is null"), CURRENT_CONTEXT);
-		return;
-	}
-
-	if (AnimInstance->Montage_IsPlaying(MontageSwing))
-	{
-		FName CurrentSection = AnimInstance->Montage_GetCurrentSection(MontageSwing);
-		if (CurrentSection != NAME_None && CurrentSection != SectionName)
+		if (SectionName == NAME_None)
 		{
-			AnimInstance->Montage_Stop(0.5f, MontageSwing);
-			AnimInstance->Montage_Play(MontageSwing);
-			AnimInstance->Montage_JumpToSection(SectionName, MontageSwing); 
+			TArray<FName>& SectionNames = AnimSectionMap.FindOrAdd(AnimType);
+			if (SectionNames.IsEmpty())
+			{
+				for (const auto& Section : AnimMontage->CompositeSections)
+				{
+					SectionNames.Add(Section.SectionName);
+				}
+			}
+
+			if (SectionNames.Num() > 0)
+			{
+				const FName RandomSection = SectionNames[FMath::RandRange(0, SectionNames.Num() - 1)];
+				
+				PlayAnimMontage(AnimMontage, InPlayRate, RandomSection);
+			}
 		}
-	}
-	else
-	{
-		AnimInstance->Montage_Play(MontageSwing);
-		AnimInstance->Montage_JumpToSection(SectionName, MontageSwing); 
+		else
+		{
+			PlayAnimMontage(AnimMontage, InPlayRate, SectionName);
+		}
 	}
 }
 
@@ -343,7 +355,7 @@ void ATUCharacterPlayer::OnBeginLaunch()
 		}, AirControlChangeIntervalSeconds, false);
 
 	SteamComponent->ConsumeSteam(CableSteamCost);
-	PlayAnimation(TEXT("Default"));
+	PlayAnimation(EPlayerAnimationMontageType::Swinging);
 	RotateToCameraDirection();
 
 	GetCharacterMovement()->bOrientRotationToMovement = false;
@@ -354,7 +366,7 @@ void ATUCharacterPlayer::OnBeginRetract()
 {
 	GetCharacterMovement()->AirControl = AirControl;
 	HandleStopSteamBooster();
-	StopAnimMontage();
+	PlayAnimation(EPlayerAnimationMontageType::SwingEnd);
 
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;

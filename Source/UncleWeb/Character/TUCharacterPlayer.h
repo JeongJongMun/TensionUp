@@ -5,6 +5,7 @@
 #include "InputAction.h"
 #include "InputActionValue.h"
 #include "TUCharacterBase.h"
+#include "UncleWeb/Util/TUDefines.h"
 #include "TUCharacterPlayer.generated.h"
 
 UCLASS()
@@ -18,7 +19,7 @@ class UNCLEWEB_API ATUCharacterPlayer : public ATUCharacterBase
 public:
 	ATUCharacterPlayer();
 	bool IsCableAttached() const;
-	void PlayAnimation(const FName SectionName);
+	void PlayAnimation(const EPlayerAnimationMontageType AnimType, float InPlayRate = 1.0f, const FName SectionName = NAME_None);
 
 private:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
@@ -95,7 +96,8 @@ private:
 	TObjectPtr<class UCableComponent> CableComponent;
 	
 	UPROPERTY()
-	TObjectPtr<UAnimMontage> MontageSwing;
+	TMap<EPlayerAnimationMontageType, TObjectPtr<UAnimMontage>> AnimMontageMap;
+	TMap<EPlayerAnimationMontageType, TArray<FName>> AnimSectionMap;
 	
 	UPROPERTY(EditAnywhere, Category = "Config|Dash")
 	float DashStrength = 1500.0f;
