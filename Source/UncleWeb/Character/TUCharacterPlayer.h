@@ -82,13 +82,13 @@ protected:
 	TObjectPtr<class UCameraComponent> FollowCamera;
 
 	UPROPERTY()
-	TObjectPtr<UParticleSystemComponent> FootSteamEffectR;
-
+	TObjectPtr<class UNiagaraComponent> NiagaraCompSteamVfxR;
+	
 	UPROPERTY()
-	TObjectPtr<UParticleSystemComponent> FootSteamEffectL;
-
+	TObjectPtr<class UNiagaraComponent> NiagaraCompSteamVfxL;
+	
 	UPROPERTY()
-	TObjectPtr<UParticleSystem> SteamParticleSystem;
+	TObjectPtr<class UNiagaraSystem> NiagaraSystemSteamVfx;
 
 
 private:

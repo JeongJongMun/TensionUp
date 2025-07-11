@@ -16,25 +16,28 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "UncleWeb/UI/UIManager.h"
 #include "UncleWeb/Util/TUDefines.h"
-#include "Kismet/KismetMathLibrary.h"
+#include "NiagaraSystem.h"
+#include "NiagaraComponent.h"
 
 ATUCharacterPlayer::ATUCharacterPlayer()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	FootSteamEffectL = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("FootSteamEffect_L"));
-	FootSteamEffectR = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("FootSteamEffect_R"));
-	FootSteamEffectL->SetupAttachment(GetMesh(), SteamEffectSocketNameL);
-	FootSteamEffectR->SetupAttachment(GetMesh(), SteamEffectSocketNameR);
-	FootSteamEffectL->SetAutoActivate(false);
-	FootSteamEffectR->SetAutoActivate(false);
-
-	static ConstructorHelpers::FObjectFinder<UParticleSystem> SteamParticleObj(TEXT("/Script/Engine.ParticleSystem'/Game/VFX/P_Flamethrower.P_Flamethrower'"));
-	if (SteamParticleObj.Succeeded())
+	NiagaraCompSteamVfxL = CreateDefaultSubobject<UNiagaraComponent>(TEXT("NiagaraComp_L"));
+	NiagaraCompSteamVfxR = CreateDefaultSubobject<UNiagaraComponent>(TEXT("NiagaraComp_R"));
+	NiagaraCompSteamVfxL->SetupAttachment(GetMesh(), SteamEffectSocketNameL);
+	NiagaraCompSteamVfxR->SetupAttachment(GetMesh(), SteamEffectSocketNameR);
+	NiagaraCompSteamVfxL->SetAutoActivate(false);
+	NiagaraCompSteamVfxR->SetAutoActivate(false);
+	NiagaraCompSteamVfxL->SetWorldScale3D(FVector(2.0f, 2.0f, 2.0f));
+	NiagaraCompSteamVfxR->SetWorldScale3D(FVector(2.0f, 2.0f, 2.0f));
+	
+	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> NiagaraSystemObj(TEXT("/Script/Niagara.NiagaraSystem'/Game/VFX/CartoonSmoke/Effects/NS_ToonSmoke4.NS_ToonSmoke4'"));
+	if (NiagaraSystemObj.Succeeded())
 	{
-		SteamParticleSystem = SteamParticleObj.Object;
-		FootSteamEffectL->SetTemplate(SteamParticleSystem);
-		FootSteamEffectR->SetTemplate(SteamParticleSystem);
+		NiagaraSystemSteamVfx = NiagaraSystemObj.Object;
+		NiagaraCompSteamVfxL->SetAsset(NiagaraSystemSteamVfx);
+		NiagaraCompSteamVfxR->SetAsset(NiagaraSystemSteamVfx);
 	}
 
 	// Camera
@@ -404,20 +407,22 @@ void ATUCharacterPlayer::HandleStartSteamBooster()
 		return;
 
 	CableActionComponent->SetIsSteamBoosterActive(true);
-	if (FootSteamEffectL && FootSteamEffectR)
+
+	if (NiagaraCompSteamVfxL && NiagaraCompSteamVfxR)
 	{
-		FootSteamEffectL->Activate();
-		FootSteamEffectR->Activate();
+		NiagaraCompSteamVfxL->Activate();
+		NiagaraCompSteamVfxR->Activate();
 	}
 }
 
 void ATUCharacterPlayer::HandleStopSteamBooster()
 {
 	CableActionComponent->SetIsSteamBoosterActive(false);	
-	if (FootSteamEffectL && FootSteamEffectR)
+
+	if (NiagaraCompSteamVfxL && NiagaraCompSteamVfxR)
 	{
-		FootSteamEffectL->Deactivate();
-		FootSteamEffectR->Deactivate();
+		NiagaraCompSteamVfxL->Deactivate();
+		NiagaraCompSteamVfxR->Deactivate();
 	}
 }
 
