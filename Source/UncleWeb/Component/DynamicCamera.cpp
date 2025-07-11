@@ -1,32 +1,32 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "TUDynamicCamera.h"
+#include "DynamicCamera.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/PawnMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "UncleWeb/Character/TUCharacterPlayer.h"
 #include "UncleWeb/Util/TUDefines.h"
 
-UTUDynamicCamera::UTUDynamicCamera()
+UDynamicCamera::UDynamicCamera()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
 
-void UTUDynamicCamera::BeginPlay()
+void UDynamicCamera::BeginPlay()
 {
 	Super::BeginPlay();
 
 	Owner = CastChecked<ATUCharacterPlayer>(GetOwner());
 }
 
-void UTUDynamicCamera::InitializeCamera()
+void UDynamicCamera::InitializeCamera()
 {
 	TargetSpringArm->bUsePawnControlRotation = true;
 	TargetSpringArm->SetRelativeLocation(CameraOffset);
 }
 
-void UTUDynamicCamera::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UDynamicCamera::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
@@ -47,7 +47,7 @@ void UTUDynamicCamera::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 		//UE_LOG(LogTemp, Log, TEXT("[%s] Current Speed: %f / Current Spring Arm Length: %f"), CURRENT_CONTEXT, CurrentSpeed, NewLength);
 }
 
-float UTUDynamicCamera::CalculateTargetArmLength(const float CurrentSpeed) const
+float UDynamicCamera::CalculateTargetArmLength(const float CurrentSpeed) const
 {
 	if (CurrentSpeed <= SpeedThreshold_A)
 		return MinSpringArmLength;

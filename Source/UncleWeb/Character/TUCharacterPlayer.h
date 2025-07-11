@@ -13,9 +13,9 @@ class UNCLEWEB_API ATUCharacterPlayer : public ATUCharacterBase
 {
 	GENERATED_BODY()
 
-	// --------------------
-	// Functions
-	// --------------------
+// --------------------
+// Functions
+// --------------------
 public:
 	ATUCharacterPlayer();
 	bool IsCableAttached() const;
@@ -59,12 +59,12 @@ private:
 
 	void RotateToCameraDirection();
 
-	// --------------------
-	// Variables
-	// --------------------
+// --------------------
+// Variables
+// --------------------
 protected:
 	UPROPERTY(VisibleAnywhere, Category = "Component")
-	TObjectPtr<class UTUDynamicCamera> DynamicCameraComponent;
+	TObjectPtr<class UDynamicCamera> DynamicCameraComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = "Component")
 	TObjectPtr<class UCableActionComponent> CableActionComponent;
@@ -100,28 +100,28 @@ private:
 	TMap<EPlayerAnimationMontageType, TArray<FName>> AnimSectionMap;
 	
 	UPROPERTY(EditAnywhere, Category = "Config|Dash")
-	float DashStrength = 1500.0f;
+	float DashStrength = 1400.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|Steam")
-	float DashSteamCost = 20.0f;
+	float DashSteamCost = 35.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|Steam")
-	float CableSteamCost = 10.0f;
+	float CableSteamCost = 25.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|Steam")
 	float SteamBoosterCost = 5.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|Player")
-	float CableActionAirControl = 0.5f;
+	float CableActionAirControl = 0.3f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|Player")
 	float CableFallingLateralFriction = 0.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|Player")
-	float AirControlChangeIntervalSeconds = 0.5f;
+	float MovementModeTransitionDelay = 3.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|RepulsiveForce")
-	float RepulsiveForceScaleFactor = 1.0f;
+	float RepulsiveForceScaleFactor = 0.75f;
 
 
 

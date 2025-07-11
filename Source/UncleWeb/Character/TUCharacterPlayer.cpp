@@ -10,7 +10,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "UncleWeb/Component/CableActionComponent.h"
 #include "UncleWeb/Component/SteamComponent.h"
-#include "UncleWeb/Component/TUDynamicCamera.h"
+#include "UncleWeb/Component/DynamicCamera.h"
 #include "UncleWeb/Component/ParkourComponent.h"
 #include "DrawDebugHelpers.h"
 #include "Particles/ParticleSystemComponent.h"
@@ -48,7 +48,7 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
 
-	DynamicCameraComponent = CreateDefaultSubobject<UTUDynamicCamera>(TEXT("DynamicCameraComponent"));
+	DynamicCameraComponent = CreateDefaultSubobject<UDynamicCamera>(TEXT("DynamicCameraComponent"));
 	DynamicCameraComponent->TargetSpringArm = CameraBoom;
 	DynamicCameraComponent->InitializeCamera();
 
@@ -355,7 +355,8 @@ void ATUCharacterPlayer::OnBeginLaunch()
 	Owner->GetWorldTimerManager().SetTimer(TimerHandle, [this]()
 		{
 			GetCharacterMovement()->AirControl = CableActionAirControl;
-		}, AirControlChangeIntervalSeconds, false);
+			GetCharacterMovement()->FallingLateralFriction = CableFallingLateralFriction;
+		}, MovementModeTransitionDelay, false);
 
 	SteamComponent->ConsumeSteam(CableSteamCost);
 	PlayAnimation(EPlayerAnimationMontageType::Swinging);
@@ -368,6 +369,7 @@ void ATUCharacterPlayer::OnBeginLaunch()
 void ATUCharacterPlayer::OnBeginRetract()
 {
 	GetCharacterMovement()->AirControl = AirControl;
+	GetCharacterMovement()->FallingLateralFriction = FallingLateralFriction;
 	HandleStopSteamBooster();
 	PlayAnimation(EPlayerAnimationMontageType::SwingEnd);
 

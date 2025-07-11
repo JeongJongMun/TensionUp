@@ -25,6 +25,7 @@ ATUCharacterBase::ATUCharacterBase()
 	GetCharacterMovement()->AirControl = AirControl;
 	GetCharacterMovement()->FallingLateralFriction = FallingLateralFriction;
 	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed;
+	GetCharacterMovement()->GravityScale = GravityScale;
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
 

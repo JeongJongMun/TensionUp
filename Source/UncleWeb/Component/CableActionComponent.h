@@ -92,13 +92,13 @@ public:
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Config|Cable")
-	float CableMaxLength = 2000.0f;
+	float CableMaxLength = 2250.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|Cable")
 	float CableMinLength = 300.0f;
 	
 	UPROPERTY(EditAnywhere, Category = "Config|Cable")
-	float CableDrivingForce = 1000.0f;
+	float CableDrivingForce = 1125.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|Cable")
 	float CableAdjustSpeed = 200.0f;
@@ -107,7 +107,7 @@ private:
 	float CableInterpSpeed = 5.0f;
 	
 	UPROPERTY(EditAnywhere, Category = "Config|Cable")
-	float SteamBoosterForce = 1000.0f;
+	float SteamBoosterForce = 400.0f;
 	
 	UPROPERTY(EditAnywhere, Category = "Config|Cable")
 	float CableLaunchSpeed = 2500.0f;

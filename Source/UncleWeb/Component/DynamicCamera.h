@@ -3,10 +3,10 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "TUDynamicCamera.generated.h"
+#include "DynamicCamera.generated.h"
 
 UCLASS()
-class UNCLEWEB_API UTUDynamicCamera : public UActorComponent
+class UNCLEWEB_API UDynamicCamera : public UActorComponent
 {
 	GENERATED_BODY()
 	
@@ -14,7 +14,7 @@ class UNCLEWEB_API UTUDynamicCamera : public UActorComponent
 // Functions
 // --------------------
 public:	
-	UTUDynamicCamera();
+	UDynamicCamera();
 	void InitializeCamera();
 
 protected:
@@ -28,35 +28,37 @@ private:
 // Variables
 // --------------------
 public:
+	UPROPERTY()
 	TObjectPtr<class USpringArmComponent> TargetSpringArm;
 	
 private:
 	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
-	float MinSpringArmLength = 300.0f;
+	float MinSpringArmLength = 350.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
-	float MidSpringArmLength = 600.0f;
+	float MidSpringArmLength = 750.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
-	float MaxSpringArmLength = 900.0f;
+	float MaxSpringArmLength = 1400.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
 	float SpeedThreshold_A = 500.0f;
 	
 	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
-	float SpeedThreshold_B = 1000.0f;
+	float SpeedThreshold_B = 1300.0f;
 	
 	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
-	float SpeedThreshold_C = 1500.0f;
+	float SpeedThreshold_C = 1800.0f;
 	
 	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
-	float SpeedThreshold_D = 2000.0f;
+	float SpeedThreshold_D = 2500.0f;
 	
 	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
-	float CameraInterpolationSpeed = 5.0f;
+	float CameraInterpolationSpeed = 12.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
 	FVector CameraOffset = FVector(0.0f, 0.0f, 120.0f);
-	
+
+	UPROPERTY()
 	TObjectPtr<class ATUCharacterPlayer> Owner;
 };

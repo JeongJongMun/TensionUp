@@ -22,17 +22,20 @@ public:
 // --------------------
 protected:
 	UPROPERTY(EditAnywhere, Category = "Config|Player")
-	float MaxWalkSpeed = 500.0f;
+	float MaxWalkSpeed = 450.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|Player")
-	float MaxRunSpeed = 1000.0f;
+	float MaxRunSpeed = 800.0f;
 	
 	UPROPERTY(EditAnywhere, Category = "Config|Player")
 	float ZumpVelocity = 500.0f;
 	
 	UPROPERTY(EditAnywhere, Category = "Config|Player")
-	float AirControl = 0.35f;
+	float AirControl = 0.75f;
 	
 	UPROPERTY(EditAnywhere, Category = "Config|Player")
-	float FallingLateralFriction = 0.0f;
+	float FallingLateralFriction = 0.45f;
+
+	UPROPERTY(EditAnywhere, Category = "Config|Player")
+	float GravityScale = 1.0f;
 };
