@@ -37,5 +37,5 @@ protected:
 	float FallingLateralFriction = 0.45f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|Player")
-	float GravityScale = 1.0f;
+	float GravityScale = 1.3f;
 };
