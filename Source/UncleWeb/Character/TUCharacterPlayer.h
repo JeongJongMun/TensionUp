@@ -26,6 +26,8 @@ private:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 
+	void InitializeInputActions();
+	void InitializeAnimations();
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	void StartRunning();
@@ -122,19 +124,44 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Config|RepulsiveForce")
 	float RepulsiveForceScaleFactor = 0.75f;
-
-
-
+	
+	UPROPERTY()
 	TObjectPtr<class AUIManager> UIManager;
+	
+	UPROPERTY()
 	TObjectPtr<class UInputMappingContext> DefaultMappingContext;
+
+	UPROPERTY()
+	TMap<EInputActionType, TSoftObjectPtr<UInputAction>> InputActionPaths;
+
+	UPROPERTY()
+	TMap<EInputActionType, TObjectPtr<UInputAction>> InputActionMap;
+	
+	UPROPERTY()
 	TObjectPtr<UInputAction> JumpAction;
+	
+	UPROPERTY()
 	TObjectPtr<UInputAction> MoveAction;
+	
+	UPROPERTY()
 	TObjectPtr<UInputAction> LookAction;
+	
+	UPROPERTY()
 	TObjectPtr<UInputAction> LeftClickAction;
+	
+	UPROPERTY()
 	TObjectPtr<UInputAction> DashAction;
+	
+	UPROPERTY()
 	TObjectPtr<UInputAction> ShortenCableAction;
+	
+	UPROPERTY()
 	TObjectPtr<UInputAction> ExtendCableAction;
+	
+	UPROPERTY()
 	TObjectPtr<UInputAction> RunAction;
+	
+	UPROPERTY()
 	TObjectPtr<UInputAction> SteamBoostAction;
 
 	bool bIsRunning = false;

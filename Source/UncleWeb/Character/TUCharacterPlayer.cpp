@@ -13,7 +13,6 @@
 #include "UncleWeb/Component/DynamicCamera.h"
 #include "UncleWeb/Component/ParkourComponent.h"
 #include "DrawDebugHelpers.h"
-#include "Particles/ParticleSystemComponent.h"
 #include "UncleWeb/UI/UIManager.h"
 #include "UncleWeb/Util/TUDefines.h"
 #include "NiagaraSystem.h"
@@ -23,14 +22,13 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
+	// Component
 	NiagaraCompSteamVfxL = CreateDefaultSubobject<UNiagaraComponent>(TEXT("NiagaraComp_L"));
 	NiagaraCompSteamVfxR = CreateDefaultSubobject<UNiagaraComponent>(TEXT("NiagaraComp_R"));
 	NiagaraCompSteamVfxL->SetupAttachment(GetMesh(), SteamEffectSocketNameL);
 	NiagaraCompSteamVfxR->SetupAttachment(GetMesh(), SteamEffectSocketNameR);
 	NiagaraCompSteamVfxL->SetAutoActivate(false);
 	NiagaraCompSteamVfxR->SetAutoActivate(false);
-	NiagaraCompSteamVfxL->SetWorldScale3D(FVector(2.0f, 2.0f, 2.0f));
-	NiagaraCompSteamVfxR->SetWorldScale3D(FVector(2.0f, 2.0f, 2.0f));
 	
 	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> NiagaraSystemObj(TEXT("/Script/Niagara.NiagaraSystem'/Game/VFX/CartoonSmoke/Effects/NS_ToonSmoke4.NS_ToonSmoke4'"));
 	if (NiagaraSystemObj.Succeeded())
@@ -40,7 +38,6 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 		NiagaraCompSteamVfxR->SetAsset(NiagaraSystemSteamVfx);
 	}
 
-	// Camera
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
 
@@ -59,7 +56,6 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 	CableActionComponent->TargetCable = CableComponent;
 
 	SteamComponent = CreateDefaultSubobject<USteamComponent>(TEXT("SteamComponent"));
-
 	ParkourComponent = CreateDefaultSubobject<UParkourComponent>(TEXT("ParkourComponent"));
 
 	// Input
@@ -68,75 +64,9 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 	{
 		DefaultMappingContext = InputMappingContextRef.Object;
 	}
+	InitializeInputActions();
 
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionMoveRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_Move.IA_Move'"));
-	if (nullptr != InputActionMoveRef.Object)
-	{
-		MoveAction = InputActionMoveRef.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionJumpRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_Jump.IA_Jump'"));
-	if (nullptr != InputActionJumpRef.Object)
-	{
-		JumpAction = InputActionJumpRef.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionLookRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_Look.IA_Look'"));
-	if (nullptr != InputActionLookRef.Object)
-	{
-		LookAction = InputActionLookRef.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionLeftClickRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_LeftClick.IA_LeftClick'"));
-	if (nullptr != InputActionLeftClickRef.Object)
-	{
-		LeftClickAction = InputActionLeftClickRef.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionDashRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_Dash.IA_Dash'"));
-	if (InputActionDashRef.Succeeded())
-	{
-		DashAction = InputActionDashRef.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionRunRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_Run.IA_Run'"));
-	if (InputActionRunRef.Succeeded())
-	{
-		RunAction = InputActionRunRef.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionShortenCableRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_ZoomIn.IA_ZoomIn'"));
-	if (InputActionShortenCableRef.Succeeded())
-	{
-		ShortenCableAction = InputActionShortenCableRef.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionExtendCableRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_ZoomOut.IA_ZoomOut'"));
-	if (InputActionExtendCableRef.Succeeded())
-	{
-		ExtendCableAction = InputActionExtendCableRef.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionSteamBoostRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_SteamBooster.IA_SteamBooster'"));
-	if (InputActionSteamBoostRef.Succeeded())
-	{
-		SteamBoostAction = InputActionSteamBoostRef.Object;
-	}
-
-
-	// Animations
-	TMap<EPlayerAnimationMontageType, FString> AnimMontagePaths = {
-		{ EPlayerAnimationMontageType::Swinging, TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_Swing.MT_Player_Swing'") },
-		{ EPlayerAnimationMontageType::SwingEnd, TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_SwingEnd.MT_Player_SwingEnd'") }
-	};
-
-	for (const auto& [Type, Path] : AnimMontagePaths)
-	{
-		if (ConstructorHelpers::FObjectFinder<UAnimMontage> MontageFinder(*Path); MontageFinder.Succeeded())
-		{
-			AnimMontageMap.Add(Type, MontageFinder.Object);
-		}
-	}
+	InitializeAnimations();
 }
 
 bool ATUCharacterPlayer::IsCableAttached() const
@@ -222,6 +152,74 @@ void ATUCharacterPlayer::Tick(float DeltaTime)
 
 	ParkourComponent->TickParkour(DeltaTime);
 
+}
+
+void ATUCharacterPlayer::InitializeInputActions()
+{
+	InputActionPaths = {
+		{ EInputActionType::Move, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_Move.IA_Move'"))) },
+		{ EInputActionType::Jump, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_Jump.IA_Jump'"))) },
+		{ EInputActionType::Look, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_Look.IA_Look'"))) },
+		{ EInputActionType::LeftClick, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_LeftClick.IA_LeftClick'"))) },
+		{ EInputActionType::Dash, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_Dash.IA_Dash'"))) },
+		{ EInputActionType::Run, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_Run.IA_Run'"))) },
+		{ EInputActionType::ShortenCable, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_ZoomIn.IA_ZoomIn'"))) },
+		{ EInputActionType::ExtendCable, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_ZoomOut.IA_ZoomOut'"))) },
+		{ EInputActionType::SteamBoost, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_SteamBooster.IA_SteamBooster'"))) }
+	};
+
+	InputActionMap = {
+		{ EInputActionType::Move, MoveAction},
+		{ EInputActionType::Jump, JumpAction },
+		{ EInputActionType::Look, LookAction },
+		{ EInputActionType::LeftClick, LeftClickAction },
+		{ EInputActionType::Dash, DashAction },
+		{ EInputActionType::Run, RunAction },
+		{ EInputActionType::ShortenCable, ShortenCableAction },
+		{ EInputActionType::ExtendCable, ExtendCableAction },
+		{ EInputActionType::SteamBoost, SteamBoostAction }
+	};
+
+	for (const TPair<EInputActionType, TSoftObjectPtr<UInputAction>>& Pair : InputActionPaths)
+	{
+		if (Pair.Value.IsValid())
+		{
+			if (UInputAction* LoadedAction = Pair.Value.LoadSynchronous())
+			{
+				InputActionMap.Add(Pair.Key, LoadedAction);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("[%s] Failed to load InputAction: %s"), CURRENT_CONTEXT, *Pair.Value.ToString());
+			}
+		}
+	}
+
+	MoveAction = InputActionMap.FindRef(EInputActionType::Move);
+	JumpAction = InputActionMap.FindRef(EInputActionType::Jump);
+	LookAction = InputActionMap.FindRef(EInputActionType::Look);
+	LeftClickAction = InputActionMap.FindRef(EInputActionType::LeftClick);
+	DashAction = InputActionMap.FindRef(EInputActionType::Dash);
+	ShortenCableAction = InputActionMap.FindRef(EInputActionType::ShortenCable);
+	ExtendCableAction = InputActionMap.FindRef(EInputActionType::ExtendCable);
+	RunAction = InputActionMap.FindRef(EInputActionType::Run);
+	SteamBoostAction = InputActionMap.FindRef(EInputActionType::SteamBoost);
+}
+
+void ATUCharacterPlayer::InitializeAnimations()
+{
+	TMap<EPlayerAnimationMontageType, FString> AnimMontagePaths = {
+		{ EPlayerAnimationMontageType::Swinging, TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_Swing.MT_Player_Swing'") },
+		{ EPlayerAnimationMontageType::SwingEnd, TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_SwingEnd.MT_Player_SwingEnd'") }
+	};
+
+	for (const auto& [Type, Path] : AnimMontagePaths)
+	{
+		if (ConstructorHelpers::FObjectFinder<UAnimMontage> MontageFinder(*Path); MontageFinder.Succeeded())
+		{
+			AnimMontageMap.Add(Type, MontageFinder.Object);
+		}
+	}
 }
 
 void ATUCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -355,13 +353,13 @@ void ATUCharacterPlayer::OnBeginLaunch()
 	Owner->GetWorldTimerManager().SetTimer(TimerHandle, [this]()
 		{
 			GetCharacterMovement()->AirControl = CableActionAirControl;
-			GetCharacterMovement()->FallingLateralFriction = CableFallingLateralFriction;
 		}, MovementModeTransitionDelay, false);
 
 	SteamComponent->ConsumeSteam(CableSteamCost);
 	PlayAnimation(EPlayerAnimationMontageType::Swinging);
 	RotateToCameraDirection();
 
+	GetCharacterMovement()->FallingLateralFriction = CableFallingLateralFriction;
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 	GetCharacterMovement()->bUseControllerDesiredRotation = false;
 }
