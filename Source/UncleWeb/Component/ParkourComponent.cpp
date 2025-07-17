@@ -20,7 +20,7 @@ void UParkourComponent::TickParkour(float DeltaTime)
 {
 	/*
 	if (!OwnerCharacter || ParkourState != EParkourState::Climbing) return;
-
+	
 	ClimbInterpAlpha += DeltaTime * ClimbSpeed;
 	FVector NewLocation = FMath::Lerp(ParkourStartLocation, ParkourTargetLocation, ClimbInterpAlpha);
 	//OwnerCharacter->SetActorLocation(NewLocation);

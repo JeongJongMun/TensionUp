@@ -13,4 +13,7 @@ class ATUGameMode : public AGameModeBase
 
 public:
 	ATUGameMode();
+
+protected:
+	virtual void BeginPlay() override;
 };

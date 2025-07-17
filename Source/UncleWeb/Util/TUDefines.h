@@ -4,6 +4,38 @@
 #include "CoreMinimal.h"
 #define CURRENT_CONTEXT *FString(__FUNCTION__)
 
+UENUM()
+enum class EInputActionType : uint8
+{
+	Move,
+	Jump,
+	Look,
+	LeftClick,
+	Dash,
+	Run,
+	ShortenCable,
+	ExtendCable,
+	SteamBoost
+};
+
+UENUM()
+enum class EPlayerAnimationMontageType : uint8
+{
+	None,
+	Parkour,
+	Swinging,
+	SwingEnd,
+};
+
+UENUM()
+enum class ECableState : uint8
+{
+	Idle,
+	Launching,
+	Attaching,
+	Retracting,
+};
+
 enum class EDirectionType : uint8
 {
 	None,

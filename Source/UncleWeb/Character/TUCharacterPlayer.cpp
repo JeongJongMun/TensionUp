@@ -10,34 +10,34 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "UncleWeb/Component/CableActionComponent.h"
 #include "UncleWeb/Component/SteamComponent.h"
-#include "UncleWeb/Component/TUDynamicCamera.h"
+#include "UncleWeb/Component/DynamicCamera.h"
 #include "UncleWeb/Component/ParkourComponent.h"
 #include "DrawDebugHelpers.h"
-#include "Particles/ParticleSystemComponent.h"
 #include "UncleWeb/UI/UIManager.h"
 #include "UncleWeb/Util/TUDefines.h"
-#include "Kismet/KismetMathLibrary.h"
+#include "NiagaraSystem.h"
+#include "NiagaraComponent.h"
 
 ATUCharacterPlayer::ATUCharacterPlayer()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	FootSteamEffectL = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("FootSteamEffect_L"));
-	FootSteamEffectR = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("FootSteamEffect_R"));
-	FootSteamEffectL->SetupAttachment(GetMesh(), SteamEffectSocketNameL);
-	FootSteamEffectR->SetupAttachment(GetMesh(), SteamEffectSocketNameR);
-	FootSteamEffectL->SetAutoActivate(false);
-	FootSteamEffectR->SetAutoActivate(false);
-
-	static ConstructorHelpers::FObjectFinder<UParticleSystem> SteamParticleObj(TEXT("/Script/Engine.ParticleSystem'/Game/VFX/P_Flamethrower.P_Flamethrower'"));
-	if (SteamParticleObj.Succeeded())
+	// Component
+	NiagaraCompSteamVfxL = CreateDefaultSubobject<UNiagaraComponent>(TEXT("NiagaraComp_L"));
+	NiagaraCompSteamVfxR = CreateDefaultSubobject<UNiagaraComponent>(TEXT("NiagaraComp_R"));
+	NiagaraCompSteamVfxL->SetupAttachment(GetMesh(), SteamEffectSocketNameL);
+	NiagaraCompSteamVfxR->SetupAttachment(GetMesh(), SteamEffectSocketNameR);
+	NiagaraCompSteamVfxL->SetAutoActivate(false);
+	NiagaraCompSteamVfxR->SetAutoActivate(false);
+	
+	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> NiagaraSystemObj(TEXT("/Script/Niagara.NiagaraSystem'/Game/VFX/CartoonSmoke/Effects/NS_ToonSmoke4.NS_ToonSmoke4'"));
+	if (NiagaraSystemObj.Succeeded())
 	{
-		SteamParticleSystem = SteamParticleObj.Object;
-		FootSteamEffectL->SetTemplate(SteamParticleSystem);
-		FootSteamEffectR->SetTemplate(SteamParticleSystem);
+		NiagaraSystemSteamVfx = NiagaraSystemObj.Object;
+		NiagaraCompSteamVfxL->SetAsset(NiagaraSystemSteamVfx);
+		NiagaraCompSteamVfxR->SetAsset(NiagaraSystemSteamVfx);
 	}
 
-	// Camera
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
 
@@ -45,7 +45,7 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
 
-	DynamicCameraComponent = CreateDefaultSubobject<UTUDynamicCamera>(TEXT("DynamicCameraComponent"));
+	DynamicCameraComponent = CreateDefaultSubobject<UDynamicCamera>(TEXT("DynamicCameraComponent"));
 	DynamicCameraComponent->TargetSpringArm = CameraBoom;
 	DynamicCameraComponent->InitializeCamera();
 
@@ -56,7 +56,6 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 	CableActionComponent->TargetCable = CableComponent;
 
 	SteamComponent = CreateDefaultSubobject<USteamComponent>(TEXT("SteamComponent"));
-
 	ParkourComponent = CreateDefaultSubobject<UParkourComponent>(TEXT("ParkourComponent"));
 
 	// Input
@@ -65,67 +64,9 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 	{
 		DefaultMappingContext = InputMappingContextRef.Object;
 	}
+	InitializeInputActions();
 
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionMoveRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_Move.IA_Move'"));
-	if (nullptr != InputActionMoveRef.Object)
-	{
-		MoveAction = InputActionMoveRef.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionJumpRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_Jump.IA_Jump'"));
-	if (nullptr != InputActionJumpRef.Object)
-	{
-		JumpAction = InputActionJumpRef.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionLookRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_Look.IA_Look'"));
-	if (nullptr != InputActionLookRef.Object)
-	{
-		LookAction = InputActionLookRef.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionLeftClickRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_LeftClick.IA_LeftClick'"));
-	if (nullptr != InputActionLeftClickRef.Object)
-	{
-		LeftClickAction = InputActionLeftClickRef.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionDashRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_Dash.IA_Dash'"));
-	if (InputActionDashRef.Succeeded())
-	{
-		DashAction = InputActionDashRef.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionRunRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_Run.IA_Run'"));
-	if (InputActionRunRef.Succeeded())
-	{
-		RunAction = InputActionRunRef.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionShortenCableRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_ZoomIn.IA_ZoomIn'"));
-	if (InputActionShortenCableRef.Succeeded())
-	{
-		ShortenCableAction = InputActionShortenCableRef.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionExtendCableRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_ZoomOut.IA_ZoomOut'"));
-	if (InputActionExtendCableRef.Succeeded())
-	{
-		ExtendCableAction = InputActionExtendCableRef.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionSteamBoostRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_SteamBooster.IA_SteamBooster'"));
-	if (InputActionSteamBoostRef.Succeeded())
-	{
-		SteamBoostAction = InputActionSteamBoostRef.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UAnimMontage> SwingAnimMontageRef(TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_Swing1.MT_Player_Swing1'"));
-	// static ConstructorHelpers::FObjectFinder<UAnimMontage> SwingAnimMontageRef(TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_Swing.MT_Player_Swing'"));
-	if (SwingAnimMontageRef.Succeeded())
-	{
-		MontageSwing = SwingAnimMontageRef.Object;
-	}
+	InitializeAnimations();
 }
 
 bool ATUCharacterPlayer::IsCableAttached() const
@@ -133,29 +74,32 @@ bool ATUCharacterPlayer::IsCableAttached() const
 	return CableActionComponent && CableActionComponent->IsCableAttaching();
 }
 
-void ATUCharacterPlayer::PlayAnimation(const FName SectionName)
+void ATUCharacterPlayer::PlayAnimation(const EPlayerAnimationMontageType AnimType, float InPlayRate, const FName SectionName)
 {
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (!AnimInstance || !MontageSwing)
+	if (const TObjectPtr<UAnimMontage> AnimMontage = AnimMontageMap.FindRef(AnimType))
 	{
-		UE_LOG(LogTemp, Error, TEXT("[%s] AnimInstance or AnimMontage is null"), CURRENT_CONTEXT);
-		return;
-	}
-
-	if (AnimInstance->Montage_IsPlaying(MontageSwing))
-	{
-		FName CurrentSection = AnimInstance->Montage_GetCurrentSection(MontageSwing);
-		if (CurrentSection != NAME_None && CurrentSection != SectionName)
+		if (SectionName == NAME_None)
 		{
-			AnimInstance->Montage_Stop(0.5f, MontageSwing);
-			AnimInstance->Montage_Play(MontageSwing);
-			AnimInstance->Montage_JumpToSection(SectionName, MontageSwing); 
+			TArray<FName>& SectionNames = AnimSectionMap.FindOrAdd(AnimType);
+			if (SectionNames.IsEmpty())
+			{
+				for (const auto& Section : AnimMontage->CompositeSections)
+				{
+					SectionNames.Add(Section.SectionName);
+				}
+			}
+
+			if (SectionNames.Num() > 0)
+			{
+				const FName RandomSection = SectionNames[FMath::RandRange(0, SectionNames.Num() - 1)];
+				
+				PlayAnimMontage(AnimMontage, InPlayRate, RandomSection);
+			}
 		}
-	}
-	else
-	{
-		AnimInstance->Montage_Play(MontageSwing);
-		AnimInstance->Montage_JumpToSection(SectionName, MontageSwing); 
+		else
+		{
+			PlayAnimMontage(AnimMontage, InPlayRate, SectionName);
+		}
 	}
 }
 
@@ -176,8 +120,8 @@ void ATUCharacterPlayer::BeginPlay()
 	UIManager->InitializeUI(PC);
 
 	SteamComponent->OnSteamChanged.AddDynamic(this, &ATUCharacterPlayer::HandleUpdateSteamUI);
-	CableActionComponent->OnCableAttachedAction.AddDynamic(this, &ATUCharacterPlayer::OnCableAttached);
-	CableActionComponent->OnCableDetachedAction.AddDynamic(this, &ATUCharacterPlayer::OnCableDetached);
+	CableActionComponent->OnBeginLaunchAction.AddDynamic(this, &ATUCharacterPlayer::OnBeginLaunch);
+	CableActionComponent->OnBeginRetractAction.AddDynamic(this, &ATUCharacterPlayer::OnBeginRetract);
 
 	// repulsive force
 	GetCapsuleComponent()->OnComponentHit.AddDynamic(this, &ATUCharacterPlayer::OnHit);
@@ -187,7 +131,7 @@ void ATUCharacterPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (CableActionComponent->IsCanAttachCable())
+	if (CableActionComponent->IsCanLaunchCable())
 	{
 		UIManager->SetCrosshairColor(ECrosshairStateType::Active);
 	}
@@ -210,6 +154,74 @@ void ATUCharacterPlayer::Tick(float DeltaTime)
 
 }
 
+void ATUCharacterPlayer::InitializeInputActions()
+{
+	InputActionPaths = {
+		{ EInputActionType::Move, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_Move.IA_Move'"))) },
+		{ EInputActionType::Jump, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_Jump.IA_Jump'"))) },
+		{ EInputActionType::Look, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_Look.IA_Look'"))) },
+		{ EInputActionType::LeftClick, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_LeftClick.IA_LeftClick'"))) },
+		{ EInputActionType::Dash, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_Dash.IA_Dash'"))) },
+		{ EInputActionType::Run, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_Run.IA_Run'"))) },
+		{ EInputActionType::ShortenCable, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_ZoomIn.IA_ZoomIn'"))) },
+		{ EInputActionType::ExtendCable, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_ZoomOut.IA_ZoomOut'"))) },
+		{ EInputActionType::SteamBoost, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_SteamBooster.IA_SteamBooster'"))) }
+	};
+
+	InputActionMap = {
+		{ EInputActionType::Move, MoveAction},
+		{ EInputActionType::Jump, JumpAction },
+		{ EInputActionType::Look, LookAction },
+		{ EInputActionType::LeftClick, LeftClickAction },
+		{ EInputActionType::Dash, DashAction },
+		{ EInputActionType::Run, RunAction },
+		{ EInputActionType::ShortenCable, ShortenCableAction },
+		{ EInputActionType::ExtendCable, ExtendCableAction },
+		{ EInputActionType::SteamBoost, SteamBoostAction }
+	};
+
+	for (const TPair<EInputActionType, TSoftObjectPtr<UInputAction>>& Pair : InputActionPaths)
+	{
+		if (Pair.Value.IsValid())
+		{
+			if (UInputAction* LoadedAction = Pair.Value.LoadSynchronous())
+			{
+				InputActionMap.Add(Pair.Key, LoadedAction);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("[%s] Failed to load InputAction: %s"), CURRENT_CONTEXT, *Pair.Value.ToString());
+			}
+		}
+	}
+
+	MoveAction = InputActionMap.FindRef(EInputActionType::Move);
+	JumpAction = InputActionMap.FindRef(EInputActionType::Jump);
+	LookAction = InputActionMap.FindRef(EInputActionType::Look);
+	LeftClickAction = InputActionMap.FindRef(EInputActionType::LeftClick);
+	DashAction = InputActionMap.FindRef(EInputActionType::Dash);
+	ShortenCableAction = InputActionMap.FindRef(EInputActionType::ShortenCable);
+	ExtendCableAction = InputActionMap.FindRef(EInputActionType::ExtendCable);
+	RunAction = InputActionMap.FindRef(EInputActionType::Run);
+	SteamBoostAction = InputActionMap.FindRef(EInputActionType::SteamBoost);
+}
+
+void ATUCharacterPlayer::InitializeAnimations()
+{
+	TMap<EPlayerAnimationMontageType, FString> AnimMontagePaths = {
+		{ EPlayerAnimationMontageType::Swinging, TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_Swing.MT_Player_Swing'") },
+		{ EPlayerAnimationMontageType::SwingEnd, TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_SwingEnd.MT_Player_SwingEnd'") }
+	};
+
+	for (const auto& [Type, Path] : AnimMontagePaths)
+	{
+		if (ConstructorHelpers::FObjectFinder<UAnimMontage> MontageFinder(*Path); MontageFinder.Succeeded())
+		{
+			AnimMontageMap.Add(Type, MontageFinder.Object);
+		}
+	}
+}
+
 void ATUCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
@@ -220,10 +232,10 @@ void ATUCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::StopJumping);
 	EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ATUCharacterPlayer::Move);
 	EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ATUCharacterPlayer::Look);
-	EnhancedInputComponent->BindAction(LeftClickAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleAttachCable);
-	EnhancedInputComponent->BindAction(LeftClickAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::HandleDetachCable);
+	EnhancedInputComponent->BindAction(LeftClickAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleLaunchCable);
+	EnhancedInputComponent->BindAction(LeftClickAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::HandleRetractCable);
 	EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::Dash);
-	// Temporary Disabled
+	// Deprecated : Cable Length Adjust Func
 	// EnhancedInputComponent->BindAction(ShortenCableAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleShortenCable);
 	// EnhancedInputComponent->BindAction(ExtendCableAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleExtendCable);
 	EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::StartRunning);
@@ -310,14 +322,14 @@ void ATUCharacterPlayer::StopRunning()
 }
 
 // ----- Handler
-void ATUCharacterPlayer::HandleAttachCable()
+void ATUCharacterPlayer::HandleLaunchCable()
 {
-	CableActionComponent->TryAttachCable();
+	CableActionComponent->TryLaunchCable();
 }
 
-void ATUCharacterPlayer::HandleDetachCable()
+void ATUCharacterPlayer::HandleRetractCable()
 {
-	CableActionComponent->TryDetachCable();
+	CableActionComponent->TryRetractCable();
 }
 
 void ATUCharacterPlayer::HandleShortenCable()
@@ -335,27 +347,29 @@ void ATUCharacterPlayer::HandleUpdateSteamUI(const float Current, const float Ma
 	UIManager->UpdateSteamUI(Current, Max);
 }
 
-void ATUCharacterPlayer::OnCableAttached()
+void ATUCharacterPlayer::OnBeginLaunch()
 {
 	FTimerHandle TimerHandle;
 	Owner->GetWorldTimerManager().SetTimer(TimerHandle, [this]()
 		{
 			GetCharacterMovement()->AirControl = CableActionAirControl;
-		}, AirControlChangeIntervalSeconds, false);
+		}, MovementModeTransitionDelay, false);
 
 	SteamComponent->ConsumeSteam(CableSteamCost);
-	PlayAnimation(TEXT("Default"));
+	PlayAnimation(EPlayerAnimationMontageType::Swinging);
 	RotateToCameraDirection();
 
+	GetCharacterMovement()->FallingLateralFriction = CableFallingLateralFriction;
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 	GetCharacterMovement()->bUseControllerDesiredRotation = false;
 }
 
-void ATUCharacterPlayer::OnCableDetached()
+void ATUCharacterPlayer::OnBeginRetract()
 {
 	GetCharacterMovement()->AirControl = AirControl;
+	GetCharacterMovement()->FallingLateralFriction = FallingLateralFriction;
 	HandleStopSteamBooster();
-	StopAnimMontage();
+	PlayAnimation(EPlayerAnimationMontageType::SwingEnd);
 
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
@@ -393,20 +407,22 @@ void ATUCharacterPlayer::HandleStartSteamBooster()
 		return;
 
 	CableActionComponent->SetIsSteamBoosterActive(true);
-	if (FootSteamEffectL && FootSteamEffectR)
+
+	if (NiagaraCompSteamVfxL && NiagaraCompSteamVfxR)
 	{
-		FootSteamEffectL->Activate();
-		FootSteamEffectR->Activate();
+		NiagaraCompSteamVfxL->Activate();
+		NiagaraCompSteamVfxR->Activate();
 	}
 }
 
 void ATUCharacterPlayer::HandleStopSteamBooster()
 {
 	CableActionComponent->SetIsSteamBoosterActive(false);	
-	if (FootSteamEffectL && FootSteamEffectR)
+
+	if (NiagaraCompSteamVfxL && NiagaraCompSteamVfxR)
 	{
-		FootSteamEffectL->Deactivate();
-		FootSteamEffectR->Deactivate();
+		NiagaraCompSteamVfxL->Deactivate();
+		NiagaraCompSteamVfxR->Deactivate();
 	}
 }
 

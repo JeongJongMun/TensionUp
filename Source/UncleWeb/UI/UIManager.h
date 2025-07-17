@@ -36,8 +36,14 @@ private:
 private:
 	TSubclassOf<UUserWidget> SteamWidgetClass;
 	TSubclassOf<UUserWidget> CrosshairWidgetClass;
+	
+	UPROPERTY()
 	TObjectPtr<UUserWidget> SteamWidget;
+	
+	UPROPERTY()
 	TObjectPtr<UUserWidget> CrosshairWidget;
+	
+	UPROPERTY()
 	TObjectPtr<APlayerController> CachedPC;
 	
 	ECrosshairStateType CurrentCrosshairState = ECrosshairStateType::Default;

@@ -40,7 +40,7 @@ private:
 	float SteamRecoveryDelay = 1.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|Steam")
-	float SteamRecoveryRate = 10.0f;
+	float SteamRecoveryRate = 80.0f;
 	
 	float TimeSinceGrounded = 0.0f;
 	bool bIsOnGround = false;

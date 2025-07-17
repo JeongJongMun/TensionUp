@@ -5,6 +5,7 @@
 #include "InputAction.h"
 #include "InputActionValue.h"
 #include "TUCharacterBase.h"
+#include "UncleWeb/Util/TUDefines.h"
 #include "TUCharacterPlayer.generated.h"
 
 UCLASS()
@@ -12,19 +13,21 @@ class UNCLEWEB_API ATUCharacterPlayer : public ATUCharacterBase
 {
 	GENERATED_BODY()
 
-	// --------------------
-	// Functions
-	// --------------------
+// --------------------
+// Functions
+// --------------------
 public:
 	ATUCharacterPlayer();
 	bool IsCableAttached() const;
-	void PlayAnimation(const FName SectionName);
+	void PlayAnimation(const EPlayerAnimationMontageType AnimType, float InPlayRate = 1.0f, const FName SectionName = NAME_None);
 
 private:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 
+	void InitializeInputActions();
+	void InitializeAnimations();
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	void StartRunning();
@@ -39,13 +42,13 @@ private:
 	void HandleUpdateSteamUI(float Current, float Max);
 
 	UFUNCTION()
-	void OnCableAttached();
+	void OnBeginLaunch();
 
 	UFUNCTION()
-	void OnCableDetached();
+	void OnBeginRetract();
 
-	void HandleAttachCable();
-	void HandleDetachCable();
+	void HandleLaunchCable();
+	void HandleRetractCable();
 
 	void HandleShortenCable();
 	void HandleExtendCable();
@@ -58,12 +61,12 @@ private:
 
 	void RotateToCameraDirection();
 
-	// --------------------
-	// Variables
-	// --------------------
+// --------------------
+// Variables
+// --------------------
 protected:
 	UPROPERTY(VisibleAnywhere, Category = "Component")
-	TObjectPtr<class UTUDynamicCamera> DynamicCameraComponent;
+	TObjectPtr<class UDynamicCamera> DynamicCameraComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = "Component")
 	TObjectPtr<class UCableActionComponent> CableActionComponent;
@@ -81,13 +84,13 @@ protected:
 	TObjectPtr<class UCameraComponent> FollowCamera;
 
 	UPROPERTY()
-	TObjectPtr<UParticleSystemComponent> FootSteamEffectR;
-
+	TObjectPtr<class UNiagaraComponent> NiagaraCompSteamVfxR;
+	
 	UPROPERTY()
-	TObjectPtr<UParticleSystemComponent> FootSteamEffectL;
-
+	TObjectPtr<class UNiagaraComponent> NiagaraCompSteamVfxL;
+	
 	UPROPERTY()
-	TObjectPtr<UParticleSystem> SteamParticleSystem;
+	TObjectPtr<class UNiagaraSystem> NiagaraSystemSteamVfx;
 
 
 private:
@@ -95,44 +98,70 @@ private:
 	TObjectPtr<class UCableComponent> CableComponent;
 	
 	UPROPERTY()
-	TObjectPtr<UAnimMontage> MontageSwing;
+	TMap<EPlayerAnimationMontageType, TObjectPtr<UAnimMontage>> AnimMontageMap;
+	TMap<EPlayerAnimationMontageType, TArray<FName>> AnimSectionMap;
 	
 	UPROPERTY(EditAnywhere, Category = "Config|Dash")
-	float DashStrength = 1500.0f;
+	float DashStrength = 1400.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|Steam")
-	float DashSteamCost = 20.0f;
+	float DashSteamCost = 35.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|Steam")
-	float CableSteamCost = 10.0f;
+	float CableSteamCost = 25.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|Steam")
 	float SteamBoosterCost = 5.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|Player")
-	float CableActionAirControl = 0.5f;
+	float CableActionAirControl = 0.3f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|Player")
 	float CableFallingLateralFriction = 0.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|Player")
-	float AirControlChangeIntervalSeconds = 0.5f;
+	float MovementModeTransitionDelay = 3.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|RepulsiveForce")
-	float RepulsiveForceScaleFactor = 1.0f;
-
-
-
+	float RepulsiveForceScaleFactor = 0.75f;
+	
+	UPROPERTY()
 	TObjectPtr<class AUIManager> UIManager;
+	
+	UPROPERTY()
 	TObjectPtr<class UInputMappingContext> DefaultMappingContext;
+
+	UPROPERTY()
+	TMap<EInputActionType, TSoftObjectPtr<UInputAction>> InputActionPaths;
+
+	UPROPERTY()
+	TMap<EInputActionType, TObjectPtr<UInputAction>> InputActionMap;
+	
+	UPROPERTY()
 	TObjectPtr<UInputAction> JumpAction;
+	
+	UPROPERTY()
 	TObjectPtr<UInputAction> MoveAction;
+	
+	UPROPERTY()
 	TObjectPtr<UInputAction> LookAction;
+	
+	UPROPERTY()
 	TObjectPtr<UInputAction> LeftClickAction;
+	
+	UPROPERTY()
 	TObjectPtr<UInputAction> DashAction;
+	
+	UPROPERTY()
 	TObjectPtr<UInputAction> ShortenCableAction;
+	
+	UPROPERTY()
 	TObjectPtr<UInputAction> ExtendCableAction;
+	
+	UPROPERTY()
 	TObjectPtr<UInputAction> RunAction;
+	
+	UPROPERTY()
 	TObjectPtr<UInputAction> SteamBoostAction;
 
 	bool bIsRunning = false;
