@@ -47,6 +47,7 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 
 	DynamicCameraComponent = CreateDefaultSubobject<UDynamicCamera>(TEXT("DynamicCameraComponent"));
 	DynamicCameraComponent->TargetSpringArm = CameraBoom;
+	DynamicCameraComponent->FollowCamera = FollowCamera;
 	DynamicCameraComponent->InitializeCamera();
 
 	CableComponent = CreateDefaultSubobject<UCableComponent>(TEXT("CableComponent"));

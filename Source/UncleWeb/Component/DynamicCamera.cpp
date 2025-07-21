@@ -1,11 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "DynamicCamera.h"
+
+#include "Camera/CameraComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/PawnMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "UncleWeb/Character/TUCharacterPlayer.h"
-#include "UncleWeb/Util/TUDefines.h"
 
 UDynamicCamera::UDynamicCamera()
 {
@@ -18,12 +20,39 @@ void UDynamicCamera::BeginPlay()
 	Super::BeginPlay();
 
 	Owner = CastChecked<ATUCharacterPlayer>(GetOwner());
+
+	if (const UWorld* World = GetWorld())
+	{
+		TArray<AActor*> FoundActors;
+		UGameplayStatics::GetAllActorsOfClassWithTag(World, APostProcessVolume::StaticClass(), FName("PostProcessVolume"),FoundActors);
+        
+		if (FoundActors.Num() > 0)
+		{
+			PostProcessVolume = Cast<APostProcessVolume>(FoundActors[0]);
+		}
+	}
 }
 
-void UDynamicCamera::InitializeCamera()
+void UDynamicCamera::InitializeCamera() const
 {
 	TargetSpringArm->bUsePawnControlRotation = true;
 	TargetSpringArm->SetRelativeLocation(CameraOffset);
+}
+
+void UDynamicCamera::UpdatePostProcessVolume() const
+{
+	if (!Owner->IsCableAttached())
+		return;
+	
+	const float CurrentSpeed = Owner->GetVelocity().Size();
+	const float SpeedRatio = FMath::Clamp(CurrentSpeed / SpeedThreshold_D, 0.0f, 1.0f);
+    
+	PostProcessVolume->Settings.MotionBlurAmount = FMath::Lerp(MotionBlurAmountMin, MotionBlurAmountMax, SpeedRatio);
+	PostProcessVolume->Settings.MotionBlurMax = FMath::Lerp(MotionBlurDistortionMin, MotionBlurDistortionMax, SpeedRatio);
+
+	const float TargetFOV = FMath::Lerp(FOVMin, FOVMax, SpeedRatio);
+        
+	FollowCamera->SetFieldOfView(TargetFOV);
 }
 
 void UDynamicCamera::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -31,6 +60,8 @@ void UDynamicCamera::TickComponent(float DeltaTime, ELevelTick TickType, FActorC
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	if (!TargetSpringArm || !Owner->GetMovementComponent()) return;
+	
+	UpdatePostProcessVolume();
 
 	const float CurrentSpeed = Owner->GetMovementComponent()->Velocity.Size();
 	float TargetLength;

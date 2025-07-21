@@ -15,7 +15,8 @@ class UNCLEWEB_API UDynamicCamera : public UActorComponent
 // --------------------
 public:	
 	UDynamicCamera();
-	void InitializeCamera();
+	void InitializeCamera() const;
+	void UpdatePostProcessVolume() const;
 
 protected:
 	virtual void BeginPlay() override;
@@ -30,6 +31,9 @@ private:
 public:
 	UPROPERTY()
 	TObjectPtr<class USpringArmComponent> TargetSpringArm;
+
+	UPROPERTY()
+	TObjectPtr<class UCameraComponent> FollowCamera;
 	
 private:
 	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
@@ -59,6 +63,28 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
 	FVector CameraOffset = FVector(0.0f, 0.0f, 120.0f);
 
+	
+	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
+	float MotionBlurAmountMin = 0.2f;
+	
+	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
+	float MotionBlurAmountMax = 0.8f;
+
+	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
+	float MotionBlurDistortionMin = 5.0f;
+	
+	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
+	float MotionBlurDistortionMax = 25.0f;
+	
+	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
+	float FOVMin = 90.0f;
+	
+	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
+	float FOVMax = 110.0f;
+
 	UPROPERTY()
 	TObjectPtr<class ATUCharacterPlayer> Owner;
+
+	UPROPERTY()
+	TObjectPtr<APostProcessVolume> PostProcessVolume;
 };
