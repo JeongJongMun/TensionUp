@@ -265,14 +265,18 @@ void UCableActionComponent::OnWhileAttach(const float DeltaTime)
 	OnWhileAttachAction.Broadcast();
 }
 
-void UCableActionComponent::SetOwnerRotationToCable(const FVector& CableDirection, float DeltaTime)
+void UCableActionComponent::SetOwnerRotationToCable(const FVector& CableDirection, const float DeltaTime)
 {
 	if (!Owner || !Owner->GetMesh()) return;
+	
+	FVector Direction = CableDirection;
+	if (CableDirection.Z < 0.1f)
+	{
+		Direction.Z = -CableDirection.Z;
+	}
 
-	const FVector UpDirection = CableDirection.GetSafeNormal();
     const FVector ForwardDirection = Owner->GetActorForwardVector();
-
-	const FMatrix RotationMatrix = FRotationMatrix::MakeFromZX(UpDirection, ForwardDirection);
+	const FMatrix RotationMatrix = FRotationMatrix::MakeFromZX(Direction, ForwardDirection);
 	
 	FQuat TargetRotation = FQuat(RotationMatrix);
 	TargetRotation.Normalize();
