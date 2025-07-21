@@ -234,6 +234,8 @@ void ATUCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ATUCharacterPlayer::Look);
 	EnhancedInputComponent->BindAction(LeftClickAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleLaunchCable);
 	EnhancedInputComponent->BindAction(LeftClickAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::HandleRetractCable);
+	EnhancedInputComponent->BindAction(LeftClickAction, ETriggerEvent::Canceled, this, &ATUCharacterPlayer::HandleRetractCable);
+
 	EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::Dash);
 	// Deprecated : Cable Length Adjust Func
 	// EnhancedInputComponent->BindAction(ShortenCableAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleShortenCable);
@@ -399,11 +401,9 @@ void ATUCharacterPlayer::HandleJumpOrParkour()
 	}
 }
 
-
-
 void ATUCharacterPlayer::HandleStartSteamBooster()
 {
-	if (!CableActionComponent->IsCableAttaching() || !SteamComponent->HasEnoughSteam(SteamBoosterCost))
+	if (!CableActionComponent->IsCableActive() || !SteamComponent->HasEnoughSteam(SteamBoosterCost))
 		return;
 
 	CableActionComponent->SetIsSteamBoosterActive(true);

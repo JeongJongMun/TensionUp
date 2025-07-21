@@ -48,7 +48,7 @@ public:
 	void SetIsSteamBoosterActive(const bool bActive) { bIsSteamBoosterActive = bActive; }
 	bool IsSteamBoosterActive() const { return bIsSteamBoosterActive; }
 	ECableState GetCableState() const { return CurrentCableState; }
-	bool IsCableActive() const { return CurrentCableState != ECableState::Idle; }
+	bool IsCableActive() const { return CurrentCableState == ECableState::Attaching || CurrentCableState == ECableState::Launching; }
 	bool IsCableAttaching() const { return CurrentCableState == ECableState::Attaching; }
 	
 	// Deprecated : Cable Length Adjust Func
