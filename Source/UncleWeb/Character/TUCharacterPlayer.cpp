@@ -326,6 +326,9 @@ void ATUCharacterPlayer::StopRunning()
 // ----- Handler
 void ATUCharacterPlayer::HandleLaunchCable()
 {
+	if (!SteamComponent->HasEnoughSteam(CableSteamCost))
+		return;
+	
 	CableActionComponent->TryLaunchCable();
 }
 
