@@ -37,7 +37,7 @@ void UCableActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 		PlayCableVfx(DeltaTime);
 	}
 	
-	if (CurrentCableState == ECableState::Launching || CurrentCableState == ECableState::Attaching)
+	if (CurrentCableState == ECableState::Attaching)
 	{
 		OnWhileAttach(DeltaTime);
 	}

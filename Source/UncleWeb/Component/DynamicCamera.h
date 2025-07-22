@@ -16,7 +16,6 @@ class UNCLEWEB_API UDynamicCamera : public UActorComponent
 public:	
 	UDynamicCamera();
 	void InitializeCamera() const;
-	void UpdatePostProcessVolume() const;
 
 protected:
 	virtual void BeginPlay() override;
@@ -24,6 +23,7 @@ protected:
 
 private:
 	float CalculateTargetArmLength(float CurrentSpeed) const;
+	void UpdatePostProcessVolume(const float DeltaTime) const;
 	
 // --------------------
 // Variables
@@ -62,7 +62,6 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
 	FVector CameraOffset = FVector(0.0f, 0.0f, 120.0f);
-
 	
 	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
 	float MotionBlurAmountMin = 0.2f;
@@ -80,11 +79,29 @@ private:
 	float FOVMin = 90.0f;
 	
 	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
-	float FOVMax = 110.0f;
+	float FOVMax = 100.0f;
 
 	UPROPERTY()
 	TObjectPtr<class ATUCharacterPlayer> Owner;
 
 	UPROPERTY()
 	TObjectPtr<APostProcessVolume> PostProcessVolume;
+
+	UPROPERTY()
+	TObjectPtr<UMaterialParameterCollection> MaterialParameterCollection;
+
+	UPROPERTY()
+	TObjectPtr<UMaterialParameterCollectionInstance> MaterialParameterCollectionInstance;
+
+	FName RadialBlurIntensityName = FName("BlurIntensity");
+	FName RadialBlurRadiusName = FName("BlurRadius");
+
+	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
+	float RadialBlurIntensityMax = 1.5f;
+
+	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
+	float RadialBlurRadiusMax = 1.5f;
+
+	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
+	float PostProcessingResetInterpolationSpeed = 1.0f;
 };
