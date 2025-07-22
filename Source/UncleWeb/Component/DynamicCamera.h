@@ -103,5 +103,5 @@ private:
 	float RadialBlurRadiusMax = 1.5f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
-	float PostProcessingResetInterpolationSpeed = 1.0f;
+	float PostProcessingInterpolationSpeed = 1.0f;
 };

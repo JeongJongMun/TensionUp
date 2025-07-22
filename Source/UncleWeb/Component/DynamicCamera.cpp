@@ -103,42 +103,50 @@ void UDynamicCamera::UpdatePostProcessVolume(const float DeltaTime) const
 {
 	if (!PostProcessVolume || !MaterialParameterCollectionInstance || !FollowCamera)
 		return;
-	
+
 	if (Owner->IsCableAttached())
 	{
 		const float CurrentSpeed = Owner->GetVelocity().Size();
-		const float SpeedRatio = FMath::Clamp(CurrentSpeed / SpeedThreshold_D, 0.0f, 1.0f);
-    
-		PostProcessVolume->Settings.MotionBlurAmount = FMath::Lerp(MotionBlurAmountMin, MotionBlurAmountMax, SpeedRatio);
-		PostProcessVolume->Settings.MotionBlurMax = FMath::Lerp(MotionBlurDistortionMin, MotionBlurDistortionMax, SpeedRatio);
-
-		const float TargetFOV = FMath::Lerp(FOVMin, FOVMax, SpeedRatio);
-        
-		FollowCamera->SetFieldOfView(TargetFOV);
-
-		const float RadialBlurIntensityValue = FMath::Lerp(0.0f, RadialBlurIntensityMax, SpeedRatio);
-		const float RadialBlurRadiusValue = FMath::Lerp(0.0f, RadialBlurRadiusMax, SpeedRatio);
+		const float SpeedRatio = FMath::Clamp(CurrentSpeed / SpeedThreshold_D * 1.5f, 0.0f, 1.0f);
 		
-		MaterialParameterCollectionInstance->SetScalarParameterValue(RadialBlurIntensityName, RadialBlurIntensityValue);
-		MaterialParameterCollectionInstance->SetScalarParameterValue(RadialBlurRadiusName, RadialBlurRadiusValue);
+		const float CurrentMotionBlurAmount = PostProcessVolume->Settings.MotionBlurAmount;
+		const float CurrentMotionBlurMax = PostProcessVolume->Settings.MotionBlurMax;
+		const float TargetMotionBlurAmount = FMath::Lerp(MotionBlurAmountMin, MotionBlurAmountMax, SpeedRatio);
+		const float TargetMotionBlurDistortion = FMath::Lerp(MotionBlurDistortionMin, MotionBlurDistortionMax, SpeedRatio);
+		PostProcessVolume->Settings.MotionBlurAmount = FMath::FInterpTo(CurrentMotionBlurAmount, CurrentMotionBlurMax, DeltaTime, PostProcessingInterpolationSpeed);
+		PostProcessVolume->Settings.MotionBlurMax = FMath::FInterpTo(TargetMotionBlurAmount, TargetMotionBlurDistortion, DeltaTime, PostProcessingInterpolationSpeed);
+
+		const float CurrentFOV = FollowCamera->FieldOfView;
+		const float TargetFOV = FMath::Lerp(FOVMin, FOVMax, SpeedRatio);
+		const float InterpolatedFOV = FMath::FInterpTo(CurrentFOV, TargetFOV, DeltaTime, PostProcessingInterpolationSpeed);
+		FollowCamera->SetFieldOfView(InterpolatedFOV);
+
+		float CurrentRadialBlurIntensity, CurrentRadialBlurRadius;
+		MaterialParameterCollectionInstance->GetScalarParameterValue(RadialBlurIntensityName, CurrentRadialBlurIntensity);
+		MaterialParameterCollectionInstance->GetScalarParameterValue(RadialBlurRadiusName, CurrentRadialBlurRadius);
+		const float TargetRadialBlurIntensity = FMath::Lerp(0.0f, RadialBlurIntensityMax, SpeedRatio);
+		const float TargetRadialBlurRadius = FMath::Lerp(0.0f, RadialBlurRadiusMax, SpeedRatio);
+		const float InterpolatedRadialBlurIntensity = FMath::FInterpTo(CurrentRadialBlurIntensity, TargetRadialBlurIntensity, DeltaTime, PostProcessingInterpolationSpeed);
+		const float InterpolatedRadialBlurRadius = FMath::FInterpTo(CurrentRadialBlurRadius, TargetRadialBlurRadius, DeltaTime, PostProcessingInterpolationSpeed);
+		MaterialParameterCollectionInstance->SetScalarParameterValue(RadialBlurIntensityName, InterpolatedRadialBlurIntensity);
+		MaterialParameterCollectionInstance->SetScalarParameterValue(RadialBlurRadiusName, InterpolatedRadialBlurRadius);
 	}
 	else
 	{
 		const float CurrentMotionBlurAmount = PostProcessVolume->Settings.MotionBlurAmount;
 		const float CurrentMotionBlurMax = PostProcessVolume->Settings.MotionBlurMax;
+		PostProcessVolume->Settings.MotionBlurAmount = FMath::FInterpTo(CurrentMotionBlurAmount, 0.0f, DeltaTime, PostProcessingInterpolationSpeed);
+		PostProcessVolume->Settings.MotionBlurMax = FMath::FInterpTo(CurrentMotionBlurMax, 0.0f, DeltaTime, PostProcessingInterpolationSpeed);
+		
 		const float CurrentFOV = FollowCamera->FieldOfView;
-
-		PostProcessVolume->Settings.MotionBlurAmount = FMath::FInterpTo(CurrentMotionBlurAmount, 0.0f, DeltaTime, PostProcessingResetInterpolationSpeed);
-		PostProcessVolume->Settings.MotionBlurMax = FMath::FInterpTo(CurrentMotionBlurMax, 0.0f, DeltaTime, PostProcessingResetInterpolationSpeed);
-		FollowCamera->SetFieldOfView(FMath::FInterpTo(CurrentFOV, 90.0f, DeltaTime, PostProcessingResetInterpolationSpeed));
+		FollowCamera->SetFieldOfView(FMath::FInterpTo(CurrentFOV, 90.0f, DeltaTime, PostProcessingInterpolationSpeed));
 	
-		float CurrentRadialBlurIntensity;
+		float CurrentRadialBlurIntensity, CurrentRadialBlurRadius;
 		MaterialParameterCollectionInstance->GetScalarParameterValue(RadialBlurIntensityName, CurrentRadialBlurIntensity);
-		float CurrentRadialBlurRadius;
 		MaterialParameterCollectionInstance->GetScalarParameterValue(RadialBlurRadiusName, CurrentRadialBlurRadius);
 	
-		const float RadialBlurIntensityValue = FMath::FInterpTo(CurrentRadialBlurIntensity, 0.0f, DeltaTime, PostProcessingResetInterpolationSpeed);
-		const float RadialBlurRadiusValue = FMath::FInterpTo(CurrentRadialBlurRadius, 0.0f, DeltaTime, PostProcessingResetInterpolationSpeed);
+		const float RadialBlurIntensityValue = FMath::FInterpTo(CurrentRadialBlurIntensity, 0.0f, DeltaTime, PostProcessingInterpolationSpeed);
+		const float RadialBlurRadiusValue = FMath::FInterpTo(CurrentRadialBlurRadius, 0.0f, DeltaTime, PostProcessingInterpolationSpeed);
 		MaterialParameterCollectionInstance->SetScalarParameterValue(RadialBlurIntensityName, RadialBlurIntensityValue);
 		MaterialParameterCollectionInstance->SetScalarParameterValue(RadialBlurRadiusName, RadialBlurRadiusValue);
 	}
