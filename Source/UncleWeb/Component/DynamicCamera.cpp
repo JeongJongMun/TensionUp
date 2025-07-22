@@ -101,6 +101,9 @@ float UDynamicCamera::CalculateTargetArmLength(const float CurrentSpeed) const
 
 void UDynamicCamera::UpdatePostProcessVolume(const float DeltaTime) const
 {
+	if (!PostProcessVolume || !MaterialParameterCollectionInstance || !FollowCamera)
+		return;
+	
 	if (Owner->IsCableAttached())
 	{
 		const float CurrentSpeed = Owner->GetVelocity().Size();
