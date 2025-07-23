@@ -116,18 +116,25 @@ bool UParkourComponent::IsSurfaceClearAboveForClimb(const FVector& ImpactPoint, 
 	if (!OwnerCharacter) return false;
 
 	FVector EyeLocation = OwnerCharacter->GetActorLocation() + FVector(0, 0, OwnerCharacter->BaseEyeHeight);
-
 	FVector ClimbTargetLocation = ImpactPoint + FVector(0, 0, ClimbHeightOffset);
 
-	if (ClimbTargetLocation.Z <= EyeLocation.Z)
-	{
+	if (ClimbTargetLocation.Z <= EyeLocation.Z || ClimbTargetLocation.Z > EyeLocation.Z + ClimbHeightLimit)
 		return false;
-	}
 
-	if (ClimbTargetLocation.Z > EyeLocation.Z + ClimbHeightLimit)
-	{
-		return false;
-	}
+	// check if the target climb location is within the allowed height limit
+	FVector BoxCenter = ClimbTargetLocation + FVector(0, 0, OwnerCharacter->GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
+	FVector BoxHalf = FVector(30.f, 30.f, OwnerCharacter->GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
+
+	FHitResult OccupyHit;
+	bool bClimbLocationBlocked = GetWorld()->SweepSingleByChannel(
+		OccupyHit,
+		BoxCenter,
+		BoxCenter,
+		FQuat::Identity,
+		ECC_Visibility,
+		FCollisionShape::MakeBox(BoxHalf),
+		Params
+	);
 
 	FVector CheckStart = ClimbTargetLocation;
 	FVector CheckEnd = CheckStart + FVector(0, 0, OwnerCharacter->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() + 20.f); // character height + some offset
