@@ -20,7 +20,7 @@ void UParkourComponent::TickParkour(float DeltaTime)
 {
 	/*
 	if (!OwnerCharacter || ParkourState != EParkourState::Climbing) return;
-	
+
 	ClimbInterpAlpha += DeltaTime * ClimbSpeed;
 	FVector NewLocation = FMath::Lerp(ParkourStartLocation, ParkourTargetLocation, ClimbInterpAlpha);
 	//OwnerCharacter->SetActorLocation(NewLocation);
@@ -165,33 +165,28 @@ bool UParkourComponent::IsSurfaceClearAboveForClimb(const FVector& ImpactPoint, 
 void UParkourComponent::BeginParkour(const FVector& SurfaceNormal, const FVector& HitPoint)
 {
 	ParkourStartLocation = OwnerCharacter->GetActorLocation();
-	ParkourTargetLocation = HitPoint + FVector(0, 0, ClimbHeightOffset);
-	//ClimbInterpAlpha = 0.0f;
-	ParkourState = EParkourState::Climbing;
 
+	FVector AttachOffsetVec = SurfaceNormal * AttachOffset;
+	ParkourTargetLocation = HitPoint + AttachOffsetVec + FVector(0, 0, ClimbHeightOffset);
+
+	ParkourState = EParkourState::Climbing;
 	OwnerCharacter->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
 
-	FRotator ForwardRotation = OwnerCharacter->GetActorForwardVector().Rotation();
-	OwnerCharacter->SetActorRotation(ForwardRotation);
+
+	FRotator LookAtWallRotation = UKismetMathLibrary::MakeRotFromX(-SurfaceNormal);
+	OwnerCharacter->SetActorRotation(LookAtWallRotation);
+
+	OwnerCharacter->SetActorLocation(ParkourStartLocation + FVector(0, 0, -50.f));
 
 	if (ClimbUpMontage && OwnerCharacter->GetMesh())
 	{
-		/*
-		float MontageLength = ClimbUpMontage->GetPlayLength();
-		if (MontageLength > 0.f)
-		{
-			ClimbSpeed = 1.f / MontageLength;
-		}
-		*/
-
 		if (UAnimInstance* AnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance())
 		{
 			AnimInstance->Montage_Play(ClimbUpMontage);
 		}
-
-
 	}
 }
+
 void UParkourComponent::AnimNotify_ParkourClimbEnd()
 {
 	if (!OwnerCharacter) return;
