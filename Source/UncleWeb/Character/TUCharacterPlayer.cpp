@@ -292,6 +292,7 @@ void ATUCharacterPlayer::Dash()
 		FRotator CameraRotation = FollowCamera->GetComponentRotation();
 		FRotator YawRotation(0, CameraRotation.Yaw, 0);
 		FVector DashDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+		//FVector DashDirection = GetActorForwardVector(); // player forward direction
 		LaunchCharacter(DashDirection * DashStrength, true, true);
 
 		SteamComponent->ConsumeSteam(DashSteamCost);
