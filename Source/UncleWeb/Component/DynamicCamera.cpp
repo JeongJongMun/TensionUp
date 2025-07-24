@@ -111,8 +111,8 @@ void UDynamicCamera::UpdatePostProcessVolume(const float DeltaTime) const
 		
 		const float CurrentMotionBlurAmount = PostProcessVolume->Settings.MotionBlurAmount;
 		const float CurrentMotionBlurMax = PostProcessVolume->Settings.MotionBlurMax;
-		const float TargetMotionBlurAmount = FMath::Lerp(MotionBlurAmountMin, MotionBlurAmountMax, SpeedRatio);
-		const float TargetMotionBlurDistortion = FMath::Lerp(MotionBlurDistortionMin, MotionBlurDistortionMax, SpeedRatio);
+		const float TargetMotionBlurAmount = FMath::Lerp(0.0f, MotionBlurAmountMax, SpeedRatio);
+		const float TargetMotionBlurDistortion = FMath::Lerp(0.0f, MotionBlurDistortionMax, SpeedRatio);
 		PostProcessVolume->Settings.MotionBlurAmount = FMath::FInterpTo(CurrentMotionBlurAmount, CurrentMotionBlurMax, DeltaTime, PostProcessingInterpolationSpeed);
 		PostProcessVolume->Settings.MotionBlurMax = FMath::FInterpTo(TargetMotionBlurAmount, TargetMotionBlurDistortion, DeltaTime, PostProcessingInterpolationSpeed);
 

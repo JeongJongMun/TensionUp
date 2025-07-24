@@ -64,16 +64,10 @@ private:
 	FVector CameraOffset = FVector(0.0f, 0.0f, 120.0f);
 	
 	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
-	float MotionBlurAmountMin = 0.2f;
-	
-	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
-	float MotionBlurAmountMax = 0.8f;
+	float MotionBlurAmountMax = 0.5f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
-	float MotionBlurDistortionMin = 5.0f;
-	
-	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
-	float MotionBlurDistortionMax = 25.0f;
+	float MotionBlurDistortionMax = 15.0f;
 	
 	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
 	float FOVMin = 90.0f;
