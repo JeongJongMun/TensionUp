@@ -5,6 +5,7 @@
 #include "InputAction.h"
 #include "InputActionValue.h"
 #include "TUCharacterBase.h"
+#include "UncleWeb/Manager/SoundManager.h"
 #include "UncleWeb/Util/TUDefines.h"
 #include "TUCharacterPlayer.generated.h"
 
@@ -171,4 +172,7 @@ private:
 	FName CableSocketName = TEXT("cable_r");
 	FName SteamEffectSocketNameL = TEXT("foot_l_Socket");
 	FName SteamEffectSocketNameR = TEXT("foot_r_Socket");
+
+	UPROPERTY()
+	TObjectPtr<USoundManager> SoundManager;
 };

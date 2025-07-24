@@ -25,6 +25,13 @@ void UCableActionComponent::BeginPlay()
 	
 	Owner = CastChecked<ATUCharacterPlayer>(GetOwner());
 	CachedPC = CastChecked<APlayerController>(Owner->GetController());
+	if (const UWorld* World = GetWorld())
+	{
+		if (const UGameInstance* GI = World->GetGameInstance())
+		{
+			SoundManager = GI->GetSubsystem<USoundManager>();
+		}
+	}
 	ResetCable();
 }
 
@@ -142,6 +149,8 @@ void UCableActionComponent::LaunchCable(const FVector& HitLocation, AActor* HitA
 	TargetCable->SetAttachEndTo(HitActor, NAME_None);
 	TargetCable->EndLocation = AttachedActor->GetTransform().InverseTransformPosition(Owner->GetActorLocation());
 	TargetCable->SetVisibility(true);
+
+	SoundManager->PlaySound2D("SW_Cable_Fire");
 }
 
 void UCableActionComponent::ResetCable()
@@ -207,6 +216,7 @@ void UCableActionComponent::PlayCableVfx(const float DeltaTime)
 		if (CurrentCableState == ECableState::Launching)
 		{
 			CurrentCableState = ECableState::Attaching;
+			SoundManager->PlaySound2D("SW_Cable_Attached");
 			OnEndLaunchAction.Broadcast();
 		}
 		else if (CurrentCableState == ECableState::Retracting)
