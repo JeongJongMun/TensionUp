@@ -38,6 +38,12 @@ void UParkourComponent::TryParkour()
 {
 	if (!OwnerCharacter || !OwnerCharacter->GetCharacterMovement()->IsFalling()) return;
 
+	if (OwnerCharacter->IsCableAttached())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Cannot Parkour~"));
+		return;
+	}
+
 	// Check if the character is already in a parkour state
 	FVector TraceStart = OwnerCharacter->GetActorLocation() + FVector(0, 0, 50.f);
 	FVector BoxHalfSize = BoxTraceHalfSize;
