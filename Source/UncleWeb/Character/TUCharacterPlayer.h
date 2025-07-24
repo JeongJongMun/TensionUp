@@ -20,6 +20,7 @@ class UNCLEWEB_API ATUCharacterPlayer : public ATUCharacterBase
 public:
 	ATUCharacterPlayer();
 	bool IsCableAttached() const;
+	bool IsDashing() const;
 	void PlayAnimation(const EPlayerAnimationMontageType AnimType, float InPlayRate = 1.0f, const FName SectionName = NAME_None);
 
 private:
@@ -168,6 +169,8 @@ private:
 	bool bIsRunning = false;
 	bool bIsTryingParkour = false;
 	bool bIsJumpInputActive = false;
+	bool bIsDashing = false;
+
 
 	FName CableSocketName = TEXT("cable_r");
 	FName SteamEffectSocketNameL = TEXT("foot_l_Socket");

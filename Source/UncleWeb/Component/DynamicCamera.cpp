@@ -62,6 +62,7 @@ void UDynamicCamera::TickComponent(float DeltaTime, ELevelTick TickType, FActorC
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	if (!TargetSpringArm || !Owner->GetMovementComponent()) return;
+
 	
 	UpdatePostProcessVolume(DeltaTime);
 
@@ -104,17 +105,22 @@ void UDynamicCamera::UpdatePostProcessVolume(const float DeltaTime) const
 	if (!PostProcessVolume || !MaterialParameterCollectionInstance || !FollowCamera)
 		return;
 
-	if (Owner->IsCableAttached())
+	if (Owner->IsCableAttached() || Owner->IsDashing())
 	{
 		const float CurrentSpeed = Owner->GetVelocity().Size();
-		const float SpeedRatio = FMath::Clamp(CurrentSpeed / SpeedThreshold_D * 1.5f, 0.0f, 1.0f);
+		float SpeedRatio = FMath::Clamp(CurrentSpeed / SpeedThreshold_D * 1.5f, 0.0f, 1.0f);
 		
+		if (Owner->IsDashing())
+		{
+			SpeedRatio = 1.0f;
+		}
+
 		const float CurrentMotionBlurAmount = PostProcessVolume->Settings.MotionBlurAmount;
 		const float CurrentMotionBlurMax = PostProcessVolume->Settings.MotionBlurMax;
 		const float TargetMotionBlurAmount = FMath::Lerp(0.0f, MotionBlurAmountMax, SpeedRatio);
 		const float TargetMotionBlurDistortion = FMath::Lerp(0.0f, MotionBlurDistortionMax, SpeedRatio);
-		PostProcessVolume->Settings.MotionBlurAmount = FMath::FInterpTo(CurrentMotionBlurAmount, CurrentMotionBlurMax, DeltaTime, PostProcessingInterpolationSpeed);
-		PostProcessVolume->Settings.MotionBlurMax = FMath::FInterpTo(TargetMotionBlurAmount, TargetMotionBlurDistortion, DeltaTime, PostProcessingInterpolationSpeed);
+		PostProcessVolume->Settings.MotionBlurAmount = FMath::FInterpTo(CurrentMotionBlurAmount, TargetMotionBlurAmount, DeltaTime, PostProcessingInterpolationSpeed);
+		PostProcessVolume->Settings.MotionBlurMax = FMath::FInterpTo(CurrentMotionBlurMax, TargetMotionBlurDistortion, DeltaTime, PostProcessingInterpolationSpeed);
 
 		const float CurrentFOV = FollowCamera->FieldOfView;
 		const float TargetFOV = FMath::Lerp(FOVMin, FOVMax, SpeedRatio);

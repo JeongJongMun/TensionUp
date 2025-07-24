@@ -247,8 +247,8 @@ void ATUCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 	EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::Dash);
 	// Deprecated : Cable Length Adjust Func
-	//EnhancedInputComponent->BindAction(ShortenCableAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleShortenCable);
-	//EnhancedInputComponent->BindAction(ExtendCableAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleExtendCable);
+	EnhancedInputComponent->BindAction(ShortenCableAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleShortenCable);
+	EnhancedInputComponent->BindAction(ExtendCableAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleExtendCable);
 	EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::StartRunning);
 	EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::StopRunning);
 	//for parkour
@@ -287,17 +287,31 @@ void ATUCharacterPlayer::Dash()
 	if (!SteamComponent->HasEnoughSteam(DashSteamCost))
 		return;
 
+	bIsDashing = true;
+
 	if (SteamComponent)
 	{
 		FRotator CameraRotation = FollowCamera->GetComponentRotation();
 		FRotator YawRotation(0, CameraRotation.Yaw, 0);
 		FVector DashDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 		//FVector DashDirection = GetActorForwardVector(); // player forward direction
-		LaunchCharacter(DashDirection * DashStrength, true, true);
+		LaunchCharacter(DashDirection * DashStrength*1.0f, true, true);
 
 		SteamComponent->ConsumeSteam(DashSteamCost);
+
+		// deactive dash effect
+		FTimerHandle DashEffectHandle;
+		GetWorldTimerManager().SetTimer(DashEffectHandle, [this]()
+			{
+				bIsDashing = false;
+			}, 0.5f, false);
 	}
 }
+bool ATUCharacterPlayer::IsDashing() const
+{
+	return bIsDashing;
+}
+
 
 void ATUCharacterPlayer::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 	FVector NormalImpulse, const FHitResult& Hit)
