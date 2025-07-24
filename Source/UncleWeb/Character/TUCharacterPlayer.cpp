@@ -287,17 +287,31 @@ void ATUCharacterPlayer::Dash()
 	if (!SteamComponent->HasEnoughSteam(DashSteamCost))
 		return;
 
+	bIsDashing = true;
+
 	if (SteamComponent)
 	{
 		FRotator CameraRotation = FollowCamera->GetComponentRotation();
 		FRotator YawRotation(0, CameraRotation.Yaw, 0);
 		FVector DashDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 		//FVector DashDirection = GetActorForwardVector(); // player forward direction
-		LaunchCharacter(DashDirection * DashStrength, true, true);
+		LaunchCharacter(DashDirection * DashStrength*1.0f, true, true);
 
 		SteamComponent->ConsumeSteam(DashSteamCost);
+
+		// deactive dash effect
+		FTimerHandle DashEffectHandle;
+		GetWorldTimerManager().SetTimer(DashEffectHandle, [this]()
+			{
+				bIsDashing = false;
+			}, 0.5f, false);
 	}
 }
+bool ATUCharacterPlayer::IsDashing() const
+{
+	return bIsDashing;
+}
+
 
 void ATUCharacterPlayer::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 	FVector NormalImpulse, const FHitResult& Hit)
