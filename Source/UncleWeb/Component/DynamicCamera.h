@@ -37,13 +37,13 @@ public:
 	
 private:
 	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
-	float MinSpringArmLength = 350.0f;
+	float MinSpringArmLength = 400.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
-	float MidSpringArmLength = 750.0f;
+	float MidSpringArmLength = 800.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
-	float MaxSpringArmLength = 1400.0f;
+	float MaxSpringArmLength = 1450.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
 	float SpeedThreshold_A = 500.0f;
