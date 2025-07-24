@@ -126,6 +126,14 @@ void ATUCharacterPlayer::BeginPlay()
 
 	// repulsive force
 	GetCapsuleComponent()->OnComponentHit.AddDynamic(this, &ATUCharacterPlayer::OnHit);
+
+	if (const UWorld* World = GetWorld())
+	{
+		if (const UGameInstance* GI = World->GetGameInstance())
+		{
+			SoundManager = GI->GetSubsystem<USoundManager>();
+		}
+	}
 }
 
 void ATUCharacterPlayer::Tick(float DeltaTime)
@@ -417,6 +425,8 @@ void ATUCharacterPlayer::HandleStartSteamBooster()
 		NiagaraCompSteamVfxL->Activate();
 		NiagaraCompSteamVfxR->Activate();
 	}
+
+	SoundManager->PlaySound2D("SW_Cable_SteamBoost", 1.0f, 1.0f, true);
 }
 
 void ATUCharacterPlayer::HandleStopSteamBooster()
@@ -428,6 +438,8 @@ void ATUCharacterPlayer::HandleStopSteamBooster()
 		NiagaraCompSteamVfxL->Deactivate();
 		NiagaraCompSteamVfxR->Deactivate();
 	}
+	
+	SoundManager->StopSound("SW_Cable_SteamBoost");
 }
 
 void ATUCharacterPlayer::RotateToCameraDirection()

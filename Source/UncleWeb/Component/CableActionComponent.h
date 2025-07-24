@@ -4,6 +4,7 @@
 #include "CoreMinimal.h"
 #include "CableComponent.h"
 #include "Components/ActorComponent.h"
+#include "UncleWeb/Manager/SoundManager.h"
 #include "UncleWeb/Util/TUDefines.h"
 #include "CableActionComponent.generated.h"
 
@@ -131,4 +132,7 @@ private:
 	
 	// Deprecated : Cable Length Adjust Func
 	float CurrentCableLength = 0.0f;
+
+	UPROPERTY()
+	TObjectPtr<USoundManager> SoundManager;
 };
