@@ -22,10 +22,10 @@ public:
 // --------------------
 protected:
 	UPROPERTY(EditAnywhere, Category = "Config|Player")
-	float MaxWalkSpeed = 450.0f;
+	float MaxWalkSpeed = 400.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|Player")
-	float MaxRunSpeed = 800.0f;
+	float MaxRunSpeed = 850.0f;
 	
 	UPROPERTY(EditAnywhere, Category = "Config|Player")
 	float ZumpVelocity = 500.0f;

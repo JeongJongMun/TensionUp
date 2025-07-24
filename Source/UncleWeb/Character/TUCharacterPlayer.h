@@ -117,7 +117,7 @@ private:
 	float CableActionAirControl = 0.3f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|Player")
-	float CableFallingLateralFriction = 0.0f;
+	float CableFallingLateralFriction = -0.1f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|Player")
 	float MovementModeTransitionDelay = 3.0f;
