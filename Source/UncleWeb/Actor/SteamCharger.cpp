@@ -19,8 +19,7 @@ ASteamCharger::ASteamCharger()
 	SphereMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SphereMesh"));
 	SphereMesh->SetupAttachment(RootComponent);
 	SphereMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	SphereMesh->SetRelativeLocation(FVector::ZeroVector);
-	SphereMesh->SetRelativeRotation(FRotator::ZeroRotator);
+	SphereMesh->SetRelativeLocationAndRotation(FVector::ZeroVector, FRotator::ZeroRotator);
 
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> SphereMeshAsset(TEXT("/Script/Engine.StaticMesh'/Game/Art/Mesh/SM_Sphere.SM_Sphere'"));
 	if (SphereMeshAsset.Succeeded())
@@ -33,7 +32,7 @@ void ASteamCharger::BeginPlay()
 {
 	Super::BeginPlay();
 
-	SphereCollision->OnComponentBeginOverlap.AddDynamic(this, &ASteamCharger::OnOverlapBegin);
+	SphereCollision->OnComponentBeginOverlap.AddDynamic(this, &ASteamCharger::OnTriggerBeginOverlap);
 }
 
 void ASteamCharger::Tick(float DeltaTime)
@@ -51,7 +50,7 @@ void ASteamCharger::Tick(float DeltaTime)
 	}
 }
 
-void ASteamCharger::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void ASteamCharger::OnTriggerBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor && OtherActor->IsA<ATUCharacterPlayer>())
 	{
