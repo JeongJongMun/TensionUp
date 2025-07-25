@@ -5,6 +5,7 @@
 #include "InputAction.h"
 #include "InputActionValue.h"
 #include "TUCharacterBase.h"
+#include "UncleWeb/Manager/SoundManager.h"
 #include "UncleWeb/Util/TUDefines.h"
 #include "TUCharacterPlayer.generated.h"
 
@@ -19,6 +20,7 @@ class UNCLEWEB_API ATUCharacterPlayer : public ATUCharacterBase
 public:
 	ATUCharacterPlayer();
 	bool IsCableAttached() const;
+	bool IsDashing() const;
 	void PlayAnimation(const EPlayerAnimationMontageType AnimType, float InPlayRate = 1.0f, const FName SectionName = NAME_None);
 
 private:
@@ -117,7 +119,7 @@ private:
 	float CableActionAirControl = 0.3f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|Player")
-	float CableFallingLateralFriction = 0.0f;
+	float CableFallingLateralFriction = -0.1f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|Player")
 	float MovementModeTransitionDelay = 3.0f;
@@ -167,8 +169,13 @@ private:
 	bool bIsRunning = false;
 	bool bIsTryingParkour = false;
 	bool bIsJumpInputActive = false;
+	bool bIsDashing = false;
+
 
 	FName CableSocketName = TEXT("cable_r");
 	FName SteamEffectSocketNameL = TEXT("foot_l_Socket");
 	FName SteamEffectSocketNameR = TEXT("foot_r_Socket");
+
+	UPROPERTY()
+	TObjectPtr<USoundManager> SoundManager;
 };

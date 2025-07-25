@@ -20,7 +20,7 @@ void UParkourComponent::TickParkour(float DeltaTime)
 {
 	/*
 	if (!OwnerCharacter || ParkourState != EParkourState::Climbing) return;
-	
+
 	ClimbInterpAlpha += DeltaTime * ClimbSpeed;
 	FVector NewLocation = FMath::Lerp(ParkourStartLocation, ParkourTargetLocation, ClimbInterpAlpha);
 	//OwnerCharacter->SetActorLocation(NewLocation);
@@ -38,11 +38,19 @@ void UParkourComponent::TryParkour()
 {
 	if (!OwnerCharacter || !OwnerCharacter->GetCharacterMovement()->IsFalling()) return;
 
+	if (OwnerCharacter->IsCableAttached())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Cannot Parkour~"));
+		return;
+	}
+
+	// Check if the character is already in a parkour state
 	FVector TraceStart = OwnerCharacter->GetActorLocation() + FVector(0, 0, 50.f);
 	FVector BoxHalfSize = BoxTraceHalfSize;
 	FCollisionQueryParams Params;
 	Params.AddIgnoredActor(OwnerCharacter);
 
+	// Draw debug box for the trace start point
 	TArray<FVector> Directions = {
 		OwnerCharacter->GetActorForwardVector(),
 		OwnerCharacter->GetActorForwardVector().RotateAngleAxis(30.f, FVector::UpVector),
@@ -53,12 +61,13 @@ void UParkourComponent::TryParkour()
 	bool bAnyHit = false;
 	float ClosestDistance = TNumericLimits<float>::Max();
 
+	// Draw debug box at the trace start point
 	for (const FVector& Dir : Directions)
 	{
 		FVector TraceEnd = TraceStart + Dir * ParkourMaxDistance;
 		FRotator Orientation = Dir.Rotation();
 		FHitResult Hit;
-
+		// Perform the box trace
 		bool bHit = GetWorld()->SweepSingleByChannel(
 			Hit, TraceStart, TraceEnd, FQuat(Orientation),
 			ECC_Visibility, FCollisionShape::MakeBox(BoxHalfSize), Params);
@@ -80,6 +89,7 @@ void UParkourComponent::TryParkour()
 		}
 	}
 
+	// Check if we found a valid hit
 	if (bAnyHit)
 	{
 		const FVector SurfaceNormal = BestHit.ImpactNormal;
@@ -111,24 +121,33 @@ void UParkourComponent::TryParkour()
 	}
 }
 
+// Check if the surface above the target climb location is clear for climbing
 bool UParkourComponent::IsSurfaceClearAboveForClimb(const FVector& ImpactPoint, const FCollisionQueryParams& Params) const
 {
 	if (!OwnerCharacter) return false;
 
 	FVector EyeLocation = OwnerCharacter->GetActorLocation() + FVector(0, 0, OwnerCharacter->BaseEyeHeight);
-
 	FVector ClimbTargetLocation = ImpactPoint + FVector(0, 0, ClimbHeightOffset);
 
-	if (ClimbTargetLocation.Z <= EyeLocation.Z)
-	{
+	if (ClimbTargetLocation.Z <= EyeLocation.Z || ClimbTargetLocation.Z > EyeLocation.Z + ClimbHeightLimit)
 		return false;
-	}
 
-	if (ClimbTargetLocation.Z > EyeLocation.Z + ClimbHeightLimit)
-	{
-		return false;
-	}
+	// check if the target climb location is within the allowed height limit
+	FVector BoxCenter = ClimbTargetLocation + FVector(0, 0, OwnerCharacter->GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
+	FVector BoxHalf = FVector(30.f, 30.f, OwnerCharacter->GetCapsuleComponent()->GetScaledCapsuleHalfHeight()); // character width + height
 
+	FHitResult OccupyHit;
+	bool bClimbLocationBlocked = GetWorld()->SweepSingleByChannel(
+		OccupyHit,
+		BoxCenter,
+		BoxCenter,
+		FQuat::Identity,
+		ECC_Visibility,
+		FCollisionShape::MakeBox(BoxHalf),
+		Params
+	);
+
+	// check the space above the target climb location
 	FVector CheckStart = ClimbTargetLocation;
 	FVector CheckEnd = CheckStart + FVector(0, 0, OwnerCharacter->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() + 20.f); // character height + some offset
 
@@ -165,33 +184,30 @@ bool UParkourComponent::IsSurfaceClearAboveForClimb(const FVector& ImpactPoint, 
 void UParkourComponent::BeginParkour(const FVector& SurfaceNormal, const FVector& HitPoint)
 {
 	ParkourStartLocation = OwnerCharacter->GetActorLocation();
-	ParkourTargetLocation = HitPoint + FVector(0, 0, ClimbHeightOffset);
-	//ClimbInterpAlpha = 0.0f;
-	ParkourState = EParkourState::Climbing;
 
+	// Calculate the target location for climbing
+	FVector AttachOffsetVec = SurfaceNormal * AttachOffset;
+	ParkourTargetLocation = HitPoint + AttachOffsetVec + FVector(0, 0, ClimbHeightOffset);
+
+	ParkourState = EParkourState::Climbing;
 	OwnerCharacter->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
 
-	FRotator ForwardRotation = OwnerCharacter->GetActorForwardVector().Rotation();
-	OwnerCharacter->SetActorRotation(ForwardRotation);
+
+	FRotator LookAtWallRotation = UKismetMathLibrary::MakeRotFromX(-SurfaceNormal);
+	OwnerCharacter->SetActorRotation(LookAtWallRotation);
+
+	// Set the character location to the start location, so hard
+	OwnerCharacter->SetActorLocation(ParkourStartLocation + FVector(0, 0, -50.f));
 
 	if (ClimbUpMontage && OwnerCharacter->GetMesh())
 	{
-		/*
-		float MontageLength = ClimbUpMontage->GetPlayLength();
-		if (MontageLength > 0.f)
-		{
-			ClimbSpeed = 1.f / MontageLength;
-		}
-		*/
-
 		if (UAnimInstance* AnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance())
 		{
 			AnimInstance->Montage_Play(ClimbUpMontage);
 		}
-
-
 	}
 }
+
 void UParkourComponent::AnimNotify_ParkourClimbEnd()
 {
 	if (!OwnerCharacter) return;

@@ -15,7 +15,7 @@ class UNCLEWEB_API UDynamicCamera : public UActorComponent
 // --------------------
 public:	
 	UDynamicCamera();
-	void InitializeCamera();
+	void InitializeCamera() const;
 
 protected:
 	virtual void BeginPlay() override;
@@ -23,6 +23,7 @@ protected:
 
 private:
 	float CalculateTargetArmLength(float CurrentSpeed) const;
+	void UpdatePostProcessVolume(const float DeltaTime) const;
 	
 // --------------------
 // Variables
@@ -30,16 +31,19 @@ private:
 public:
 	UPROPERTY()
 	TObjectPtr<class USpringArmComponent> TargetSpringArm;
+
+	UPROPERTY()
+	TObjectPtr<class UCameraComponent> FollowCamera;
 	
 private:
 	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
-	float MinSpringArmLength = 350.0f;
+	float MinSpringArmLength = 400.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
-	float MidSpringArmLength = 750.0f;
+	float MidSpringArmLength = 800.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
-	float MaxSpringArmLength = 1400.0f;
+	float MaxSpringArmLength = 1450.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
 	float SpeedThreshold_A = 500.0f;
@@ -58,7 +62,40 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
 	FVector CameraOffset = FVector(0.0f, 0.0f, 120.0f);
+	
+	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
+	float MotionBlurAmountMax = 0.5f;
+
+	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
+	float MotionBlurDistortionMax = 15.0f;
+	
+	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
+	float FOVMin = 90.0f;
+	
+	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
+	float FOVMax = 100.0f;
 
 	UPROPERTY()
 	TObjectPtr<class ATUCharacterPlayer> Owner;
+
+	UPROPERTY()
+	TObjectPtr<APostProcessVolume> PostProcessVolume;
+
+	UPROPERTY()
+	TObjectPtr<UMaterialParameterCollection> MaterialParameterCollection;
+
+	UPROPERTY()
+	TObjectPtr<UMaterialParameterCollectionInstance> MaterialParameterCollectionInstance;
+
+	FName RadialBlurIntensityName = FName("BlurIntensity");
+	FName RadialBlurRadiusName = FName("BlurRadius");
+
+	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
+	float RadialBlurIntensityMax = 1.5f;
+
+	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
+	float RadialBlurRadiusMax = 1.5f;
+
+	UPROPERTY(EditAnywhere, Category = "Config|DynamicCamera")
+	float PostProcessingInterpolationSpeed = 1.0f;
 };

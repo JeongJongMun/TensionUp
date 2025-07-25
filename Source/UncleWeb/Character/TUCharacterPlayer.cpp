@@ -47,6 +47,7 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 
 	DynamicCameraComponent = CreateDefaultSubobject<UDynamicCamera>(TEXT("DynamicCameraComponent"));
 	DynamicCameraComponent->TargetSpringArm = CameraBoom;
+	DynamicCameraComponent->FollowCamera = FollowCamera;
 	DynamicCameraComponent->InitializeCamera();
 
 	CableComponent = CreateDefaultSubobject<UCableComponent>(TEXT("CableComponent"));
@@ -125,6 +126,14 @@ void ATUCharacterPlayer::BeginPlay()
 
 	// repulsive force
 	GetCapsuleComponent()->OnComponentHit.AddDynamic(this, &ATUCharacterPlayer::OnHit);
+
+	if (const UWorld* World = GetWorld())
+	{
+		if (const UGameInstance* GI = World->GetGameInstance())
+		{
+			SoundManager = GI->GetSubsystem<USoundManager>();
+		}
+	}
 }
 
 void ATUCharacterPlayer::Tick(float DeltaTime)
@@ -234,10 +243,12 @@ void ATUCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ATUCharacterPlayer::Look);
 	EnhancedInputComponent->BindAction(LeftClickAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleLaunchCable);
 	EnhancedInputComponent->BindAction(LeftClickAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::HandleRetractCable);
+	EnhancedInputComponent->BindAction(LeftClickAction, ETriggerEvent::Canceled, this, &ATUCharacterPlayer::HandleRetractCable);
+
 	EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::Dash);
 	// Deprecated : Cable Length Adjust Func
-	// EnhancedInputComponent->BindAction(ShortenCableAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleShortenCable);
-	// EnhancedInputComponent->BindAction(ExtendCableAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleExtendCable);
+	//EnhancedInputComponent->BindAction(ShortenCableAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleShortenCable);
+	//EnhancedInputComponent->BindAction(ExtendCableAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleExtendCable);
 	EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::StartRunning);
 	EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::StopRunning);
 	//for parkour
@@ -276,16 +287,31 @@ void ATUCharacterPlayer::Dash()
 	if (!SteamComponent->HasEnoughSteam(DashSteamCost))
 		return;
 
+	bIsDashing = true;
+
 	if (SteamComponent)
 	{
 		FRotator CameraRotation = FollowCamera->GetComponentRotation();
 		FRotator YawRotation(0, CameraRotation.Yaw, 0);
 		FVector DashDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-		LaunchCharacter(DashDirection * DashStrength, true, true);
+		//FVector DashDirection = GetActorForwardVector(); // player forward direction
+		LaunchCharacter(DashDirection * DashStrength*1.0f, true, true);
 
 		SteamComponent->ConsumeSteam(DashSteamCost);
+
+		// deactive dash effect
+		FTimerHandle DashEffectHandle;
+		GetWorldTimerManager().SetTimer(DashEffectHandle, [this]()
+			{
+				bIsDashing = false;
+			}, 0.5f, false);
 	}
 }
+bool ATUCharacterPlayer::IsDashing() const
+{
+	return bIsDashing;
+}
+
 
 void ATUCharacterPlayer::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 	FVector NormalImpulse, const FHitResult& Hit)
@@ -324,6 +350,9 @@ void ATUCharacterPlayer::StopRunning()
 // ----- Handler
 void ATUCharacterPlayer::HandleLaunchCable()
 {
+	if (!SteamComponent->HasEnoughSteam(CableSteamCost))
+		return;
+	
 	CableActionComponent->TryLaunchCable();
 }
 
@@ -399,11 +428,9 @@ void ATUCharacterPlayer::HandleJumpOrParkour()
 	}
 }
 
-
-
 void ATUCharacterPlayer::HandleStartSteamBooster()
 {
-	if (!CableActionComponent->IsCableAttaching() || !SteamComponent->HasEnoughSteam(SteamBoosterCost))
+	if (!CableActionComponent->IsCableActive() || !SteamComponent->HasEnoughSteam(SteamBoosterCost))
 		return;
 
 	CableActionComponent->SetIsSteamBoosterActive(true);
@@ -413,6 +440,8 @@ void ATUCharacterPlayer::HandleStartSteamBooster()
 		NiagaraCompSteamVfxL->Activate();
 		NiagaraCompSteamVfxR->Activate();
 	}
+
+	SoundManager->PlaySound2D("SW_Cable_SteamBoost", 1.0f, 1.0f, true);
 }
 
 void ATUCharacterPlayer::HandleStopSteamBooster()
@@ -424,6 +453,8 @@ void ATUCharacterPlayer::HandleStopSteamBooster()
 		NiagaraCompSteamVfxL->Deactivate();
 		NiagaraCompSteamVfxR->Deactivate();
 	}
+	
+	SoundManager->StopSound("SW_Cable_SteamBoost");
 }
 
 void ATUCharacterPlayer::RotateToCameraDirection()
