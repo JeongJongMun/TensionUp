@@ -44,6 +44,13 @@ void USteamComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 	}
 }
 
+void USteamComponent::SetSteam(float InAmount)
+{
+	CurrentSteam = FMath::Clamp(InAmount, 0.0f, MaxSteam);
+	
+	OnSteamChanged.Broadcast(CurrentSteam, MaxSteam);
+}
+
 void USteamComponent::ConsumeSteam(float Amount)
 {
 	if (!HasEnoughSteam(Amount)) return;

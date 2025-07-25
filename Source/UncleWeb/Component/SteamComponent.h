@@ -18,6 +18,7 @@ class UNCLEWEB_API USteamComponent : public UActorComponent
 public:
 	USteamComponent();
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	void SetSteam(float InAmount);
 	void ConsumeSteam(float Amount);
 	bool HasEnoughSteam(float Amount) const;
 	void RecoverSteam(float DeltaTime);

@@ -17,6 +17,7 @@
 #include "UncleWeb/Util/TUDefines.h"
 #include "NiagaraSystem.h"
 #include "NiagaraComponent.h"
+#include "UncleWeb/Actor/SteamCharger.h"
 
 ATUCharacterPlayer::ATUCharacterPlayer()
 {
@@ -49,7 +50,7 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 	DynamicCameraComponent->TargetSpringArm = CameraBoom;
 	DynamicCameraComponent->FollowCamera = FollowCamera;
 	DynamicCameraComponent->InitializeCamera();
-
+ 
 	CableComponent = CreateDefaultSubobject<UCableComponent>(TEXT("CableComponent"));
 	CableComponent->SetupAttachment(GetMesh(), CableSocketName);
 	
@@ -123,7 +124,7 @@ void ATUCharacterPlayer::BeginPlay()
 	SteamComponent->OnSteamChanged.AddDynamic(this, &ATUCharacterPlayer::HandleUpdateSteamUI);
 	CableActionComponent->OnBeginLaunchAction.AddDynamic(this, &ATUCharacterPlayer::OnBeginLaunch);
 	CableActionComponent->OnBeginRetractAction.AddDynamic(this, &ATUCharacterPlayer::OnBeginRetract);
-
+	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &ATUCharacterPlayer::OnOverlapBegin);
 	// repulsive force
 	GetCapsuleComponent()->OnComponentHit.AddDynamic(this, &ATUCharacterPlayer::OnHit);
 
@@ -134,6 +135,19 @@ void ATUCharacterPlayer::BeginPlay()
 			SoundManager = GI->GetSubsystem<USoundManager>();
 		}
 	}
+}
+
+void ATUCharacterPlayer::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (OtherActor && OtherActor->IsA<ASteamCharger>())
+	{
+		HandleSteamCharagerCollision();
+	}
+}
+
+void ATUCharacterPlayer::HandleSteamCharagerCollision()
+{
+	SteamComponent->SetSteam(100.0f);
 }
 
 void ATUCharacterPlayer::Tick(float DeltaTime)
