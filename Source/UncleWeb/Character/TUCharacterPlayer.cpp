@@ -18,6 +18,7 @@
 #include "NiagaraSystem.h"
 #include "NiagaraComponent.h"
 #include "UncleWeb/Actor/SteamCharger.h"
+#include "UncleWeb/Actor/Teleporter.h"
 
 ATUCharacterPlayer::ATUCharacterPlayer()
 {
@@ -141,13 +142,13 @@ void ATUCharacterPlayer::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AAc
 {
 	if (OtherActor && OtherActor->IsA<ASteamCharger>())
 	{
-		HandleSteamCharagerCollision();
+		HandleSteamChargerCollision();
 	}
-}
-
-void ATUCharacterPlayer::HandleSteamCharagerCollision()
-{
-	SteamComponent->SetSteam(100.0f);
+	else if (OtherActor && OtherActor->IsA<ATeleporter>())
+	{
+		HandleRetractCable();
+		GetCharacterMovement()->StopMovementImmediately();
+	}
 }
 
 void ATUCharacterPlayer::Tick(float DeltaTime)
@@ -469,6 +470,11 @@ void ATUCharacterPlayer::HandleStopSteamBooster()
 	}
 	
 	SoundManager->StopSound("SW_Cable_SteamBoost");
+}
+
+void ATUCharacterPlayer::HandleSteamChargerCollision()
+{
+	SteamComponent->SetSteam(100.0f);
 }
 
 void ATUCharacterPlayer::RotateToCameraDirection()
