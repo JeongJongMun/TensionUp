@@ -14,6 +14,7 @@ class UNCLEWEB_API USettingWidget : public UUserWidget
 
 public:
 	USettingWidget(const FObjectInitializer& ObjectInitializer);
+	void ShowWidget();
 
 protected:
 	virtual void NativeConstruct() override;
@@ -29,7 +30,7 @@ private:
 	void OnMouseSensitivityChanged(float Value);
 
 	UFUNCTION()
-	void OnApplyButtonClicked();
+	void HideWidget();
 
 	UFUNCTION()
 	void OnExitButtonClicked();
@@ -76,4 +77,7 @@ private:
 	TObjectPtr<USoundManager> SoundManager;
 
 	FString MainMenuLevelName = TEXT("MainMenu");
+
+	UPROPERTY()
+	TObjectPtr<APlayerController> CachedPC;
 };

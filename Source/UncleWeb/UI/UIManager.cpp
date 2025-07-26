@@ -85,7 +85,7 @@ void AUIManager::AddWidgetsToViewport()
     }
 }
 
-void AUIManager::UpdateSteamUI(float Current, float Max)
+void AUIManager::UpdateSteamUI(const float Current, const float Max)
 {
     if (SteamWidget)
     {
@@ -105,7 +105,7 @@ void AUIManager::SetActiveCrosshair(const ESlateVisibility Visibility)
     CrosshairWidget->SetVisibility(Visibility);
 }
 
-void AUIManager::SetCrosshairColor(ECrosshairStateType State)
+void AUIManager::SetCrosshairColor(const ECrosshairStateType State)
 {
     if (!CrosshairWidget || CurrentCrosshairState == State) return;
 
@@ -125,12 +125,8 @@ void AUIManager::SetCrosshairColor(ECrosshairStateType State)
 
 void AUIManager::ShowSettingWidget()
 {
-    if (SettingWidget)
-    {
-        CachedPC->SetInputMode(FInputModeUIOnly());
-        CachedPC->SetShowMouseCursor(true);
-        
-        SettingWidget->SetVisibility(ESlateVisibility::Visible);
-        UGameplayStatics::SetGamePaused(GetWorld(), true);
-    }
+    if (!SettingWidget)
+        return;
+    
+    SettingWidget->ShowWidget();
 }
