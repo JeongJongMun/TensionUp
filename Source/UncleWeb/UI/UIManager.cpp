@@ -1,10 +1,10 @@
 #include "UIManager.h"
+#include "ControlGuideWidget.h"
 #include "SettingWidget.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/Image.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
-#include "Kismet/GameplayStatics.h"
 #include "UncleWeb/Util/TUDefines.h"
 
 AUIManager::AUIManager()
@@ -26,6 +26,12 @@ AUIManager::AUIManager()
     if (SettingWidgetFinder.Succeeded())
     {
         SettingWidgetClass = SettingWidgetFinder.Class;
+    }
+
+    static ConstructorHelpers::FClassFinder<UControlGuideWidget> ControlGuideFinder(TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/UI/WBP_ControlGuide.WBP_ControlGuide_C'"));
+    if (ControlGuideFinder.Succeeded())
+    {
+        ControlGuideWidgetClass = ControlGuideFinder.Class;
     }
 }
 
@@ -65,6 +71,10 @@ void AUIManager::CreateWidgets()
     {
         SettingWidget = CreateWidget<USettingWidget>(CachedPC, SettingWidgetClass);
     }
+    if (!ControlGuideWidget && ControlGuideWidgetClass)
+    {
+        ControlGuideWidget = CreateWidget<UControlGuideWidget>(CachedPC, ControlGuideWidgetClass);
+    }
 }
 
 void AUIManager::AddWidgetsToViewport()
@@ -83,9 +93,13 @@ void AUIManager::AddWidgetsToViewport()
         SettingWidget->AddToViewport();
         SettingWidget->SetVisibility(ESlateVisibility::Hidden);
     }
+    if (ControlGuideWidget && !ControlGuideWidget->IsInViewport())
+    {
+        ControlGuideWidget->AddToViewport();
+    }
 }
 
-void AUIManager::UpdateSteamUI(float Current, float Max)
+void AUIManager::UpdateSteamUI(const float Current, const float Max)
 {
     if (SteamWidget)
     {
@@ -105,32 +119,42 @@ void AUIManager::SetActiveCrosshair(const ESlateVisibility Visibility)
     CrosshairWidget->SetVisibility(Visibility);
 }
 
-void AUIManager::SetCrosshairColor(ECrosshairStateType State)
+void AUIManager::SetCrosshairColor(const ECrosshairStateType State)
 {
     if (!CrosshairWidget || CurrentCrosshairState == State) return;
 
     UImage* CrosshairImage = Cast<UImage>(CrosshairWidget->GetWidgetFromName(TEXT("IMG_Crosshair")));
-    if (!CrosshairImage) return;
+    UImage* CrosshairFocusImage = Cast<UImage>(CrosshairWidget->GetWidgetFromName(TEXT("IMG_Crosshair_Focus")));
+    
+    if (!CrosshairImage || !CrosshairFocusImage) return;
 
     if (State == ECrosshairStateType::Default)
     {
         CrosshairImage->SetColorAndOpacity(DefaultCrosshairColor);
+        CrosshairFocusImage->SetColorAndOpacity(DefaultCrosshairColor);
+        CrosshairFocusImage->SetVisibility(ESlateVisibility::Hidden);
     }
     else if (State == ECrosshairStateType::Active)
     {
         CrosshairImage->SetColorAndOpacity(ActiveCrosshairColor);
+        CrosshairFocusImage->SetColorAndOpacity(ActiveCrosshairColor);
+        CrosshairFocusImage->SetVisibility(ESlateVisibility::Visible);
     }
     CurrentCrosshairState = State;
 }
 
 void AUIManager::ShowSettingWidget()
 {
-    if (SettingWidget)
-    {
-        CachedPC->SetInputMode(FInputModeUIOnly());
-        CachedPC->SetShowMouseCursor(true);
-        
-        SettingWidget->SetVisibility(ESlateVisibility::Visible);
-        UGameplayStatics::SetGamePaused(GetWorld(), true);
-    }
+    if (!SettingWidget)
+        return;
+    
+    SettingWidget->ShowWidget();
+}
+
+void AUIManager::ToggleControlGuideWidget()
+{
+    if (!ControlGuideWidget)
+        return;
+
+    ControlGuideWidget->ToggleWidget();
 }

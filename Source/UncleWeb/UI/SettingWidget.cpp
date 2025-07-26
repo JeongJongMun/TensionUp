@@ -8,14 +8,18 @@
 #include "UncleWeb/Character/TUCharacterPlayer.h"
 #include "UncleWeb/Framework/SettingSaveGame.h"
 
-USettingWidget::USettingWidget(const FObjectInitializer& ObjectInitializer)
-    : Super(ObjectInitializer)
+USettingWidget::USettingWidget(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 }
 
 void USettingWidget::NativeConstruct()
 {
     Super::NativeConstruct();
+    APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+    if (PC)
+    {
+        CachedPC = PC;
+    }
 
     if (const UWorld* World = GetWorld())
     {
@@ -39,7 +43,7 @@ void USettingWidget::NativeConstruct()
     
     if (ApplyButton)
     {
-        ApplyButton->OnClicked.AddDynamic(this, &USettingWidget::OnApplyButtonClicked);
+        ApplyButton->OnClicked.AddDynamic(this, &USettingWidget::HideWidget);
     }
     if (ExitButton)
     {
@@ -123,26 +127,35 @@ void USettingWidget::OnMouseSensitivityChanged(const float Value)
     }
 }
 
-void USettingWidget::OnApplyButtonClicked()
+void USettingWidget::ShowWidget()
+{
+    if (!CachedPC)
+        return;
+
+    CachedPC->SetInputMode(FInputModeUIOnly());
+    CachedPC->SetShowMouseCursor(true);
+        
+    SetVisibility(ESlateVisibility::Visible);
+    UGameplayStatics::SetGamePaused(GetWorld(), true);
+}
+
+void USettingWidget::HideWidget()
 {
     USettingSaveGame* SaveGameInstance = Cast<USettingSaveGame>(UGameplayStatics::CreateSaveGameObject(USettingSaveGame::StaticClass()));
 
-    if (SaveGameInstance)
-    {
-        SaveGameInstance->BgmVolume = BgmValue;
-        SaveGameInstance->SfxVolume = SfxValue;
-        SaveGameInstance->MouseSensitivity = MouseSensitivityValue;
-        
-        UGameplayStatics::SaveGameToSlot(SaveGameInstance, SaveGameSlotName, SaveGameSlotIndex);
-        
-        if (APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0))
-        {
-            PC->SetInputMode(FInputModeGameOnly());
-            PC->SetShowMouseCursor(false);
-        }
-        SetVisibility(ESlateVisibility::Hidden);
-        UGameplayStatics::SetGamePaused(GetWorld(), false);
-    }
+    if (!SaveGameInstance || !CachedPC)
+        return;
+    
+    SaveGameInstance->BgmVolume = BgmValue;
+    SaveGameInstance->SfxVolume = SfxValue;
+    SaveGameInstance->MouseSensitivity = MouseSensitivityValue;
+    
+    UGameplayStatics::SaveGameToSlot(SaveGameInstance, SaveGameSlotName, SaveGameSlotIndex);
+    
+    CachedPC->SetInputMode(FInputModeGameOnly());
+    CachedPC->SetShowMouseCursor(false);
+    SetVisibility(ESlateVisibility::Hidden);
+    UGameplayStatics::SetGamePaused(GetWorld(), false);
 }
 
 void USettingWidget::OnExitButtonClicked()

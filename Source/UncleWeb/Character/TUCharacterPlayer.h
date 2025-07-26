@@ -72,6 +72,7 @@ private:
 
 	void RotateToCameraDirection();
 	void HandleShowSettingWidget();
+	void ToggleControlGuideWidget();
 
 // --------------------
 // Variables
@@ -177,7 +178,10 @@ private:
 	TObjectPtr<UInputAction> SteamBoostAction;
 
 	UPROPERTY()
-	TObjectPtr<UInputAction> ToggleSettingsAction;
+	TObjectPtr<UInputAction> ShowSettingsAction;
+	
+	UPROPERTY()
+	TObjectPtr<UInputAction> ToggleControlGuideAction;
 
 	bool bIsTryingParkour = false;
 	bool bIsJumpInputActive = false;

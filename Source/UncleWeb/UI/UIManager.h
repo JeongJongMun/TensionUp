@@ -23,6 +23,7 @@ public:
 	void SetActiveCrosshair(ESlateVisibility Visibility);
 	void SetCrosshairColor(ECrosshairStateType State);
 	void ShowSettingWidget();
+	void ToggleControlGuideWidget();
 
 protected:
 	virtual void BeginPlay() override;
@@ -51,9 +52,15 @@ private:
 	TSubclassOf<class USettingWidget> SettingWidgetClass;
 	
 	UPROPERTY()
+	TObjectPtr<class UControlGuideWidget> ControlGuideWidget;
+	
+	UPROPERTY()
+	TSubclassOf<class UControlGuideWidget> ControlGuideWidgetClass;
+	
+	UPROPERTY()
 	TObjectPtr<APlayerController> CachedPC;
 	
 	ECrosshairStateType CurrentCrosshairState = ECrosshairStateType::Default;
 	FLinearColor DefaultCrosshairColor = FLinearColor(1.0f, 1.0f, 1.0f, 1.0f);
-	FLinearColor ActiveCrosshairColor = FLinearColor(1.0f, 0.0f, 0.0f, 1.0f);
+	FLinearColor ActiveCrosshairColor = FColor::FromHex(TEXT("F4672A")).ReinterpretAsLinear();
 };

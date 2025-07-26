@@ -40,4 +40,7 @@ private:
 	
 	ESteamChargerState CurrentState = ESteamChargerState::None;
 	float ElapsedTime = 0.0f;
+
+	UPROPERTY()
+	TObjectPtr<class USoundManager> SoundManager;
 };

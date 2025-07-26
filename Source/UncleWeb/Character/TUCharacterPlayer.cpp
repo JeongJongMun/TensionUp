@@ -181,6 +181,7 @@ void ATUCharacterPlayer::Tick(float DeltaTime)
 
 		if (!SteamComponent->HasEnoughSteam(SteamBoosterCost))
 		{
+			SoundManager->PlaySound2D("SW_Steam_Alarm");
 			HandleStopSteamBooster();
 		}
 	}
@@ -201,7 +202,8 @@ void ATUCharacterPlayer::InitializeInputActions()
 		{ EInputActionType::ShortenCable, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_ZoomIn.IA_ZoomIn'"))) },
 		{ EInputActionType::ExtendCable, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_ZoomOut.IA_ZoomOut'"))) },
 		{ EInputActionType::SteamBoost, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_SteamBooster.IA_SteamBooster'"))) },
-		{ EInputActionType::ShowSetting, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_ToggleSettings.IA_ToggleSettings'"))) }
+		{ EInputActionType::ShowSetting, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_ShowSettings.IA_ShowSettings'"))) },
+		{ EInputActionType::ToggleControlGuide, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_ToggleControlGuide.IA_ToggleControlGuide'"))) },
 	};
 
 	InputActionMap = {
@@ -214,7 +216,8 @@ void ATUCharacterPlayer::InitializeInputActions()
 		{ EInputActionType::ShortenCable, ShortenCableAction },
 		{ EInputActionType::ExtendCable, ExtendCableAction },
 		{ EInputActionType::SteamBoost, SteamBoostAction },
-		{ EInputActionType::ShowSetting, ToggleSettingsAction }
+		{ EInputActionType::ShowSetting, ShowSettingsAction },
+		{ EInputActionType::ToggleControlGuide, ToggleControlGuideAction },
 	};
 
 	for (const TPair<EInputActionType, TSoftObjectPtr<UInputAction>>& Pair : InputActionPaths)
@@ -241,7 +244,8 @@ void ATUCharacterPlayer::InitializeInputActions()
 	ExtendCableAction = InputActionMap.FindRef(EInputActionType::ExtendCable);
 	RunAction = InputActionMap.FindRef(EInputActionType::Run);
 	SteamBoostAction = InputActionMap.FindRef(EInputActionType::SteamBoost);
-	ToggleSettingsAction = InputActionMap.FindRef(EInputActionType::ShowSetting);
+	ShowSettingsAction = InputActionMap.FindRef(EInputActionType::ShowSetting);
+	ToggleControlGuideAction = InputActionMap.FindRef(EInputActionType::ToggleControlGuide);
 }
 
 void ATUCharacterPlayer::InitializeAnimations()
@@ -285,7 +289,8 @@ void ATUCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	EnhancedInputComponent->BindAction(SteamBoostAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::HandleStopSteamBooster);
 	EnhancedInputComponent->BindAction(SteamBoostAction, ETriggerEvent::Canceled, this, &ATUCharacterPlayer::HandleStopSteamBooster);
 
-	EnhancedInputComponent->BindAction(ToggleSettingsAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleShowSettingWidget);
+	EnhancedInputComponent->BindAction(ShowSettingsAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleShowSettingWidget);
+	EnhancedInputComponent->BindAction(ToggleControlGuideAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::ToggleControlGuideWidget);
 }
 
 void ATUCharacterPlayer::Move(const FInputActionValue& Value)
@@ -314,7 +319,10 @@ void ATUCharacterPlayer::Look(const FInputActionValue& Value)
 void ATUCharacterPlayer::Dash()
 {
 	if (!SteamComponent->HasEnoughSteam(DashSteamCost))
+	{
+		SoundManager->PlaySound2D("SW_Steam_Alarm");
 		return;
+	}
 
 	bIsDashing = true;
 
@@ -327,6 +335,7 @@ void ATUCharacterPlayer::Dash()
 		LaunchCharacter(DashDirection * DashStrength*1.0f, true, true);
 
 		SteamComponent->ConsumeSteam(DashSteamCost);
+		SoundManager->PlaySound2D("SW_Dash");
 
 		// deactive dash effect
 		FTimerHandle DashEffectHandle;
@@ -360,8 +369,8 @@ void ATUCharacterPlayer::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherA
 
 	FVector ReflectionDirection = FMath::GetReflectionVector(CurrentVelocity.GetSafeNormal(), Hit.ImpactNormal);
 
+	SoundManager->PlaySound2D("SW_RepulsiveForce");
 	LaunchCharacter(ReflectionDirection * CurrentSpeed * RepulsiveForceScaleFactor, true, true);
-	UE_LOG(LogTemp, Log, TEXT("[%s] Hit occurred in speed: %f"), CURRENT_CONTEXT, CurrentSpeed);
 }
 
 void ATUCharacterPlayer::StartRunning()
@@ -384,7 +393,10 @@ void ATUCharacterPlayer::StopRunning()
 void ATUCharacterPlayer::HandleLaunchCable()
 {
 	if (!SteamComponent->HasEnoughSteam(CableSteamCost))
+	{
+		SoundManager->PlaySound2D("SW_Steam_Alarm");
 		return;
+	}
 	
 	CableActionComponent->TryLaunchCable();
 }
@@ -509,8 +521,16 @@ void ATUCharacterPlayer::RotateToCameraDirection()
 
 void ATUCharacterPlayer::HandleShowSettingWidget()
 {
-	if (UIManager)
-	{
-		UIManager->ShowSettingWidget();
-	}
+	if (!UIManager)
+		return;
+	
+	UIManager->ShowSettingWidget();
+}
+
+void ATUCharacterPlayer::ToggleControlGuideWidget()
+{
+	if (!UIManager)
+		return;
+	
+	UIManager->ToggleControlGuideWidget();
 }

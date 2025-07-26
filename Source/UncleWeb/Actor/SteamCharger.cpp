@@ -32,6 +32,14 @@ void ASteamCharger::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (const UWorld* World = GetWorld())
+	{
+		if (const UGameInstance* GI = World->GetGameInstance())
+		{
+			SoundManager = GI->GetSubsystem<USoundManager>();
+		}
+	}
+
 	SphereCollision->OnComponentBeginOverlap.AddDynamic(this, &ASteamCharger::OnTriggerBeginOverlap);
 }
 
@@ -55,6 +63,7 @@ void ASteamCharger::OnTriggerBeginOverlap(UPrimitiveComponent* OverlappedComp, A
 	if (OtherActor && OtherActor->IsA<ATUCharacterPlayer>())
 	{
 		ChangeState(ESteamChargerState::Disabled);
+		SoundManager->PlaySound2D("SW_SteamCharger_Collision");
 	}
 }
 
@@ -87,6 +96,7 @@ void ASteamCharger::OnDisabled()
 
 void ASteamCharger::OnEnabled()
 {
+	SoundManager->PlaySound2D("SW_SteamCharger_Enabled");
 	SphereCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	SphereCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
 	SphereMesh->SetVisibility(true);
