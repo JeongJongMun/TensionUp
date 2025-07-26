@@ -27,9 +27,7 @@ void AMainMenuGameMode::BeginPlay()
 		PC->bShowMouseCursor = true;
 		PC->bEnableClickEvents = true;
 		PC->bEnableMouseOverEvents = true;
-        
-		FInputModeUIOnly InputMode;
-		PC->SetInputMode(InputMode);
+		PC->SetInputMode(FInputModeUIOnly());
 	}
 }
 

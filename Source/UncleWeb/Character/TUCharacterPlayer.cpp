@@ -200,7 +200,8 @@ void ATUCharacterPlayer::InitializeInputActions()
 		{ EInputActionType::Run, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_Run.IA_Run'"))) },
 		{ EInputActionType::ShortenCable, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_ZoomIn.IA_ZoomIn'"))) },
 		{ EInputActionType::ExtendCable, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_ZoomOut.IA_ZoomOut'"))) },
-		{ EInputActionType::SteamBoost, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_SteamBooster.IA_SteamBooster'"))) }
+		{ EInputActionType::SteamBoost, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_SteamBooster.IA_SteamBooster'"))) },
+		{ EInputActionType::ShowSetting, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_ToggleSettings.IA_ToggleSettings'"))) }
 	};
 
 	InputActionMap = {
@@ -212,7 +213,8 @@ void ATUCharacterPlayer::InitializeInputActions()
 		{ EInputActionType::Run, RunAction },
 		{ EInputActionType::ShortenCable, ShortenCableAction },
 		{ EInputActionType::ExtendCable, ExtendCableAction },
-		{ EInputActionType::SteamBoost, SteamBoostAction }
+		{ EInputActionType::SteamBoost, SteamBoostAction },
+		{ EInputActionType::ShowSetting, ToggleSettingsAction }
 	};
 
 	for (const TPair<EInputActionType, TSoftObjectPtr<UInputAction>>& Pair : InputActionPaths)
@@ -239,6 +241,7 @@ void ATUCharacterPlayer::InitializeInputActions()
 	ExtendCableAction = InputActionMap.FindRef(EInputActionType::ExtendCable);
 	RunAction = InputActionMap.FindRef(EInputActionType::Run);
 	SteamBoostAction = InputActionMap.FindRef(EInputActionType::SteamBoost);
+	ToggleSettingsAction = InputActionMap.FindRef(EInputActionType::ShowSetting);
 }
 
 void ATUCharacterPlayer::InitializeAnimations()
@@ -281,6 +284,8 @@ void ATUCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	EnhancedInputComponent->BindAction(SteamBoostAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleStartSteamBooster);
 	EnhancedInputComponent->BindAction(SteamBoostAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::HandleStopSteamBooster);
 	EnhancedInputComponent->BindAction(SteamBoostAction, ETriggerEvent::Canceled, this, &ATUCharacterPlayer::HandleStopSteamBooster);
+
+	EnhancedInputComponent->BindAction(ToggleSettingsAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleShowSettingWidget);
 }
 
 void ATUCharacterPlayer::Move(const FInputActionValue& Value)
@@ -300,6 +305,7 @@ void ATUCharacterPlayer::Move(const FInputActionValue& Value)
 void ATUCharacterPlayer::Look(const FInputActionValue& Value)
 {
 	FVector2D LookAxisVector = Value.Get<FVector2D>();
+	LookAxisVector *= MouseSensitivity;
 
 	AddControllerYawInput(LookAxisVector.X);
 	AddControllerPitchInput(LookAxisVector.Y);
@@ -498,5 +504,13 @@ void ATUCharacterPlayer::RotateToCameraDirection()
 		const FRotator TargetRotation = FRotator(0.0f, CameraRotation.Yaw, 0.0f);
         
 		SetActorRotation(TargetRotation);
+	}
+}
+
+void ATUCharacterPlayer::HandleShowSettingWidget()
+{
+	if (UIManager)
+	{
+		UIManager->ShowSettingWidget();
 	}
 }

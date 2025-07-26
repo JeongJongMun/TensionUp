@@ -17,11 +17,6 @@ void UMainMenuWidget::NativeConstruct()
 		StartButton->OnClicked.AddDynamic(this, &UMainMenuWidget::OnStartGameClicked);
 	}
 
-	if (SettingsButton)
-	{
-		SettingsButton->OnClicked.AddDynamic(this, &UMainMenuWidget::OnSettingsClicked);
-	}
-
 	if (ExitButton)
 	{
 		ExitButton->OnClicked.AddDynamic(this, &UMainMenuWidget::OnQuitClicked);
@@ -31,11 +26,6 @@ void UMainMenuWidget::NativeConstruct()
 void UMainMenuWidget::OnStartGameClicked()
 {
 	UGameplayStatics::OpenLevel(this, FName(*GameLevelName));
-}
-
-void UMainMenuWidget::OnSettingsClicked()
-{
-	// TODO : implement Settings UI
 }
 
 void UMainMenuWidget::OnQuitClicked()

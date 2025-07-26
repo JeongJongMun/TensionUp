@@ -22,6 +22,7 @@ public:
 	void UpdateSteamUI(float Current, float Max);
 	void SetActiveCrosshair(ESlateVisibility Visibility);
 	void SetCrosshairColor(ECrosshairStateType State);
+	void ShowSettingWidget();
 
 protected:
 	virtual void BeginPlay() override;
@@ -42,6 +43,12 @@ private:
 	
 	UPROPERTY()
 	TObjectPtr<UUserWidget> CrosshairWidget;
+
+	UPROPERTY()
+	TObjectPtr<class USettingWidget> SettingWidget;
+
+	UPROPERTY()
+	TSubclassOf<class USettingWidget> SettingWidgetClass;
 	
 	UPROPERTY()
 	TObjectPtr<APlayerController> CachedPC;

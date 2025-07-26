@@ -23,7 +23,8 @@ enum class EInputActionType : uint8
 	Run,
 	ShortenCable,
 	ExtendCable,
-	SteamBoost
+	SteamBoost,
+	ShowSetting,
 };
 
 UENUM()
