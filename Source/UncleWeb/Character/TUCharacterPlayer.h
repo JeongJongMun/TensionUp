@@ -22,6 +22,7 @@ public:
 	bool IsCableAttached() const;
 	bool IsDashing() const;
 	void PlayAnimation(const EPlayerAnimationMontageType AnimType, float InPlayRate = 1.0f, const FName SectionName = NAME_None);
+	virtual void Landed(const FHitResult& Hit) override;
 
 protected:
 	virtual void BeginPlay() override;
@@ -173,12 +174,10 @@ private:
 	UPROPERTY()
 	TObjectPtr<UInputAction> SteamBoostAction;
 
-	bool bIsRunning = false;
 	bool bIsTryingParkour = false;
 	bool bIsJumpInputActive = false;
 	bool bIsDashing = false;
-
-
+	
 	FName CableSocketName = TEXT("cable_r");
 	FName SteamEffectSocketNameL = TEXT("foot_l_Socket");
 	FName SteamEffectSocketNameR = TEXT("foot_r_Socket");

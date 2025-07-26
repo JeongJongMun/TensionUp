@@ -106,6 +106,17 @@ void ATUCharacterPlayer::PlayAnimation(const EPlayerAnimationMontageType AnimTyp
 	}
 }
 
+void ATUCharacterPlayer::Landed(const FHitResult& Hit)
+{
+	Super::Landed(Hit);
+	
+	if (const APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		const bool bIsShiftPressed = PC->IsInputKeyDown(EKeys::LeftShift);
+		GetCharacterMovement()->MaxWalkSpeed = bIsShiftPressed ? MaxRunSpeed : MaxWalkSpeed;
+	}
+}
+
 void ATUCharacterPlayer::BeginPlay()
 {
 	Super::BeginPlay();
@@ -252,8 +263,8 @@ void ATUCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 	UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent);
 
-	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::Jump);
-	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::StopJumping);
+	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleJumpPressed);
+	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::HandleJumpReleased);
 	EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ATUCharacterPlayer::Move);
 	EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ATUCharacterPlayer::Look);
 	EnhancedInputComponent->BindAction(LeftClickAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleLaunchCable);
@@ -266,9 +277,6 @@ void ATUCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	//EnhancedInputComponent->BindAction(ExtendCableAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleExtendCable);
 	EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::StartRunning);
 	EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::StopRunning);
-	//for parkour
-	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleJumpPressed);
-	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::HandleJumpReleased);
 
 	EnhancedInputComponent->BindAction(SteamBoostAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleStartSteamBooster);
 	EnhancedInputComponent->BindAction(SteamBoostAction, ETriggerEvent::Completed, this, &ATUCharacterPlayer::HandleStopSteamBooster);
@@ -352,14 +360,18 @@ void ATUCharacterPlayer::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherA
 
 void ATUCharacterPlayer::StartRunning()
 {
-	bIsRunning = true;
-	GetCharacterMovement()->MaxWalkSpeed = MaxRunSpeed;
+	if (GetCharacterMovement() && GetCharacterMovement()->IsMovingOnGround())
+	{
+		GetCharacterMovement()->MaxWalkSpeed = MaxRunSpeed;
+	}
 }
 
 void ATUCharacterPlayer::StopRunning()
 {
-	bIsRunning = false;
-	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed;
+	if (GetCharacterMovement() && GetCharacterMovement()->IsMovingOnGround())
+	{
+		GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed;
+	}
 }
 
 // ----- Handler
@@ -406,6 +418,7 @@ void ATUCharacterPlayer::OnBeginLaunch()
 	GetCharacterMovement()->FallingLateralFriction = CableFallingLateralFriction;
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 	GetCharacterMovement()->bUseControllerDesiredRotation = false;
+	GetCharacterMovement()->MaxWalkSpeed = MaxRunSpeed;
 }
 
 void ATUCharacterPlayer::OnBeginRetract()
