@@ -5,6 +5,14 @@
 #define CURRENT_CONTEXT *FString(__FUNCTION__)
 
 UENUM()
+enum class ESteamChargerState : uint8
+{
+	None,
+	Disabled,
+	Enabled,
+};
+
+UENUM()
 enum class EInputActionType : uint8
 {
 	Move,
