@@ -3,6 +3,12 @@
 #pragma once
 #include "CoreMinimal.h"
 #define CURRENT_CONTEXT *FString(__FUNCTION__)
+#define LOG_CALL() UE_LOG(LogTemp, Log, TEXT("[%s] Called"), CURRENT_CONTEXT)
+#define LOG_CALL_NUM(Number) UE_LOG(LogTemp, Log, TEXT("[%s] Called %d"), CURRENT_CONTEXT, Number)
+#define LOG_CALL_WARNING() UE_LOG(LogTemp, Warning, TEXT("[%s] Called"), CURRENT_CONTEXT)
+#define LOG_CALL_WARNING_NUM(Number) UE_LOG(LogTemp, Warning, TEXT("[%s] Called %d"), CURRENT_CONTEXT, Number)
+#define LOG_CALL_ERROR() UE_LOG(LogTemp, Error, TEXT("[%s] Called"), CURRENT_CONTEXT)
+#define LOG_CALL_ERROR_NUM(Number) UE_LOG(LogTemp, Error, TEXT("[%s] Called %d"), CURRENT_CONTEXT, Number)
 
 UENUM()
 enum class ESteamChargerState : uint8
@@ -25,6 +31,7 @@ enum class EInputActionType : uint8
 	ExtendCable,
 	SteamBoost,
 	ShowSetting,
+	ToggleControlGuide,
 };
 
 UENUM()

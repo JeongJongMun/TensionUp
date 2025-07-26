@@ -23,6 +23,7 @@ public:
 	void SetActiveCrosshair(ESlateVisibility Visibility);
 	void SetCrosshairColor(ECrosshairStateType State);
 	void ShowSettingWidget();
+	void ToggleControlGuideWidget();
 
 protected:
 	virtual void BeginPlay() override;
@@ -49,6 +50,12 @@ private:
 
 	UPROPERTY()
 	TSubclassOf<class USettingWidget> SettingWidgetClass;
+	
+	UPROPERTY()
+	TObjectPtr<class UControlGuideWidget> ControlGuideWidget;
+	
+	UPROPERTY()
+	TSubclassOf<class UControlGuideWidget> ControlGuideWidgetClass;
 	
 	UPROPERTY()
 	TObjectPtr<APlayerController> CachedPC;

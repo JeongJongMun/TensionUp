@@ -8,8 +8,7 @@
 #include "UncleWeb/Character/TUCharacterPlayer.h"
 #include "UncleWeb/Framework/SettingSaveGame.h"
 
-USettingWidget::USettingWidget(const FObjectInitializer& ObjectInitializer)
-    : Super(ObjectInitializer)
+USettingWidget::USettingWidget(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 }
 

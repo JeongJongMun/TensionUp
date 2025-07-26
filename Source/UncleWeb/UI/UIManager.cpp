@@ -1,10 +1,10 @@
 #include "UIManager.h"
+#include "ControlGuideWidget.h"
 #include "SettingWidget.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/Image.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
-#include "Kismet/GameplayStatics.h"
 #include "UncleWeb/Util/TUDefines.h"
 
 AUIManager::AUIManager()
@@ -26,6 +26,12 @@ AUIManager::AUIManager()
     if (SettingWidgetFinder.Succeeded())
     {
         SettingWidgetClass = SettingWidgetFinder.Class;
+    }
+
+    static ConstructorHelpers::FClassFinder<UControlGuideWidget> ControlGuideFinder(TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/UI/WBP_ControlGuide.WBP_ControlGuide_C'"));
+    if (ControlGuideFinder.Succeeded())
+    {
+        ControlGuideWidgetClass = ControlGuideFinder.Class;
     }
 }
 
@@ -65,6 +71,10 @@ void AUIManager::CreateWidgets()
     {
         SettingWidget = CreateWidget<USettingWidget>(CachedPC, SettingWidgetClass);
     }
+    if (!ControlGuideWidget && ControlGuideWidgetClass)
+    {
+        ControlGuideWidget = CreateWidget<UControlGuideWidget>(CachedPC, ControlGuideWidgetClass);
+    }
 }
 
 void AUIManager::AddWidgetsToViewport()
@@ -82,6 +92,10 @@ void AUIManager::AddWidgetsToViewport()
     {
         SettingWidget->AddToViewport();
         SettingWidget->SetVisibility(ESlateVisibility::Hidden);
+    }
+    if (ControlGuideWidget && !ControlGuideWidget->IsInViewport())
+    {
+        ControlGuideWidget->AddToViewport();
     }
 }
 
@@ -129,4 +143,12 @@ void AUIManager::ShowSettingWidget()
         return;
     
     SettingWidget->ShowWidget();
+}
+
+void AUIManager::ToggleControlGuideWidget()
+{
+    if (!ControlGuideWidget)
+        return;
+
+    ControlGuideWidget->ToggleWidget();
 }

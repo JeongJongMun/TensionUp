@@ -15,6 +15,10 @@ class UNCLEWEB_API USettingWidget : public UUserWidget
 public:
 	USettingWidget(const FObjectInitializer& ObjectInitializer);
 	void ShowWidget();
+	
+	UFUNCTION()
+	void HideWidget();
+	
 
 protected:
 	virtual void NativeConstruct() override;
@@ -28,15 +32,11 @@ private:
 	
 	UFUNCTION()
 	void OnMouseSensitivityChanged(float Value);
-
-	UFUNCTION()
-	void HideWidget();
-
+	
 	UFUNCTION()
 	void OnExitButtonClicked();
 
 	void UpdateSliderText(const TObjectPtr<class UTextBlock>& TextBlock, float Value);
-
 	void InitBgmSlider();
 	void InitSfxSlider();
 	void InitMouseSensitivitySlider();
