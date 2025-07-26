@@ -1,8 +1,10 @@
 #include "UIManager.h"
+#include "SettingWidget.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/Image.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
+#include "Kismet/GameplayStatics.h"
 #include "UncleWeb/Util/TUDefines.h"
 
 AUIManager::AUIManager()
@@ -18,6 +20,12 @@ AUIManager::AUIManager()
     if (CrosshairFinder.Succeeded())
     {
         CrosshairWidgetClass = CrosshairFinder.Class;
+    }
+    
+    static ConstructorHelpers::FClassFinder<UUserWidget> SettingWidgetFinder(TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/UI/WBP_Setting.WBP_Setting_C'"));
+    if (SettingWidgetFinder.Succeeded())
+    {
+        SettingWidgetClass = SettingWidgetFinder.Class;
     }
 }
 
@@ -52,6 +60,11 @@ void AUIManager::CreateWidgets()
     {
         CrosshairWidget = CreateWidget<UUserWidget>(CachedPC, CrosshairWidgetClass);
     }
+
+    if (!SettingWidget && SettingWidgetClass)
+    {
+        SettingWidget = CreateWidget<USettingWidget>(CachedPC, SettingWidgetClass);
+    }
 }
 
 void AUIManager::AddWidgetsToViewport()
@@ -65,6 +78,11 @@ void AUIManager::AddWidgetsToViewport()
     {
         CrosshairWidget->AddToViewport();
     }
+    if (SettingWidget && !SettingWidget->IsInViewport())
+    {
+        SettingWidget->AddToViewport();
+        SettingWidget->SetVisibility(ESlateVisibility::Hidden);
+    }
 }
 
 void AUIManager::UpdateSteamUI(float Current, float Max)
@@ -76,10 +94,6 @@ void AUIManager::UpdateSteamUI(float Current, float Max)
             struct FParams { float Current; float Max; };
             FParams Params{ Current, Max };
             SteamWidget->ProcessEvent(Func, &Params);
-        }
-        else
-        {
-            UE_LOG(LogTemp, Warning, TEXT("[%s] UpdateStaminaBar function not found in SteamWidget"), CURRENT_CONTEXT);
         }
     }
 }
@@ -107,4 +121,16 @@ void AUIManager::SetCrosshairColor(ECrosshairStateType State)
         CrosshairImage->SetColorAndOpacity(ActiveCrosshairColor);
     }
     CurrentCrosshairState = State;
+}
+
+void AUIManager::ShowSettingWidget()
+{
+    if (SettingWidget)
+    {
+        CachedPC->SetInputMode(FInputModeUIOnly());
+        CachedPC->SetShowMouseCursor(true);
+        
+        SettingWidget->SetVisibility(ESlateVisibility::Visible);
+        UGameplayStatics::SetGamePaused(GetWorld(), true);
+    }
 }

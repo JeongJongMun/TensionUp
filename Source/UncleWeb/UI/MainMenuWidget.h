@@ -19,10 +19,7 @@ protected:
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UButton> StartButton;
-
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UButton> SettingsButton;
-
+	
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UButton> ExitButton;
 	
@@ -30,11 +27,8 @@ protected:
 	void OnStartGameClicked();
 
 	UFUNCTION()
-	void OnSettingsClicked();
-
-	UFUNCTION()
 	void OnQuitClicked();
 
 public:
-	FString GameLevelName = TEXT("ThirdPersonMap");
+	FString GameLevelName = TEXT("Stage_2");
 };
