@@ -62,5 +62,5 @@ private:
 	
 	ECrosshairStateType CurrentCrosshairState = ECrosshairStateType::Default;
 	FLinearColor DefaultCrosshairColor = FLinearColor(1.0f, 1.0f, 1.0f, 1.0f);
-	FLinearColor ActiveCrosshairColor = FLinearColor(1.0f, 0.0f, 0.0f, 1.0f);
+	FLinearColor ActiveCrosshairColor = FColor::FromHex(TEXT("F4672A")).ReinterpretAsLinear();
 };

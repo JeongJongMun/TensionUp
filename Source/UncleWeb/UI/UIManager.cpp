@@ -124,15 +124,21 @@ void AUIManager::SetCrosshairColor(const ECrosshairStateType State)
     if (!CrosshairWidget || CurrentCrosshairState == State) return;
 
     UImage* CrosshairImage = Cast<UImage>(CrosshairWidget->GetWidgetFromName(TEXT("IMG_Crosshair")));
-    if (!CrosshairImage) return;
+    UImage* CrosshairFocusImage = Cast<UImage>(CrosshairWidget->GetWidgetFromName(TEXT("IMG_Crosshair_Focus")));
+    
+    if (!CrosshairImage || !CrosshairFocusImage) return;
 
     if (State == ECrosshairStateType::Default)
     {
         CrosshairImage->SetColorAndOpacity(DefaultCrosshairColor);
+        CrosshairFocusImage->SetColorAndOpacity(DefaultCrosshairColor);
+        CrosshairFocusImage->SetVisibility(ESlateVisibility::Hidden);
     }
     else if (State == ECrosshairStateType::Active)
     {
         CrosshairImage->SetColorAndOpacity(ActiveCrosshairColor);
+        CrosshairFocusImage->SetColorAndOpacity(ActiveCrosshairColor);
+        CrosshairFocusImage->SetVisibility(ESlateVisibility::Visible);
     }
     CurrentCrosshairState = State;
 }
