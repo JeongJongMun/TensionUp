@@ -45,7 +45,7 @@ void USoundManager::PlaySoundAtLocation(FName SoundName, const FVector& Location
     }
     else
     {
-        UE_LOG(LogTemp, Warning, TEXT("[%s] SFX sound '%s' not found!"), *GetName(), *SoundName.ToString());
+        UE_LOG(LogTemp, Warning, TEXT("[%s] SFX sound '%s' not found!"), CURRENT_CONTEXT, *SoundName.ToString());
     }
 }
 
@@ -57,7 +57,7 @@ void USoundManager::PlaySound2D(FName SoundName, float VolumeMultiplier, float P
     }
     else
     {
-        UE_LOG(LogTemp, Warning, TEXT("[%s] SFX sound '%s' not found!"), *GetName(), *SoundName.ToString());
+        UE_LOG(LogTemp, Warning, TEXT("[%s] SFX sound '%s' not found!"), CURRENT_CONTEXT, *SoundName.ToString());
     }
 }
 

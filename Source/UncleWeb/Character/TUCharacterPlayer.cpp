@@ -181,6 +181,7 @@ void ATUCharacterPlayer::Tick(float DeltaTime)
 
 		if (!SteamComponent->HasEnoughSteam(SteamBoosterCost))
 		{
+			SoundManager->PlaySound2D("SW_Steam_Alarm");
 			HandleStopSteamBooster();
 		}
 	}
@@ -318,7 +319,10 @@ void ATUCharacterPlayer::Look(const FInputActionValue& Value)
 void ATUCharacterPlayer::Dash()
 {
 	if (!SteamComponent->HasEnoughSteam(DashSteamCost))
+	{
+		SoundManager->PlaySound2D("SW_Steam_Alarm");
 		return;
+	}
 
 	bIsDashing = true;
 
@@ -331,6 +335,7 @@ void ATUCharacterPlayer::Dash()
 		LaunchCharacter(DashDirection * DashStrength*1.0f, true, true);
 
 		SteamComponent->ConsumeSteam(DashSteamCost);
+		SoundManager->PlaySound2D("SW_Dash");
 
 		// deactive dash effect
 		FTimerHandle DashEffectHandle;
@@ -364,8 +369,8 @@ void ATUCharacterPlayer::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherA
 
 	FVector ReflectionDirection = FMath::GetReflectionVector(CurrentVelocity.GetSafeNormal(), Hit.ImpactNormal);
 
+	SoundManager->PlaySound2D("SW_RepulsiveForce");
 	LaunchCharacter(ReflectionDirection * CurrentSpeed * RepulsiveForceScaleFactor, true, true);
-	UE_LOG(LogTemp, Log, TEXT("[%s] Hit occurred in speed: %f"), CURRENT_CONTEXT, CurrentSpeed);
 }
 
 void ATUCharacterPlayer::StartRunning()
@@ -388,7 +393,10 @@ void ATUCharacterPlayer::StopRunning()
 void ATUCharacterPlayer::HandleLaunchCable()
 {
 	if (!SteamComponent->HasEnoughSteam(CableSteamCost))
+	{
+		SoundManager->PlaySound2D("SW_Steam_Alarm");
 		return;
+	}
 	
 	CableActionComponent->TryLaunchCable();
 }

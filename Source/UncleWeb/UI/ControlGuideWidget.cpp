@@ -3,6 +3,7 @@
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "UncleWeb/Manager/SoundManager.h"
 
 UControlGuideWidget::UControlGuideWidget(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -27,6 +28,14 @@ void UControlGuideWidget::NativeConstruct()
 		RightPanelSlot->SetOffsets(FMargin(SlideDistance, 0.0f, -SlideDistance, 0.0f));
 		TargetOffset = 0.0f;
 	}
+
+	if (const UWorld* World = GetWorld())
+	{
+		if (const UGameInstance* GI = World->GetGameInstance())
+		{
+			SoundManager = GI->GetSubsystem<USoundManager>();
+		}
+	}
 }
 
 void UControlGuideWidget::NativeTick(const FGeometry& MyGeometry, const float InDeltaTime)
@@ -44,6 +53,7 @@ void UControlGuideWidget::ToggleWidget()
 	if (bIsAnimating)
 		return;
 
+	SoundManager->PlaySound2D("SW_GearRotate", 1.0f, 1.0f, true);
 	if (!bIsOn)
 	{
 		SetVisibility(ESlateVisibility::Visible);
@@ -120,6 +130,7 @@ void UControlGuideWidget::OnSlideInComplete()
 		LeftPanelSlot->SetOffsets(FMargin(0.0f, 0.0f, 0.0f, 0.0f));
 		RightPanelSlot->SetOffsets(FMargin(0.0f, 0.0f, 0.0f, 0.0f));
 	}
+	SoundManager->StopSound("SW_GearRotate");
 }
 
 void UControlGuideWidget::OnSlideOutComplete()
@@ -131,4 +142,5 @@ void UControlGuideWidget::OnSlideOutComplete()
 		LeftPanelSlot->SetOffsets(FMargin(-SlideDistance, 0.0f, SlideDistance, 0.0f));
 		RightPanelSlot->SetOffsets(FMargin(SlideDistance, 0.0f, -SlideDistance, 0.0f));
 	}
+	SoundManager->StopSound("SW_GearRotate");
 }

@@ -40,7 +40,6 @@ private:
 	TObjectPtr<class UCanvasPanelSlot> RightPanelSlot;
 
 	TEnumAsByte<EEasingFunc::Type> EasingFunction = EEasingFunc::EaseOut;
-
 	
 	float AnimationDuration = 0.5f;
 	float SlideDistance = 900.0f;
@@ -51,4 +50,7 @@ private:
 	float TargetOffset = 0.0f;
 
 	bool bIsOn = false;
+
+	UPROPERTY()
+	TObjectPtr<class USoundManager> SoundManager;
 };
