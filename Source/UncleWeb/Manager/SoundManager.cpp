@@ -4,7 +4,6 @@
 #include "Engine/World.h"
 #include "TimerManager.h"
 #include "UncleWeb/Data/SoundLibrary.h"
-#include "UncleWeb/Util/TUDefines.h"
 
 void USoundManager::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -12,10 +11,7 @@ void USoundManager::Initialize(FSubsystemCollectionBase& Collection)
 
     USoundLibrary* Library = LoadObject<USoundLibrary>(nullptr, TEXT("/Script/UncleWeb.SoundLibrary'/Game/Data/DA_SoundLibrary.DA_SoundLibrary'"));
     if (!Library)
-    {
-        UE_LOG(LogTemp, Error, TEXT("[%s] SoundLibrary not found!"), CURRENT_CONTEXT);
         return;
-    }
     SoundDataAsset = Library;
 
     CurrentBGMAudioComponent = nullptr;
@@ -43,10 +39,6 @@ void USoundManager::PlaySoundAtLocation(FName SoundName, const FVector& Location
     {
         PlaySoundAtLocation(Sound, Location, VolumeMultiplier, PitchMultiplier, bLoop);
     }
-    else
-    {
-        UE_LOG(LogTemp, Warning, TEXT("[%s] SFX sound '%s' not found!"), CURRENT_CONTEXT, *SoundName.ToString());
-    }
 }
 
 void USoundManager::PlaySound2D(FName SoundName, float VolumeMultiplier, float PitchMultiplier,bool bLoop)
@@ -54,10 +46,6 @@ void USoundManager::PlaySound2D(FName SoundName, float VolumeMultiplier, float P
     if (USoundBase* Sound = SoundDataAsset->SFXMap.FindRef(SoundName))
     {
         PlaySound2D(Sound, VolumeMultiplier, PitchMultiplier, bLoop);
-    }
-    else
-    {
-        UE_LOG(LogTemp, Warning, TEXT("[%s] SFX sound '%s' not found!"), CURRENT_CONTEXT, *SoundName.ToString());
     }
 }
 
@@ -122,47 +110,35 @@ void USoundManager::PlaySound2D(USoundBase* Sound, const float VolumeMultiplier,
     }
 }
 
-void USoundManager::PlayBGM(USoundBase* Sound, const bool bLoop, const float FadeInDuration)
+void USoundManager::PlayBGM(FName SoundName, const bool bLoop)
+{
+    if (USoundBase* Sound = SoundDataAsset->BGMMap.FindRef(SoundName))
+    {
+        PlayBGM(Sound, bLoop);
+    }
+}
+
+void USoundManager::PlayBGM(USoundBase* Sound, const bool bLoop)
 {
     if (!Sound || GetWorld()->IsNetMode(NM_DedicatedServer))
         return;
 
     if (CurrentBGMAudioComponent && IsValid(CurrentBGMAudioComponent))
     {
-        if (FadeInDuration > 0.0f)
-        {
-            StopBGM(FadeInDuration * 0.5f);
-        }
-        else
-        {
-            CurrentBGMAudioComponent->Stop();
-            CurrentBGMAudioComponent = nullptr;
-        }
+        CurrentBGMAudioComponent->Stop();
+        CurrentBGMAudioComponent = nullptr;
     }
 
     CurrentBGMAudioComponent = UGameplayStatics::SpawnSound2D(GetWorld(), Sound, BGMVolume, 1.0f, 0.0f, nullptr, true, bLoop);
-
-    if (CurrentBGMAudioComponent && FadeInDuration > 0.0f)
-    {
-        CurrentBGMAudioComponent->SetVolumeMultiplier(0.0f);
-        FadeBGM(BGMVolume, FadeInDuration);
-    }
 }
 
-void USoundManager::StopBGM(const float FadeOutDuration)
+void USoundManager::StopBGM()
 {
     if (!CurrentBGMAudioComponent || !IsValid(CurrentBGMAudioComponent))
         return;
 
-    if (FadeOutDuration > 0.0f)
-    {
-        FadeBGM(0.0f, FadeOutDuration);
-    }
-    else
-    {
-        CurrentBGMAudioComponent->Stop();
-        CurrentBGMAudioComponent = nullptr;
-    }
+    CurrentBGMAudioComponent->Stop();
+    CurrentBGMAudioComponent = nullptr;
 }
 
 void USoundManager::PauseBGM()
@@ -242,53 +218,4 @@ void USoundManager::CleanupFinishedAudioComponents()
     {
         return !IsValid(AudioComp) || !AudioComp->IsPlaying();
     });
-}
-
-void USoundManager::FadeBGM(float TargetVolume, const float Duration)
-{
-    if (!CurrentBGMAudioComponent || !IsValid(CurrentBGMAudioComponent))
-        return;
-
-    if (GetWorld()->GetTimerManager().IsTimerActive(BGMFadeTimerHandle))
-    {
-        GetWorld()->GetTimerManager().ClearTimer(BGMFadeTimerHandle);
-    }
-
-    const float CurrentVolume = CurrentBGMAudioComponent->VolumeMultiplier;
-    float VolumeStep = (TargetVolume - CurrentVolume) / (Duration / 0.1f); // 0.1초마다 업데이트
-
-    GetWorld()->GetTimerManager().SetTimer(BGMFadeTimerHandle, [this, TargetVolume, VolumeStep]()
-    {
-        if (!CurrentBGMAudioComponent || !IsValid(CurrentBGMAudioComponent))
-        {
-            OnBGMFadeComplete();
-            return;
-        }
-
-        const float NewVolume = CurrentBGMAudioComponent->VolumeMultiplier + VolumeStep;
-        
-        const bool bReachedTarget = (VolumeStep > 0.0f) ? (NewVolume >= TargetVolume) : (NewVolume <= TargetVolume);
-        
-        if (bReachedTarget)
-        {
-            CurrentBGMAudioComponent->SetVolumeMultiplier(TargetVolume);
-            OnBGMFadeComplete();
-        }
-        else
-        {
-            CurrentBGMAudioComponent->SetVolumeMultiplier(NewVolume);
-        }
-    }, 0.1f, true);
-}
-
-void USoundManager::OnBGMFadeComplete()
-{
-    GetWorld()->GetTimerManager().ClearTimer(BGMFadeTimerHandle);
-    
-    if (CurrentBGMAudioComponent && IsValid(CurrentBGMAudioComponent) && 
-        CurrentBGMAudioComponent->VolumeMultiplier <= 0.0f)
-    {
-        CurrentBGMAudioComponent->Stop();
-        CurrentBGMAudioComponent = nullptr;
-    }
 }

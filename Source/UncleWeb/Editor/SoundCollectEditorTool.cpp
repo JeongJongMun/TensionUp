@@ -7,8 +7,14 @@ void FSoundCollectEditorTool::CollectSoundsToLibrary(USoundLibrary* Library, con
 {
 	if (!Library) return;
 
-	Library->BGMMap.Reset();
-	Library->SFXMap.Reset();
+	if (bAsBGM)
+	{
+		Library->BGMMap.Reset();
+	}
+	else
+	{
+		Library->SFXMap.Reset();
+	}
 
 	FString NormalizedPath = FolderPath;
 	if (!NormalizedPath.StartsWith("/Game"))

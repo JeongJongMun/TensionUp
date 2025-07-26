@@ -1,6 +1,7 @@
 #include "MainMenuGameMode.h"
 #include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
+#include "UncleWeb/Manager/SoundManager.h"
 #include "UncleWeb/Util/TUDefines.h"
 
 AMainMenuGameMode::AMainMenuGameMode()
@@ -29,6 +30,15 @@ void AMainMenuGameMode::BeginPlay()
 		PC->bEnableMouseOverEvents = true;
 		PC->SetInputMode(FInputModeUIOnly());
 	}
+
+	if (const UWorld* World = GetWorld())
+	{
+		if (const UGameInstance* GI = World->GetGameInstance())
+		{
+			SoundManager = GI->GetSubsystem<USoundManager>();
+		}
+	}
+	SoundManager->PlayBGM("SW_Main_Jazz", true);
 }
 
 void AMainMenuGameMode::ShowMainMenu()

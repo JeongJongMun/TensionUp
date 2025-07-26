@@ -20,7 +20,10 @@ protected:
 	
 private:
 	TSubclassOf<UUserWidget> MainMenuWidgetClass;
-	UPROPERTY()
 	
+	UPROPERTY()
 	TObjectPtr<UUserWidget> MainMenuWidget;
+
+	UPROPERTY()
+	TObjectPtr<class USoundManager> SoundManager;
 };

@@ -1,7 +1,6 @@
 ﻿#pragma once
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
-#include "Components/AudioComponent.h"
 #include "UncleWeb/Data/SoundLibrary.h"
 #include "SoundManager.generated.h"
 
@@ -25,8 +24,8 @@ public:
     void PlaySound2D(FName SoundName, float VolumeMultiplier = 1.0f, float PitchMultiplier = 1.0f, bool bLoop = false);
     void StopSound(FName SoundName);
 
-    void PlayBGM(USoundBase* Sound, bool bLoop = true, float FadeInDuration = 0.0f);
-    void StopBGM(float FadeOutDuration = 0.0f);
+    void PlayBGM(FName SoundName, bool bLoop = true);
+    void StopBGM();
     void PauseBGM();
     void ResumeBGM();
 
@@ -41,11 +40,10 @@ public:
 private:
     void PlaySoundAtLocation(USoundBase* Sound, const FVector& Location, float VolumeMultiplier = 1.0f, float PitchMultiplier = 1.0f, bool bLoop = false);
     void PlaySound2D(USoundBase* Sound, float VolumeMultiplier = 1.0f, float PitchMultiplier = 1.0f, bool bLoop = false);
-    
+    void PlayBGM(USoundBase* Sound, bool bLoop = true);
+
     float GetVolumeForType(ESoundType SoundType, float VolumeMultiplier) const;
     void CleanupFinishedAudioComponents();
-    void FadeBGM(float TargetVolume, float Duration);
-    void OnBGMFadeComplete();
     
 
 private:
@@ -59,13 +57,13 @@ private:
     float SFXVolume = 0.5f;
     
     UPROPERTY()
-    TObjectPtr<UAudioComponent> CurrentBGMAudioComponent;
+    TObjectPtr<class UAudioComponent> CurrentBGMAudioComponent;
     
     UPROPERTY()
     TSet<TObjectPtr<USoundBase>> CachedSounds;
     
     UPROPERTY()
-    TArray<TObjectPtr<UAudioComponent>> ActiveSFXComponents;
+    TArray<TObjectPtr<class UAudioComponent>> ActiveSFXComponents;
 
     FTimerHandle BGMFadeTimerHandle;
 };
