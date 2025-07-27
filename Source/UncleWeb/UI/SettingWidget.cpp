@@ -135,12 +135,17 @@ void USettingWidget::ShowWidget()
     CachedPC->SetInputMode(FInputModeUIOnly());
     CachedPC->SetShowMouseCursor(true);
         
+    SoundManager->PlaySound2D("SW_Sys_Button");
+
     SetVisibility(ESlateVisibility::Visible);
     UGameplayStatics::SetGamePaused(GetWorld(), true);
+
 }
 
 void USettingWidget::HideWidget()
 {
+    SoundManager->PlaySound2D("SW_Sys_Button");
+
     USettingSaveGame* SaveGameInstance = Cast<USettingSaveGame>(UGameplayStatics::CreateSaveGameObject(USettingSaveGame::StaticClass()));
 
     if (!SaveGameInstance || !CachedPC)

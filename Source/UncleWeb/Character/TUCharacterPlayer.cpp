@@ -115,6 +115,8 @@ void ATUCharacterPlayer::Landed(const FHitResult& Hit)
 		const bool bIsShiftPressed = PC->IsInputKeyDown(EKeys::LeftShift);
 		GetCharacterMovement()->MaxWalkSpeed = bIsShiftPressed ? MaxRunSpeed : MaxWalkSpeed;
 	}
+
+	SoundManager->PlaySound2D("SW_Chr_Land");
 }
 
 void ATUCharacterPlayer::BeginPlay()
@@ -166,11 +168,23 @@ void ATUCharacterPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (GetCharacterMovement()->IsMovingOnGround() && !GetVelocity().IsNearlyZero() && !IsDashing())
+	const bool bIsMoving = !GetVelocity().IsNearlyZero();
+	const bool bOnGround = GetCharacterMovement()->IsMovingOnGround();
+
+	if (bOnGround && bIsMoving && !IsDashing() && !IsCableAttached())
 	{
-		if (!GetWorldTimerManager().IsTimerActive(WalkSoundTimerHandle))
+		// is walking or running sound
+		const float CurrentSpeed = GetVelocity().Size();
+		const bool bShouldPlayRunSound = (CurrentSpeed > MaxWalkSpeed);
+
+		const float DesiredInterval = bShouldPlayRunSound ? RunSoundInterval : WalkSoundInterval;
+		const bool bWasRunning = bIsRunningSound;
+
+		if (!GetWorldTimerManager().IsTimerActive(WalkSoundTimerHandle) || bWasRunning != bShouldPlayRunSound)
 		{
-			GetWorldTimerManager().SetTimer(WalkSoundTimerHandle, this, &ATUCharacterPlayer::PlayWalkSound, WalkSoundInterval, true);
+			GetWorldTimerManager().ClearTimer(WalkSoundTimerHandle);
+			GetWorldTimerManager().SetTimer(WalkSoundTimerHandle, this, &ATUCharacterPlayer::PlayWalkSound, DesiredInterval, true);
+			bIsRunningSound = bShouldPlayRunSound;
 		}
 	}
 	else
@@ -483,6 +497,10 @@ void ATUCharacterPlayer::HandleJumpOrParkour()
 	else
 	{
 		Jump();
+		if (!IsCableAttached() && SoundManager)
+		{
+			SoundManager->PlaySound2D("SW_Chr_Jump");
+		}
 	}
 }
 
@@ -550,8 +568,15 @@ void ATUCharacterPlayer::ToggleControlGuideWidget()
 // ----- Sound
 void ATUCharacterPlayer::PlayWalkSound()
 {
-	if (SoundManager)
+	if (!SoundManager) return;
+
+	if (bIsRunningSound)
+	{
+		SoundManager->PlaySound2D("SW_Chr_Run");
+	}
+	else
 	{
 		SoundManager->PlaySound2D("SW_Chr_Walk");
 	}
 }
+

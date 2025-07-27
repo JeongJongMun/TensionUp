@@ -191,13 +191,17 @@ private:
 	FName SteamEffectSocketNameL = TEXT("foot_l_Socket");
 	FName SteamEffectSocketNameR = TEXT("foot_r_Socket");
 
+	float MouseSensitivity = 1.0f;
+
+	// Sound
 	UPROPERTY()
 	TObjectPtr<USoundManager> SoundManager;
 
-	float MouseSensitivity = 1.0f;
-
 	FTimerHandle WalkSoundTimerHandle;
+
 	float WalkSoundInterval = 1.0f;
+	float RunSoundInterval = 1.4f;
+	bool bIsRunningSound = false;
 
 	UFUNCTION()
 	void PlayWalkSound();
