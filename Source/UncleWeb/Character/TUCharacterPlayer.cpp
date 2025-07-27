@@ -171,7 +171,7 @@ void ATUCharacterPlayer::Tick(float DeltaTime)
 	const bool bIsMoving = !GetVelocity().IsNearlyZero();
 	const bool bOnGround = GetCharacterMovement()->IsMovingOnGround();
 
-	if (bOnGround && bIsMoving && !IsDashing())
+	if (bOnGround && bIsMoving && !IsDashing() && !IsCableAttached())
 	{
 		// is walking or running sound
 		const float CurrentSpeed = GetVelocity().Size();
