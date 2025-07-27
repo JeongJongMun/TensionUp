@@ -166,11 +166,23 @@ void ATUCharacterPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (GetCharacterMovement()->IsMovingOnGround() && !GetVelocity().IsNearlyZero() && !IsDashing())
+	const bool bIsMoving = !GetVelocity().IsNearlyZero();
+	const bool bOnGround = GetCharacterMovement()->IsMovingOnGround();
+
+	if (bOnGround && bIsMoving && !IsDashing())
 	{
-		if (!GetWorldTimerManager().IsTimerActive(WalkSoundTimerHandle))
+		// is walking or running sound
+		const float CurrentSpeed = GetVelocity().Size();
+		const bool bShouldPlayRunSound = (CurrentSpeed > MaxWalkSpeed + 10.0f); // 10.0f is a threshold to determine if the character is running
+
+		const float DesiredInterval = bShouldPlayRunSound ? RunSoundInterval : WalkSoundInterval;
+		const bool bWasRunning = bIsRunningSound;
+
+		if (!GetWorldTimerManager().IsTimerActive(WalkSoundTimerHandle) || bWasRunning != bShouldPlayRunSound)
 		{
-			GetWorldTimerManager().SetTimer(WalkSoundTimerHandle, this, &ATUCharacterPlayer::PlayWalkSound, WalkSoundInterval, true);
+			GetWorldTimerManager().ClearTimer(WalkSoundTimerHandle);
+			GetWorldTimerManager().SetTimer(WalkSoundTimerHandle, this, &ATUCharacterPlayer::PlayWalkSound, DesiredInterval, true);
+			bIsRunningSound = bShouldPlayRunSound;
 		}
 	}
 	else
@@ -550,8 +562,15 @@ void ATUCharacterPlayer::ToggleControlGuideWidget()
 // ----- Sound
 void ATUCharacterPlayer::PlayWalkSound()
 {
-	if (SoundManager)
+	if (!SoundManager) return;
+
+	if (bIsRunningSound)
+	{
+		SoundManager->PlaySound2D("SW_Chr_Run");
+	}
+	else
 	{
 		SoundManager->PlaySound2D("SW_Chr_Walk");
 	}
 }
+
