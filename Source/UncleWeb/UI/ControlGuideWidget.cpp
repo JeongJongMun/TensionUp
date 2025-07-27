@@ -2,6 +2,7 @@
 #include "ControlGuideWidget.h"
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
+#include "Components/Image.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "UncleWeb/Manager/SoundManager.h"
 
@@ -36,6 +37,18 @@ void UControlGuideWidget::NativeConstruct()
 			SoundManager = GI->GetSubsystem<USoundManager>();
 		}
 	}
+
+	LeftGears.Empty();
+	LeftGears.Add(LeftGear_0);
+	LeftGears.Add(LeftGear_1);
+	LeftGears.Add(LeftGear_2);
+	LeftGears.Add(LeftGear_3);
+    
+	RightGears.Empty();
+	RightGears.Add(RightGear_0);
+	RightGears.Add(RightGear_1);
+	RightGears.Add(RightGear_2);
+	RightGears.Add(RightGear_3);
 }
 
 void UControlGuideWidget::NativeTick(const FGeometry& MyGeometry, const float InDeltaTime)
@@ -46,6 +59,8 @@ void UControlGuideWidget::NativeTick(const FGeometry& MyGeometry, const float In
 	{
 		UpdateSlideAnimation(InDeltaTime);
 	}
+	
+	UpdateGearRotation(InDeltaTime);
 }
 
 void UControlGuideWidget::ToggleWidget()
@@ -143,4 +158,39 @@ void UControlGuideWidget::OnSlideOutComplete()
 		RightPanelSlot->SetOffsets(FMargin(SlideDistance, 0.0f, -SlideDistance, 0.0f));
 	}
 	SoundManager->StopSound("SW_GearRotate");
+}
+
+void UControlGuideWidget::UpdateGearRotation(const float DeltaTime)
+{
+	for (auto& LeftGear : LeftGears)
+	{
+		if (!LeftGear) continue;
+        
+		FWidgetTransform CurrentTransform = LeftGear->GetRenderTransform();
+		float NewRotation = CurrentTransform.Angle + (90.0f * DeltaTime);
+        
+		if (FMath::Abs(NewRotation) >= 360.0f)
+		{
+			NewRotation = FMath::Fmod(NewRotation, 360.0f);
+		}
+        
+		CurrentTransform.Angle = NewRotation;
+		LeftGear->SetRenderTransform(CurrentTransform);
+	}
+    
+	for (auto& RightGear : RightGears)
+	{
+		if (!RightGear) continue;
+        
+		FWidgetTransform CurrentTransform = RightGear->GetRenderTransform();
+		float NewRotation = CurrentTransform.Angle + (-90.0f * DeltaTime);
+        
+		if (FMath::Abs(NewRotation) >= 360.0f)
+		{
+			NewRotation = FMath::Fmod(NewRotation, 360.0f);
+		}
+        
+		CurrentTransform.Angle = NewRotation;
+		RightGear->SetRenderTransform(CurrentTransform);
+	}
 }

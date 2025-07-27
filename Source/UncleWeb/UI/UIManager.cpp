@@ -148,7 +148,7 @@ void AUIManager::ShowSettingWidget()
     if (!SettingWidget)
         return;
     
-    SettingWidget->ShowWidget();
+    SettingWidget->ToggleWidget();
 }
 
 void AUIManager::ToggleControlGuideWidget()
