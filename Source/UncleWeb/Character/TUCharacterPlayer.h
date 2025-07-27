@@ -200,7 +200,7 @@ private:
 	FTimerHandle WalkSoundTimerHandle;
 
 	float WalkSoundInterval = 1.0f;
-	float RunSoundInterval = 1.0f;
+	float RunSoundInterval = 1.4f;
 	bool bIsRunningSound = false;
 
 	UFUNCTION()

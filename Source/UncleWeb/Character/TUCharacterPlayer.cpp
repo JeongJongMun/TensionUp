@@ -175,7 +175,7 @@ void ATUCharacterPlayer::Tick(float DeltaTime)
 	{
 		// is walking or running sound
 		const float CurrentSpeed = GetVelocity().Size();
-		const bool bShouldPlayRunSound = (CurrentSpeed > MaxWalkSpeed + 10.0f); // 10.0f is a threshold to determine if the character is running
+		const bool bShouldPlayRunSound = (CurrentSpeed > MaxWalkSpeed);
 
 		const float DesiredInterval = bShouldPlayRunSound ? RunSoundInterval : WalkSoundInterval;
 		const bool bWasRunning = bIsRunningSound;
@@ -497,6 +497,10 @@ void ATUCharacterPlayer::HandleJumpOrParkour()
 	else
 	{
 		Jump();
+		if (!IsCableAttached() && SoundManager)
+		{
+			SoundManager->PlaySound2D("SW_Chr_Jump");
+		}
 	}
 }
 
