@@ -195,4 +195,11 @@ private:
 	TObjectPtr<USoundManager> SoundManager;
 
 	float MouseSensitivity = 1.0f;
+
+	FTimerHandle WalkSoundTimerHandle;
+	float WalkSoundInterval = 1.0f;
+
+	UFUNCTION()
+	void PlayWalkSound();
+
 };

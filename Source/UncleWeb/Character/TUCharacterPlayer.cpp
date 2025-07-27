@@ -166,6 +166,18 @@ void ATUCharacterPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (GetCharacterMovement()->IsMovingOnGround() && !GetVelocity().IsNearlyZero() && !IsDashing())
+	{
+		if (!GetWorldTimerManager().IsTimerActive(WalkSoundTimerHandle))
+		{
+			GetWorldTimerManager().SetTimer(WalkSoundTimerHandle, this, &ATUCharacterPlayer::PlayWalkSound, WalkSoundInterval, true);
+		}
+	}
+	else
+	{
+		GetWorldTimerManager().ClearTimer(WalkSoundTimerHandle);
+	}
+
 	if (CableActionComponent->IsCanLaunchCable())
 	{
 		UIManager->SetCrosshairColor(ECrosshairStateType::Active);
@@ -533,4 +545,13 @@ void ATUCharacterPlayer::ToggleControlGuideWidget()
 		return;
 	
 	UIManager->ToggleControlGuideWidget();
+}
+
+// ----- Sound
+void ATUCharacterPlayer::PlayWalkSound()
+{
+	if (SoundManager)
+	{
+		SoundManager->PlaySound2D("SW_Chr_Walk");
+	}
 }
