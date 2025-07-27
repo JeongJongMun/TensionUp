@@ -115,6 +115,8 @@ void ATUCharacterPlayer::Landed(const FHitResult& Hit)
 		const bool bIsShiftPressed = PC->IsInputKeyDown(EKeys::LeftShift);
 		GetCharacterMovement()->MaxWalkSpeed = bIsShiftPressed ? MaxRunSpeed : MaxWalkSpeed;
 	}
+
+	SoundManager->PlaySound2D("SW_Chr_Land");
 }
 
 void ATUCharacterPlayer::BeginPlay()
