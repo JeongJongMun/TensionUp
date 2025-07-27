@@ -25,8 +25,39 @@ private:
 	void UpdateSlideAnimation(float DeltaTime);
 	void OnSlideInComplete();
 	void OnSlideOutComplete();
+	void UpdateGearRotation(float DeltaTime);
 
 private:
+	UPROPERTY()
+	TArray<TObjectPtr<class UImage>> LeftGears;
+    
+	UPROPERTY()
+	TArray<TObjectPtr<class UImage>> RightGears;
+	
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UImage> LeftGear_0;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UImage> LeftGear_1;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UImage> LeftGear_2;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UImage> LeftGear_3;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UImage> RightGear_0;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UImage> RightGear_1;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UImage> RightGear_2;
+	
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UImage> RightGear_3;
+	
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UCanvasPanel> LeftPanel;
 
@@ -42,7 +73,7 @@ private:
 	TEnumAsByte<EEasingFunc::Type> EasingFunction = EEasingFunc::EaseOut;
 	
 	float AnimationDuration = 0.5f;
-	float SlideDistance = 900.0f;
+	float SlideDistance = 1300.0f;
 	bool bIsAnimating = false;
 	bool bIsSlideIn = false;
 	float CurrentAnimationTime = 0.0f;
