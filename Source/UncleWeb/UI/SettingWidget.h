@@ -4,6 +4,7 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/Slider.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "UncleWeb/Manager/SoundManager.h"
 #include "SettingWidget.generated.h"
 
@@ -14,16 +15,23 @@ class UNCLEWEB_API USettingWidget : public UUserWidget
 
 public:
 	USettingWidget(const FObjectInitializer& ObjectInitializer);
-	void ShowWidget();
-	
 	UFUNCTION()
-	void HideWidget();
+	void ToggleWidget();
 	
 
 protected:
 	virtual void NativeConstruct() override;
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
 private:
+	void ShowWidget();
+	void HideWidget();
+	void StartSlideInAnimation();
+	void StartSlideOutAnimation();
+	void UpdateSlideAnimation(float DeltaTime);
+	void OnSlideInComplete();
+	void OnSlideOutComplete();
+	
 	UFUNCTION()
 	void OnBgmVolumeChanged(float Value);
 	
@@ -35,6 +43,7 @@ private:
 	
 	UFUNCTION()
 	void OnExitButtonClicked();
+	void UpdateGearRotation(float DeltaTime);
 
 	void UpdateSliderText(const TObjectPtr<class UTextBlock>& TextBlock, float Value);
 	void InitBgmSlider();
@@ -42,6 +51,21 @@ private:
 	void InitMouseSensitivitySlider();
 
 private:
+	UPROPERTY()
+	TArray<TObjectPtr<class UImage>> LeftGears;
+    
+	UPROPERTY()
+	TArray<TObjectPtr<class UImage>> RightGears;
+	
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UImage> LeftGear_0;
+	
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UImage> RightGear_0;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UImage> RightGear_1;
+	
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UButton> ApplyButton;
 	
@@ -80,4 +104,28 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<APlayerController> CachedPC;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UCanvasPanel> TopPanel;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UCanvasPanel> BottomPanel;
+
+	UPROPERTY()
+	TObjectPtr<class UCanvasPanelSlot> TopPanelSlot;
+    
+	UPROPERTY()
+	TObjectPtr<class UCanvasPanelSlot> BottomPanelSlot;
+
+	TEnumAsByte<EEasingFunc::Type> EasingFunction = EEasingFunc::EaseOut;
+
+	float AnimationDuration = 0.5f;
+	float SlideDistance = 1080.0f;
+	bool bIsAnimating = false;
+	bool bIsSlideIn = false;
+	float CurrentAnimationTime = 0.0f;
+	float StartOffset = 0.0f;
+	float TargetOffset = 0.0f;
+
+	bool bIsOn = false;
 };
