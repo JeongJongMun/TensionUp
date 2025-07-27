@@ -211,9 +211,6 @@ void ATUCharacterPlayer::Tick(float DeltaTime)
 			HandleStopSteamBooster();
 		}
 	}
-
-	ParkourComponent->TickParkour(DeltaTime);
-
 }
 
 void ATUCharacterPlayer::InitializeInputActions()
