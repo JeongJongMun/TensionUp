@@ -160,7 +160,7 @@ void AUIManager::SetCrosshairColor(const ECrosshairStateType State)
 
 void AUIManager::ShowSettingWidget() const
 {
-    if (!SettingWidget)
+    if (!SettingWidget || ControlGuideWidget->IsOn())
         return;
     
     SettingWidget->ToggleWidget();
