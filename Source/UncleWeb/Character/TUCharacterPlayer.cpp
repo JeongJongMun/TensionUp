@@ -343,6 +343,9 @@ void ATUCharacterPlayer::Look(const FInputActionValue& Value)
 
 void ATUCharacterPlayer::Dash()
 {
+	if (IsCableAttached() || bIsDashing)
+		return;
+	
 	if (!SteamComponent->HasEnoughSteam(DashSteamCost))
 	{
 		SoundManager->PlaySound2D("SW_Steam_Alarm");
