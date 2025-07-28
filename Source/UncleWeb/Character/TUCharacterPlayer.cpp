@@ -181,17 +181,13 @@ void ATUCharacterPlayer::Tick(float DeltaTime)
 
 	if (bOnGround && bIsMoving && !IsDashing() && !IsCableAttached())
 	{
-		// is walking or running sound
-		const bool bShouldPlayRunSound = (CurrentSpeed > MaxWalkSpeed);
+		const float DesiredInterval = bIsRunning ? RunSoundInterval : WalkSoundInterval;
 
-		const float DesiredInterval = bShouldPlayRunSound ? RunSoundInterval : WalkSoundInterval;
-		const bool bWasRunning = bIsRunningSound;
-
-		if (!GetWorldTimerManager().IsTimerActive(WalkSoundTimerHandle) || bWasRunning != bShouldPlayRunSound)
+		if (!GetWorldTimerManager().IsTimerActive(WalkSoundTimerHandle))
 		{
 			GetWorldTimerManager().ClearTimer(WalkSoundTimerHandle);
+			PlayWalkSound();
 			GetWorldTimerManager().SetTimer(WalkSoundTimerHandle, this, &ATUCharacterPlayer::PlayWalkSound, DesiredInterval, true);
-			bIsRunningSound = bShouldPlayRunSound;
 		}
 	}
 	else
@@ -431,17 +427,19 @@ void ATUCharacterPlayer::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherA
 
 void ATUCharacterPlayer::StartRunning()
 {
-	if (GetCharacterMovement() && GetCharacterMovement()->IsMovingOnGround())
+	if (GetCharacterMovement()->IsMovingOnGround())
 	{
 		GetCharacterMovement()->MaxWalkSpeed = MaxRunSpeed;
+		bIsRunning = true;
 	}
 }
 
 void ATUCharacterPlayer::StopRunning()
 {
-	if (GetCharacterMovement() && GetCharacterMovement()->IsMovingOnGround())
+	if (GetCharacterMovement()->IsMovingOnGround())
 	{
 		GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed;
+		bIsRunning = false;
 	}
 }
 
@@ -598,17 +596,13 @@ void ATUCharacterPlayer::ToggleControlGuideWidget()
 // ----- Sound
 void ATUCharacterPlayer::PlayWalkSound()
 {
-	if (!SoundManager) return;
+	if (!SoundManager || IsCableAttached() || IsDashing()) return;
 
-	if (bIsRunningSound)
-	{
-		SoundManager->PlaySound2D("SW_Chr_Run");
-	}
-	else
-	{
-		SoundManager->PlaySound2D("SW_Chr_Walk");
-	}
+	const FName SoundKey = bIsRunning ? TEXT("SW_Chr_Run") : TEXT("SW_Chr_Walk");
+	SoundManager->PlaySound2D(SoundKey);
 }
+
+
 
 void ATUCharacterPlayer::HandleDance()
 {

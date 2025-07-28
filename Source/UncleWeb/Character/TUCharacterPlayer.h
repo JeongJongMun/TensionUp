@@ -217,6 +217,6 @@ private:
 
 	float WalkSoundInterval = 1.0f;
 	float RunSoundInterval = 1.4f;
-	bool bIsRunningSound = false;
+	bool bIsRunning = false;
 	bool bIsDancing = false;
 };
