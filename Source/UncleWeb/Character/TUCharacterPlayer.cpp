@@ -31,6 +31,11 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 	NiagaraCompSteamVfxR->SetupAttachment(GetMesh(), SteamEffectSocketNameR);
 	NiagaraCompSteamVfxL->SetAutoActivate(false);
 	NiagaraCompSteamVfxR->SetAutoActivate(false);
+
+	NiagaraCompDashVfx = CreateDefaultSubobject<UNiagaraComponent>(TEXT("NiagaraComp_Dash"));
+	NiagaraCompDashVfx->SetupAttachment(RootComponent);
+	NiagaraCompDashVfx->SetAutoActivate(false);
+	NiagaraCompDashVfx->SetRelativeLocation(FVector(0.f, 0.f, -88.f));
 	
 	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> NiagaraSystemObj(TEXT("/Script/Niagara.NiagaraSystem'/Game/VFX/CartoonSmoke/Effects/NS_ToonSmoke4.NS_ToonSmoke4'"));
 	if (NiagaraSystemObj.Succeeded())
@@ -38,6 +43,8 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 		NiagaraSystemSteamVfx = NiagaraSystemObj.Object;
 		NiagaraCompSteamVfxL->SetAsset(NiagaraSystemSteamVfx);
 		NiagaraCompSteamVfxR->SetAsset(NiagaraSystemSteamVfx);
+
+		NiagaraCompDashVfx->SetAsset(NiagaraSystemObj.Object); //temp
 	}
 
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -373,6 +380,11 @@ void ATUCharacterPlayer::Dash()
 		SteamComponent->ConsumeSteam(DashSteamCost);
 		SoundManager->PlaySound2D("SW_Dash");
 
+		if (bIsDashEffect && NiagaraCompDashVfx && !NiagaraCompDashVfx->IsActive())
+		{
+			NiagaraCompDashVfx->Activate(true);
+		}
+
 		const EPlayerAnimationMontageType AnimType = GetCharacterMovement()->IsMovingOnGround() ? EPlayerAnimationMontageType::DashGround : EPlayerAnimationMontageType::DashAir;
 		FTimerHandle DashEffectHandle;
 		GetWorldTimerManager().SetTimer(DashEffectHandle, [this, AnimType]()
@@ -380,6 +392,10 @@ void ATUCharacterPlayer::Dash()
 				const TObjectPtr<UAnimMontage> AnimMontage = AnimMontageMap.FindRef(AnimType);
 				StopAnimMontage(AnimMontage);
 				bIsDashing = false;
+				if (NiagaraCompDashVfx)
+				{
+					NiagaraCompDashVfx->Deactivate();
+				}
 			}, 1.0f, false);
 
 		PlayAnimation(AnimType);

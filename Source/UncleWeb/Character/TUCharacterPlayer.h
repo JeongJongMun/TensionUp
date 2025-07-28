@@ -105,9 +105,15 @@ protected:
 	
 	UPROPERTY()
 	TObjectPtr<class UNiagaraComponent> NiagaraCompSteamVfxL;
+
+	UPROPERTY()
+	TObjectPtr<class UNiagaraComponent> NiagaraCompDashVfx;
 	
 	UPROPERTY()
 	TObjectPtr<class UNiagaraSystem> NiagaraSystemSteamVfx;
+
+	UPROPERTY()
+	TObjectPtr<class UNiagaraSystem> NiagaraDashEffect;
 
 
 private:
@@ -120,6 +126,9 @@ private:
 	
 	UPROPERTY(EditAnywhere, Category = "Config|Dash")
 	float DashStrength = 1400.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Config|Dash")
+	bool bIsDashEffect = true;
 
 	UPROPERTY(EditAnywhere, Category = "Config|Steam")
 	float DashSteamCost = 35.0f;
