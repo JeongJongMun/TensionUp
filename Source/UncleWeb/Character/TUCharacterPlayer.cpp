@@ -276,8 +276,8 @@ void ATUCharacterPlayer::InitializeAnimations()
 	TMap<EPlayerAnimationMontageType, FString> AnimMontagePaths = {
 		{ EPlayerAnimationMontageType::Swinging, TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_Swing.MT_Player_Swing'") },
 		{ EPlayerAnimationMontageType::SwingEnd, TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_SwingEnd.MT_Player_SwingEnd'") },
-		{ EPlayerAnimationMontageType::DashAir, TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_DashAir.MT_Player_Dash_Air'") },
-		{ EPlayerAnimationMontageType::DashGround, TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_DashGround.MT_Player_Dash_Ground'") },
+		{ EPlayerAnimationMontageType::DashAir, TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_Dash_Air.MT_Player_Dash_Air'") },
+		{ EPlayerAnimationMontageType::DashGround, TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_Dash_Ground.MT_Player_Dash_Ground'") },
 	};
 
 	for (const auto& [Type, Path] : AnimMontagePaths)
@@ -356,20 +356,20 @@ void ATUCharacterPlayer::Dash()
 		FRotator CameraRotation = FollowCamera->GetComponentRotation();
 		FRotator YawRotation(0, CameraRotation.Yaw, 0);
 		FVector DashDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-		//FVector DashDirection = GetActorForwardVector(); // player forward direction
-		LaunchCharacter(DashDirection * DashStrength*1.0f, true, true);
+		LaunchCharacter(DashDirection * DashStrength, true, true);
 
 		SteamComponent->ConsumeSteam(DashSteamCost);
 		SoundManager->PlaySound2D("SW_Dash");
 
-		// deactive dash effect
-		FTimerHandle DashEffectHandle;
-		GetWorldTimerManager().SetTimer(DashEffectHandle, [this]()
-			{
-				bIsDashing = false;
-			}, 0.5f, false);
-
 		const EPlayerAnimationMontageType AnimType = GetCharacterMovement()->IsMovingOnGround() ? EPlayerAnimationMontageType::DashGround : EPlayerAnimationMontageType::DashAir;
+		FTimerHandle DashEffectHandle;
+		GetWorldTimerManager().SetTimer(DashEffectHandle, [this, AnimType]()
+			{
+				const TObjectPtr<UAnimMontage> AnimMontage = AnimMontageMap.FindRef(AnimType);
+				StopAnimMontage(AnimMontage);
+				bIsDashing = false;
+			}, 1.0f, false);
+
 		PlayAnimation(AnimType);
 	}
 }
