@@ -275,7 +275,9 @@ void ATUCharacterPlayer::InitializeAnimations()
 {
 	TMap<EPlayerAnimationMontageType, FString> AnimMontagePaths = {
 		{ EPlayerAnimationMontageType::Swinging, TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_Swing.MT_Player_Swing'") },
-		{ EPlayerAnimationMontageType::SwingEnd, TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_SwingEnd.MT_Player_SwingEnd'") }
+		{ EPlayerAnimationMontageType::SwingEnd, TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_SwingEnd.MT_Player_SwingEnd'") },
+		{ EPlayerAnimationMontageType::DashAir, TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_DashAir.MT_Player_Dash_Air'") },
+		{ EPlayerAnimationMontageType::DashGround, TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_DashGround.MT_Player_Dash_Ground'") },
 	};
 
 	for (const auto& [Type, Path] : AnimMontagePaths)
@@ -366,6 +368,9 @@ void ATUCharacterPlayer::Dash()
 			{
 				bIsDashing = false;
 			}, 0.5f, false);
+
+		const EPlayerAnimationMontageType AnimType = GetCharacterMovement()->IsMovingOnGround() ? EPlayerAnimationMontageType::DashGround : EPlayerAnimationMontageType::DashAir;
+		PlayAnimation(AnimType);
 	}
 }
 bool ATUCharacterPlayer::IsDashing() const

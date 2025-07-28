@@ -41,6 +41,8 @@ enum class EPlayerAnimationMontageType : uint8
 	Parkour,
 	Swinging,
 	SwingEnd,
+	DashAir,
+	DashGround,
 };
 
 UENUM()
