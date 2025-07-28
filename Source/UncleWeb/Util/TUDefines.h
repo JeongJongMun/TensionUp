@@ -32,6 +32,7 @@ enum class EInputActionType : uint8
 	SteamBoost,
 	ShowSetting,
 	ToggleControlGuide,
+	Dance,
 };
 
 UENUM()
@@ -43,6 +44,7 @@ enum class EPlayerAnimationMontageType : uint8
 	SwingEnd,
 	DashAir,
 	DashGround,
+	Dance,
 };
 
 UENUM()

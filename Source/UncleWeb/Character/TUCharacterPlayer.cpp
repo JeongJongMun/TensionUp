@@ -230,6 +230,7 @@ void ATUCharacterPlayer::InitializeInputActions()
 		{ EInputActionType::SteamBoost, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_SteamBooster.IA_SteamBooster'"))) },
 		{ EInputActionType::ShowSetting, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_ShowSettings.IA_ShowSettings'"))) },
 		{ EInputActionType::ToggleControlGuide, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_ToggleControlGuide.IA_ToggleControlGuide'"))) },
+		{ EInputActionType::Dance, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_Dance.IA_Dance'"))) },
 	};
 
 	InputActionMap = {
@@ -244,6 +245,7 @@ void ATUCharacterPlayer::InitializeInputActions()
 		{ EInputActionType::SteamBoost, SteamBoostAction },
 		{ EInputActionType::ShowSetting, ShowSettingsAction },
 		{ EInputActionType::ToggleControlGuide, ToggleControlGuideAction },
+		{ EInputActionType::Dance, DanceAction },
 	};
 
 	for (const TPair<EInputActionType, TSoftObjectPtr<UInputAction>>& Pair : InputActionPaths)
@@ -272,6 +274,7 @@ void ATUCharacterPlayer::InitializeInputActions()
 	SteamBoostAction = InputActionMap.FindRef(EInputActionType::SteamBoost);
 	ShowSettingsAction = InputActionMap.FindRef(EInputActionType::ShowSetting);
 	ToggleControlGuideAction = InputActionMap.FindRef(EInputActionType::ToggleControlGuide);
+	DanceAction = InputActionMap.FindRef(EInputActionType::Dance);
 }
 
 void ATUCharacterPlayer::InitializeAnimations()
@@ -281,6 +284,7 @@ void ATUCharacterPlayer::InitializeAnimations()
 		{ EPlayerAnimationMontageType::SwingEnd, TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_SwingEnd.MT_Player_SwingEnd'") },
 		{ EPlayerAnimationMontageType::DashAir, TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_Dash_Air.MT_Player_Dash_Air'") },
 		{ EPlayerAnimationMontageType::DashGround, TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_Dash_Ground.MT_Player_Dash_Ground'") },
+		{ EPlayerAnimationMontageType::Dance, TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_Dance.MT_Player_Dance'") },
 	};
 
 	for (const auto& [Type, Path] : AnimMontagePaths)
@@ -319,6 +323,8 @@ void ATUCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 	EnhancedInputComponent->BindAction(ShowSettingsAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleShowSettingWidget);
 	EnhancedInputComponent->BindAction(ToggleControlGuideAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::ToggleControlGuideWidget);
+
+	EnhancedInputComponent->BindAction(DanceAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleDance);
 }
 
 void ATUCharacterPlayer::Move(const FInputActionValue& Value)
@@ -588,3 +594,17 @@ void ATUCharacterPlayer::PlayWalkSound()
 	}
 }
 
+void ATUCharacterPlayer::HandleDance()
+{
+	if (bIsDancing)
+	{
+		bIsDancing = false;
+		const TObjectPtr<UAnimMontage> AnimMontage = AnimMontageMap.FindRef(EPlayerAnimationMontageType::Dance);
+		StopAnimMontage(AnimMontage);
+	}
+	else
+	{
+		bIsDancing = true;
+		PlayAnimation(EPlayerAnimationMontageType::Dance);
+	}
+}

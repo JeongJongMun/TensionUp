@@ -74,6 +74,10 @@ private:
 	void HandleShowSettingWidget();
 	void ToggleControlGuideWidget();
 
+	UFUNCTION()
+	void PlayWalkSound();
+	void HandleDance();
+
 // --------------------
 // Variables
 // --------------------
@@ -183,6 +187,9 @@ private:
 	UPROPERTY()
 	TObjectPtr<UInputAction> ToggleControlGuideAction;
 
+	UPROPERTY()
+	TObjectPtr<UInputAction> DanceAction;
+
 	bool bIsTryingParkour = false;
 	bool bIsJumpInputActive = false;
 	bool bIsDashing = false;
@@ -202,8 +209,5 @@ private:
 	float WalkSoundInterval = 1.0f;
 	float RunSoundInterval = 1.4f;
 	bool bIsRunningSound = false;
-
-	UFUNCTION()
-	void PlayWalkSound();
-
+	bool bIsDancing = false;
 };
