@@ -24,7 +24,7 @@ public:
     void PlaySound2D(FName SoundName, float VolumeMultiplier = 1.0f, float PitchMultiplier = 1.0f, bool bLoop = false);
     void StopSound(FName SoundName);
 
-    void PlayBGM(FName SoundName, bool bLoop = true);
+    void PlayBGM(FName SoundName);
     void StopBGM();
     void PauseBGM();
     void ResumeBGM();
@@ -40,7 +40,7 @@ public:
 private:
     void PlaySoundAtLocation(USoundBase* Sound, const FVector& Location, float VolumeMultiplier = 1.0f, float PitchMultiplier = 1.0f, bool bLoop = false);
     void PlaySound2D(USoundBase* Sound, float VolumeMultiplier = 1.0f, float PitchMultiplier = 1.0f, bool bLoop = false);
-    void PlayBGM(USoundBase* Sound, bool bLoop = true);
+    void PlayBGM(USoundBase* Sound);
 
     float GetVolumeForType(ESoundType SoundType, float VolumeMultiplier) const;
     void CleanupFinishedAudioComponents();
