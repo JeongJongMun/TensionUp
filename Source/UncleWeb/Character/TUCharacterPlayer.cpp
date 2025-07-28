@@ -170,11 +170,11 @@ void ATUCharacterPlayer::Tick(float DeltaTime)
 
 	const bool bIsMoving = !GetVelocity().IsNearlyZero();
 	const bool bOnGround = GetCharacterMovement()->IsMovingOnGround();
+	const float CurrentSpeed = GetVelocity().Size();
 
 	if (bOnGround && bIsMoving && !IsDashing() && !IsCableAttached())
 	{
 		// is walking or running sound
-		const float CurrentSpeed = GetVelocity().Size();
 		const bool bShouldPlayRunSound = (CurrentSpeed > MaxWalkSpeed);
 
 		const float DesiredInterval = bShouldPlayRunSound ? RunSoundInterval : WalkSoundInterval;
@@ -211,6 +211,9 @@ void ATUCharacterPlayer::Tick(float DeltaTime)
 			HandleStopSteamBooster();
 		}
 	}
+
+	const float MaxSpeed = DynamicCameraComponent->GetMaxSpeed();
+	UIManager->UpdateSpeedLineWidget(CurrentSpeed, MaxSpeed);
 }
 
 void ATUCharacterPlayer::InitializeInputActions()

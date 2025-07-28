@@ -1,6 +1,7 @@
 #include "UIManager.h"
 #include "ControlGuideWidget.h"
 #include "SettingWidget.h"
+#include "SpeedLineWidget.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/Image.h"
 #include "Engine/World.h"
@@ -32,6 +33,12 @@ AUIManager::AUIManager()
     if (ControlGuideFinder.Succeeded())
     {
         ControlGuideWidgetClass = ControlGuideFinder.Class;
+    }
+
+    static ConstructorHelpers::FClassFinder<UUserWidget> SpeedLineFinder(TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/UI/WBP_SpeedLine.WBP_SpeedLine_C'"));
+    if (SpeedLineFinder.Succeeded())
+    {
+        SpeedLineWidgetClass = SpeedLineFinder.Class;
     }
 }
 
@@ -75,9 +82,13 @@ void AUIManager::CreateWidgets()
     {
         ControlGuideWidget = CreateWidget<UControlGuideWidget>(CachedPC, ControlGuideWidgetClass);
     }
+    if (!SpeedLineWidget && SpeedLineWidgetClass)
+    {
+        SpeedLineWidget = CreateWidget<UUserWidget>(CachedPC, SpeedLineWidgetClass);
+    }
 }
 
-void AUIManager::AddWidgetsToViewport()
+void AUIManager::AddWidgetsToViewport() const
 {
     if (SteamWidget)
     {
@@ -97,9 +108,13 @@ void AUIManager::AddWidgetsToViewport()
     {
         ControlGuideWidget->AddToViewport();
     }
+    if (SpeedLineWidget && !SpeedLineWidget->IsInViewport())
+    {
+        SpeedLineWidget->AddToViewport();
+    }
 }
 
-void AUIManager::UpdateSteamUI(const float Current, const float Max)
+void AUIManager::UpdateSteamUI(const float Current, const float Max) const
 {
     if (SteamWidget)
     {
@@ -112,7 +127,7 @@ void AUIManager::UpdateSteamUI(const float Current, const float Max)
     }
 }
 
-void AUIManager::SetActiveCrosshair(const ESlateVisibility Visibility)
+void AUIManager::SetActiveCrosshair(const ESlateVisibility Visibility) const
 {
     if (!CrosshairWidget) return;
     
@@ -143,7 +158,7 @@ void AUIManager::SetCrosshairColor(const ECrosshairStateType State)
     CurrentCrosshairState = State;
 }
 
-void AUIManager::ShowSettingWidget()
+void AUIManager::ShowSettingWidget() const
 {
     if (!SettingWidget)
         return;
@@ -151,10 +166,21 @@ void AUIManager::ShowSettingWidget()
     SettingWidget->ToggleWidget();
 }
 
-void AUIManager::ToggleControlGuideWidget()
+void AUIManager::ToggleControlGuideWidget() const
 {
     if (!ControlGuideWidget)
         return;
 
     ControlGuideWidget->ToggleWidget();
+}
+
+void AUIManager::UpdateSpeedLineWidget(const float CurrentSpeed, const float MaxSpeed) const
+{
+    if (!SpeedLineWidget)
+        return;
+
+    if (USpeedLineWidget* SpeedLine = Cast<USpeedLineWidget>(SpeedLineWidget))
+    {
+        SpeedLine->UpdateSpeedLines(CurrentSpeed, MaxSpeed);
+    }
 }
