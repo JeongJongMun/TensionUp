@@ -61,7 +61,7 @@ private:
 	float ParkourMaxDistance = 150.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|Parkour")
-	bool bDrawDebugBox = true;
+	bool bDrawDebugBox = false;
 
 	UPROPERTY(EditAnywhere, Category = "Config|Parkour")
 	UAnimMontage* ClimbUpMontage;
