@@ -376,30 +376,41 @@ void ATUCharacterPlayer::Dash()
 		SteamComponent->ConsumeSteam(DashSteamCost);
 		SoundManager->PlaySound2D("SW_Dash");
 
-		if (bIsDashEffect && NiagaraCompDashVfx && !NiagaraCompDashVfx->IsActive())
+		if (bIsDashEffect && NiagaraCompDashVfx)
 		{
 			NiagaraCompDashVfx->Activate(true);
 		}
 
-		const EPlayerAnimationMontageType AnimType = GetCharacterMovement()->IsMovingOnGround() ? EPlayerAnimationMontageType::DashGround : EPlayerAnimationMontageType::DashAir;
-		FTimerHandle DashEffectHandle;
-		GetWorldTimerManager().SetTimer(DashEffectHandle, [this, AnimType]()
-			{
-				const TObjectPtr<UAnimMontage> AnimMontage = AnimMontageMap.FindRef(AnimType);
-				StopAnimMontage(AnimMontage);
-				bIsDashing = false;
-				if (NiagaraCompDashVfx)
-				{
-					NiagaraCompDashVfx->Deactivate();
-				}
-			}, 1.0f, false);
+		GetWorldTimerManager().SetTimer(DashEffectHandle, this, &ATUCharacterPlayer::OnDashFinished, 1.0f, false);
+
+		const EPlayerAnimationMontageType AnimType = GetCharacterMovement()->IsMovingOnGround()
+			? EPlayerAnimationMontageType::DashGround
+			: EPlayerAnimationMontageType::DashAir;
 
 		PlayAnimation(AnimType);
 	}
 }
+
 bool ATUCharacterPlayer::IsDashing() const
 {
 	return bIsDashing;
+}
+
+void ATUCharacterPlayer::OnDashFinished()
+{
+	if (NiagaraCompDashVfx)
+	{
+		NiagaraCompDashVfx->Deactivate();
+	}
+
+	const EPlayerAnimationMontageType AnimType = GetCharacterMovement()->IsMovingOnGround()
+		? EPlayerAnimationMontageType::DashGround
+		: EPlayerAnimationMontageType::DashAir;
+
+	const TObjectPtr<UAnimMontage> AnimMontage = AnimMontageMap.FindRef(AnimType);
+	StopAnimMontage(AnimMontage);
+
+	bIsDashing = false;
 }
 
 

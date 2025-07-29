@@ -76,6 +76,7 @@ private:
 
 	UFUNCTION()
 	void PlayWalkSound();
+	void OnDashFinished();
 	void HandleDance();
 
 // --------------------
@@ -214,6 +215,7 @@ private:
 	TObjectPtr<USoundManager> SoundManager;
 
 	FTimerHandle WalkSoundTimerHandle;
+	FTimerHandle DashEffectHandle;
 
 	float WalkSoundInterval = 1.0f;
 	float RunSoundInterval = 1.4f;
