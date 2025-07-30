@@ -16,6 +16,7 @@ class UNCLEWEB_API UDynamicCamera : public UActorComponent
 public:	
 	UDynamicCamera();
 	void InitializeCamera() const;
+	FORCEINLINE float GetMaxSpeed() const { return SpeedThreshold_D; }
 
 protected:
 	virtual void BeginPlay() override;

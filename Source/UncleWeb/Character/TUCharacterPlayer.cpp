@@ -31,6 +31,11 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 	NiagaraCompSteamVfxR->SetupAttachment(GetMesh(), SteamEffectSocketNameR);
 	NiagaraCompSteamVfxL->SetAutoActivate(false);
 	NiagaraCompSteamVfxR->SetAutoActivate(false);
+
+	NiagaraCompDashVfx = CreateDefaultSubobject<UNiagaraComponent>(TEXT("NiagaraComp_Dash"));
+	NiagaraCompDashVfx->SetupAttachment(RootComponent);
+	NiagaraCompDashVfx->SetAutoActivate(false);
+	NiagaraCompDashVfx->SetRelativeLocation(FVector(0.f, 0.f, -88.f));
 	
 	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> NiagaraSystemObj(TEXT("/Script/Niagara.NiagaraSystem'/Game/VFX/CartoonSmoke/Effects/NS_ToonSmoke4.NS_ToonSmoke4'"));
 	if (NiagaraSystemObj.Succeeded())
@@ -38,6 +43,8 @@ ATUCharacterPlayer::ATUCharacterPlayer()
 		NiagaraSystemSteamVfx = NiagaraSystemObj.Object;
 		NiagaraCompSteamVfxL->SetAsset(NiagaraSystemSteamVfx);
 		NiagaraCompSteamVfxR->SetAsset(NiagaraSystemSteamVfx);
+
+		NiagaraCompDashVfx->SetAsset(NiagaraSystemObj.Object); //temp
 	}
 
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -170,21 +177,17 @@ void ATUCharacterPlayer::Tick(float DeltaTime)
 
 	const bool bIsMoving = !GetVelocity().IsNearlyZero();
 	const bool bOnGround = GetCharacterMovement()->IsMovingOnGround();
+	const float CurrentSpeed = GetVelocity().Size();
 
 	if (bOnGround && bIsMoving && !IsDashing() && !IsCableAttached())
 	{
-		// is walking or running sound
-		const float CurrentSpeed = GetVelocity().Size();
-		const bool bShouldPlayRunSound = (CurrentSpeed > MaxWalkSpeed);
+		const float DesiredInterval = bIsRunning ? RunSoundInterval : WalkSoundInterval;
 
-		const float DesiredInterval = bShouldPlayRunSound ? RunSoundInterval : WalkSoundInterval;
-		const bool bWasRunning = bIsRunningSound;
-
-		if (!GetWorldTimerManager().IsTimerActive(WalkSoundTimerHandle) || bWasRunning != bShouldPlayRunSound)
+		if (!GetWorldTimerManager().IsTimerActive(WalkSoundTimerHandle))
 		{
 			GetWorldTimerManager().ClearTimer(WalkSoundTimerHandle);
+			PlayWalkSound();
 			GetWorldTimerManager().SetTimer(WalkSoundTimerHandle, this, &ATUCharacterPlayer::PlayWalkSound, DesiredInterval, true);
-			bIsRunningSound = bShouldPlayRunSound;
 		}
 	}
 	else
@@ -211,6 +214,9 @@ void ATUCharacterPlayer::Tick(float DeltaTime)
 			HandleStopSteamBooster();
 		}
 	}
+
+	const float MaxSpeed = DynamicCameraComponent->GetMaxSpeed();
+	UIManager->UpdateSpeedLineWidget(CurrentSpeed, MaxSpeed);
 }
 
 void ATUCharacterPlayer::InitializeInputActions()
@@ -227,6 +233,7 @@ void ATUCharacterPlayer::InitializeInputActions()
 		{ EInputActionType::SteamBoost, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_SteamBooster.IA_SteamBooster'"))) },
 		{ EInputActionType::ShowSetting, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_ShowSettings.IA_ShowSettings'"))) },
 		{ EInputActionType::ToggleControlGuide, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_ToggleControlGuide.IA_ToggleControlGuide'"))) },
+		{ EInputActionType::Dance, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_Dance.IA_Dance'"))) },
 	};
 
 	InputActionMap = {
@@ -241,6 +248,7 @@ void ATUCharacterPlayer::InitializeInputActions()
 		{ EInputActionType::SteamBoost, SteamBoostAction },
 		{ EInputActionType::ShowSetting, ShowSettingsAction },
 		{ EInputActionType::ToggleControlGuide, ToggleControlGuideAction },
+		{ EInputActionType::Dance, DanceAction },
 	};
 
 	for (const TPair<EInputActionType, TSoftObjectPtr<UInputAction>>& Pair : InputActionPaths)
@@ -269,13 +277,17 @@ void ATUCharacterPlayer::InitializeInputActions()
 	SteamBoostAction = InputActionMap.FindRef(EInputActionType::SteamBoost);
 	ShowSettingsAction = InputActionMap.FindRef(EInputActionType::ShowSetting);
 	ToggleControlGuideAction = InputActionMap.FindRef(EInputActionType::ToggleControlGuide);
+	DanceAction = InputActionMap.FindRef(EInputActionType::Dance);
 }
 
 void ATUCharacterPlayer::InitializeAnimations()
 {
 	TMap<EPlayerAnimationMontageType, FString> AnimMontagePaths = {
 		{ EPlayerAnimationMontageType::Swinging, TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_Swing.MT_Player_Swing'") },
-		{ EPlayerAnimationMontageType::SwingEnd, TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_SwingEnd.MT_Player_SwingEnd'") }
+		{ EPlayerAnimationMontageType::SwingEnd, TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_SwingEnd.MT_Player_SwingEnd'") },
+		{ EPlayerAnimationMontageType::DashAir, TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_Dash_Air.MT_Player_Dash_Air'") },
+		{ EPlayerAnimationMontageType::DashGround, TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_Dash_Ground.MT_Player_Dash_Ground'") },
+		{ EPlayerAnimationMontageType::Dance, TEXT("/Script/Engine.AnimMontage'/Game/Animations/MT_Player_Dance.MT_Player_Dance'") },
 	};
 
 	for (const auto& [Type, Path] : AnimMontagePaths)
@@ -314,6 +326,8 @@ void ATUCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 	EnhancedInputComponent->BindAction(ShowSettingsAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleShowSettingWidget);
 	EnhancedInputComponent->BindAction(ToggleControlGuideAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::ToggleControlGuideWidget);
+
+	EnhancedInputComponent->BindAction(DanceAction, ETriggerEvent::Started, this, &ATUCharacterPlayer::HandleDance);
 }
 
 void ATUCharacterPlayer::Move(const FInputActionValue& Value)
@@ -341,6 +355,9 @@ void ATUCharacterPlayer::Look(const FInputActionValue& Value)
 
 void ATUCharacterPlayer::Dash()
 {
+	if (IsCableAttached() || bIsDashing)
+		return;
+	
 	if (!SteamComponent->HasEnoughSteam(DashSteamCost))
 	{
 		SoundManager->PlaySound2D("SW_Steam_Alarm");
@@ -354,23 +371,46 @@ void ATUCharacterPlayer::Dash()
 		FRotator CameraRotation = FollowCamera->GetComponentRotation();
 		FRotator YawRotation(0, CameraRotation.Yaw, 0);
 		FVector DashDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-		//FVector DashDirection = GetActorForwardVector(); // player forward direction
-		LaunchCharacter(DashDirection * DashStrength*1.0f, true, true);
+		LaunchCharacter(DashDirection * DashStrength, true, true);
 
 		SteamComponent->ConsumeSteam(DashSteamCost);
 		SoundManager->PlaySound2D("SW_Dash");
 
-		// deactive dash effect
-		FTimerHandle DashEffectHandle;
-		GetWorldTimerManager().SetTimer(DashEffectHandle, [this]()
-			{
-				bIsDashing = false;
-			}, 0.5f, false);
+		if (bIsDashEffect && NiagaraCompDashVfx)
+		{
+			NiagaraCompDashVfx->Activate(true);
+		}
+
+		GetWorldTimerManager().SetTimer(DashEffectHandle, this, &ATUCharacterPlayer::OnDashFinished, 1.0f, false);
+
+		const EPlayerAnimationMontageType AnimType = GetCharacterMovement()->IsMovingOnGround()
+			? EPlayerAnimationMontageType::DashGround
+			: EPlayerAnimationMontageType::DashAir;
+
+		PlayAnimation(AnimType);
 	}
 }
+
 bool ATUCharacterPlayer::IsDashing() const
 {
 	return bIsDashing;
+}
+
+void ATUCharacterPlayer::OnDashFinished()
+{
+	if (NiagaraCompDashVfx)
+	{
+		NiagaraCompDashVfx->Deactivate();
+	}
+
+	const EPlayerAnimationMontageType AnimType = GetCharacterMovement()->IsMovingOnGround()
+		? EPlayerAnimationMontageType::DashGround
+		: EPlayerAnimationMontageType::DashAir;
+
+	const TObjectPtr<UAnimMontage> AnimMontage = AnimMontageMap.FindRef(AnimType);
+	StopAnimMontage(AnimMontage);
+
+	bIsDashing = false;
 }
 
 
@@ -398,17 +438,19 @@ void ATUCharacterPlayer::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherA
 
 void ATUCharacterPlayer::StartRunning()
 {
-	if (GetCharacterMovement() && GetCharacterMovement()->IsMovingOnGround())
+	if (GetCharacterMovement()->IsMovingOnGround())
 	{
 		GetCharacterMovement()->MaxWalkSpeed = MaxRunSpeed;
+		bIsRunning = true;
 	}
 }
 
 void ATUCharacterPlayer::StopRunning()
 {
-	if (GetCharacterMovement() && GetCharacterMovement()->IsMovingOnGround())
+	if (GetCharacterMovement()->IsMovingOnGround())
 	{
 		GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed;
+		bIsRunning = false;
 	}
 }
 
@@ -565,15 +607,25 @@ void ATUCharacterPlayer::ToggleControlGuideWidget()
 // ----- Sound
 void ATUCharacterPlayer::PlayWalkSound()
 {
-	if (!SoundManager) return;
+	if (!SoundManager || IsCableAttached() || IsDashing()) return;
 
-	if (bIsRunningSound)
+	const FName SoundKey = bIsRunning ? TEXT("SW_Chr_Run") : TEXT("SW_Chr_Walk");
+	SoundManager->PlaySound2D(SoundKey);
+}
+
+
+
+void ATUCharacterPlayer::HandleDance()
+{
+	if (bIsDancing)
 	{
-		SoundManager->PlaySound2D("SW_Chr_Run");
+		bIsDancing = false;
+		const TObjectPtr<UAnimMontage> AnimMontage = AnimMontageMap.FindRef(EPlayerAnimationMontageType::Dance);
+		StopAnimMontage(AnimMontage);
 	}
 	else
 	{
-		SoundManager->PlaySound2D("SW_Chr_Walk");
+		bIsDancing = true;
+		PlayAnimation(EPlayerAnimationMontageType::Dance);
 	}
 }
-

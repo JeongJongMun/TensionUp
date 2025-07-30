@@ -18,7 +18,7 @@ void USteamComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	bool bNowOnGround = Owner->GetCharacterMovement()->IsMovingOnGround();
+	bool bNowOnGround = Owner->GetCharacterMovement()->IsMovingOnGround() && !Owner->IsCableAttached();
 
 	if (bNowOnGround)
 	{

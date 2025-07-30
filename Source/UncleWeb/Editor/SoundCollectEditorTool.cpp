@@ -1,6 +1,5 @@
 ﻿#include "SoundCollectEditorTool.h"
 #include "AssetRegistry/AssetRegistryModule.h"
-#include "Editor.h"
 #include "UncleWeb/Util/TUDefines.h"
 
 void FSoundCollectEditorTool::CollectSoundsToLibrary(USoundLibrary* Library, const FString& FolderPath, bool bAsBGM)

@@ -33,7 +33,7 @@ void USoundManager::Deinitialize()
     Super::Deinitialize();
 }
 
-void USoundManager::PlaySoundAtLocation(FName SoundName, const FVector& Location, float VolumeMultiplier, float PitchMultiplier, bool bLoop)
+void USoundManager::PlaySoundAtLocation(const FName SoundName, const FVector& Location, const float VolumeMultiplier, const float PitchMultiplier, const bool bLoop)
 {
     if (USoundBase* Sound = SoundDataAsset->SFXMap.FindRef(SoundName))
     {
@@ -41,7 +41,7 @@ void USoundManager::PlaySoundAtLocation(FName SoundName, const FVector& Location
     }
 }
 
-void USoundManager::PlaySound2D(FName SoundName, float VolumeMultiplier, float PitchMultiplier,bool bLoop)
+void USoundManager::PlaySound2D(const FName SoundName, const float VolumeMultiplier, const float PitchMultiplier, const bool bLoop)
 {
     if (USoundBase* Sound = SoundDataAsset->SFXMap.FindRef(SoundName))
     {
@@ -110,15 +110,15 @@ void USoundManager::PlaySound2D(USoundBase* Sound, const float VolumeMultiplier,
     }
 }
 
-void USoundManager::PlayBGM(FName SoundName, const bool bLoop)
+void USoundManager::PlayBGM(const FName SoundName)
 {
     if (USoundBase* Sound = SoundDataAsset->BGMMap.FindRef(SoundName))
     {
-        PlayBGM(Sound, bLoop);
+        PlayBGM(Sound);
     }
 }
 
-void USoundManager::PlayBGM(USoundBase* Sound, const bool bLoop)
+void USoundManager::PlayBGM(USoundBase* Sound)
 {
     if (!Sound || GetWorld()->IsNetMode(NM_DedicatedServer))
         return;
@@ -129,7 +129,7 @@ void USoundManager::PlayBGM(USoundBase* Sound, const bool bLoop)
         CurrentBGMAudioComponent = nullptr;
     }
 
-    CurrentBGMAudioComponent = UGameplayStatics::SpawnSound2D(GetWorld(), Sound, BGMVolume, 1.0f, 0.0f, nullptr, true, bLoop);
+    CurrentBGMAudioComponent = UGameplayStatics::SpawnSound2D(GetWorld(), Sound, BGMVolume, 1.0f, 0.0f, nullptr, true, true);
 }
 
 void USoundManager::StopBGM()

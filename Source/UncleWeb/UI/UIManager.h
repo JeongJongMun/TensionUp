@@ -19,18 +19,19 @@ public:
 	AUIManager();
 
 	void InitializeUI(APlayerController* PC);
-	void UpdateSteamUI(float Current, float Max);
-	void SetActiveCrosshair(ESlateVisibility Visibility);
+	void UpdateSteamUI(float Current, float Max) const;
+	void SetActiveCrosshair(ESlateVisibility Visibility) const;
 	void SetCrosshairColor(ECrosshairStateType State);
-	void ShowSettingWidget();
-	void ToggleControlGuideWidget();
+	void ShowSettingWidget() const;
+	void ToggleControlGuideWidget() const;
+	void UpdateSpeedLineWidget(float CurrentSpeed, float MaxSpeed) const;
 
 protected:
 	virtual void BeginPlay() override;
 
 private:
 	void CreateWidgets();
-	void AddWidgetsToViewport();
+	void AddWidgetsToViewport() const;
 
 // --------------------
 // Variables
@@ -56,6 +57,12 @@ private:
 	
 	UPROPERTY()
 	TSubclassOf<class UControlGuideWidget> ControlGuideWidgetClass;
+
+	UPROPERTY()
+	TObjectPtr<UUserWidget> SpeedLineWidget;
+
+	UPROPERTY()
+	TSubclassOf<class UUserWidget> SpeedLineWidgetClass;
 	
 	UPROPERTY()
 	TObjectPtr<APlayerController> CachedPC;

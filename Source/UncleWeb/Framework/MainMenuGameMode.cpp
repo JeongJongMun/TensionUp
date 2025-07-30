@@ -38,7 +38,7 @@ void AMainMenuGameMode::BeginPlay()
 			SoundManager = GI->GetSubsystem<USoundManager>();
 		}
 	}
-	SoundManager->PlayBGM("SW_Main_Jazz", true);
+	SoundManager->PlayBGM("SW_Main_Jazz");
 }
 
 void AMainMenuGameMode::ShowMainMenu()

@@ -14,6 +14,7 @@ class UNCLEWEB_API UControlGuideWidget : public UUserWidget
 public:
     UControlGuideWidget(const FObjectInitializer& ObjectInitializer);
 	void ToggleWidget();
+	bool IsOn() const { return bIsOn; }
 
 protected:
 	virtual void NativeConstruct() override;

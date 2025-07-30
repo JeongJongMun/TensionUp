@@ -74,6 +74,11 @@ private:
 	void HandleShowSettingWidget();
 	void ToggleControlGuideWidget();
 
+	UFUNCTION()
+	void PlayWalkSound();
+	void OnDashFinished();
+	void HandleDance();
+
 // --------------------
 // Variables
 // --------------------
@@ -101,9 +106,15 @@ protected:
 	
 	UPROPERTY()
 	TObjectPtr<class UNiagaraComponent> NiagaraCompSteamVfxL;
+
+	UPROPERTY()
+	TObjectPtr<class UNiagaraComponent> NiagaraCompDashVfx;
 	
 	UPROPERTY()
 	TObjectPtr<class UNiagaraSystem> NiagaraSystemSteamVfx;
+
+	UPROPERTY()
+	TObjectPtr<class UNiagaraSystem> NiagaraDashEffect;
 
 
 private:
@@ -116,6 +127,9 @@ private:
 	
 	UPROPERTY(EditAnywhere, Category = "Config|Dash")
 	float DashStrength = 1400.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Config|Dash")
+	bool bIsDashEffect = true;
 
 	UPROPERTY(EditAnywhere, Category = "Config|Steam")
 	float DashSteamCost = 35.0f;
@@ -183,6 +197,9 @@ private:
 	UPROPERTY()
 	TObjectPtr<UInputAction> ToggleControlGuideAction;
 
+	UPROPERTY()
+	TObjectPtr<UInputAction> DanceAction;
+
 	bool bIsTryingParkour = false;
 	bool bIsJumpInputActive = false;
 	bool bIsDashing = false;
@@ -198,12 +215,10 @@ private:
 	TObjectPtr<USoundManager> SoundManager;
 
 	FTimerHandle WalkSoundTimerHandle;
+	FTimerHandle DashEffectHandle;
 
 	float WalkSoundInterval = 1.0f;
 	float RunSoundInterval = 1.4f;
-	bool bIsRunningSound = false;
-
-	UFUNCTION()
-	void PlayWalkSound();
-
+	bool bIsRunning = false;
+	bool bIsDancing = false;
 };
