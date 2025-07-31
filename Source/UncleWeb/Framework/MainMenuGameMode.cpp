@@ -20,6 +20,13 @@ void AMainMenuGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// Load the main menu level asynchronously
+	FLatentActionInfo LatentInfo;
+	LatentInfo.CallbackTarget = this;
+
+	UGameplayStatics::LoadStreamLevel(this, "Stage_2_1", true, false, LatentInfo);
+
+
 	ShowMainMenu();
 
 	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
