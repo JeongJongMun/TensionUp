@@ -2,6 +2,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
 #include "UncleWeb/Manager/SoundManager.h"
+#include "CineCameraActor.h"
 #include "UncleWeb/Util/TUDefines.h"
 
 AMainMenuGameMode::AMainMenuGameMode()
@@ -20,12 +21,11 @@ void AMainMenuGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// Load the main menu level asynchronously
+	// Load the stage asynchronously
 	FLatentActionInfo LatentInfo;
 	LatentInfo.CallbackTarget = this;
 
 	UGameplayStatics::LoadStreamLevel(this, "Stage_2_1", true, false, LatentInfo);
-
 
 	ShowMainMenu();
 
@@ -35,6 +35,17 @@ void AMainMenuGameMode::BeginPlay()
 		PC->bShowMouseCursor = true;
 		PC->bEnableClickEvents = true;
 		PC->bEnableMouseOverEvents = true;
+		PC->bAutoManageActiveCameraTarget = false;
+
+		TArray<AActor*> FoundCameras;
+		UGameplayStatics::GetAllActorsOfClass(this, ACineCameraActor::StaticClass(), FoundCameras);
+
+		if (FoundCameras.Num() > 0)
+		{
+			PC->SetViewTarget(FoundCameras[0]);
+			UE_LOG(LogTemp, Warning, TEXT("Instant ViewTarget Set: %s"), *FoundCameras[0]->GetName());
+		}
+
 		PC->SetInputMode(FInputModeUIOnly());
 	}
 
