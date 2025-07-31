@@ -7,6 +7,7 @@
 #include "LevelSequencePlayer.h"
 #include "LevelSequenceActor.h"
 #include "MovieSceneSequencePlayer.h"
+#include "GameFramework/Character.h"
 #include "UncleWeb/Util/TUDefines.h"
 
 AMainMenuGameMode::AMainMenuGameMode()
@@ -18,6 +19,12 @@ AMainMenuGameMode::AMainMenuGameMode()
 	if (MainMenuWidgetBPClass.Class != nullptr)
 	{
 		MainMenuWidgetClass = MainMenuWidgetBPClass.Class;
+	}
+
+	static ConstructorHelpers::FClassFinder<ACharacter> BPMenuCharClass(TEXT("/Game/Characters/BP_MenuCharacter.BP_MenuCharacter_C"));
+	if (BPMenuCharClass.Succeeded())
+	{
+		MenuCharacterClass = BPMenuCharClass.Class;
 	}
 }
 
@@ -47,7 +54,7 @@ void AMainMenuGameMode::BeginPlay()
 		if (FoundCameras.Num() > 0)
 		{
 			PC->SetViewTarget(FoundCameras[0]);
-			UE_LOG(LogTemp, Warning, TEXT("Instant ViewTarget Set: %s"), *FoundCameras[0]->GetName());
+			//UE_LOG(LogTemp, Warning, TEXT("Instant ViewTarget Set: %s"), *FoundCameras[0]->GetName());
 		}
 
 		ULevelSequence* SequenceAsset = LoadObject<ULevelSequence>(nullptr, TEXT("/Game/Cinematic/LS_MainMenuCam.LS_MainMenuCam"));
@@ -62,6 +69,26 @@ void AMainMenuGameMode::BeginPlay()
 			ULevelSequencePlayer* Player = ULevelSequencePlayer::CreateLevelSequencePlayer(GetWorld(), SequenceAsset, Settings, OutActor);
 		}
 
+		if (MenuCharacterClass)
+		{
+			FActorSpawnParameters Params;
+			Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+			ACharacter* MenuChar = GetWorld()->SpawnActor<ACharacter>(MenuCharacterClass, FVector::ZeroVector, FRotator::ZeroRotator, Params);
+
+			if (MenuChar && FoundCameras.Num() > 0)
+			{
+				MenuChar->AttachToActor(FoundCameras[0], FAttachmentTransformRules::KeepRelativeTransform);
+				MenuChar->SetActorRelativeLocation(FVector(369.f, 245.f, -42.f));
+				MenuChar->SetActorRelativeRotation(FRotator(0.f, 120.f, 0.f));
+				//UE_LOG(LogTemp, Warning, TEXT("Menu Character Spawned and Attached."));
+			}
+			else
+			{
+				//UE_LOG(LogTemp, Error, TEXT("Failed to spawn Menu Character or camera not found."));
+			}
+
+		}
 
 		PC->SetInputMode(FInputModeUIOnly());
 	}

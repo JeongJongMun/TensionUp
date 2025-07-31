@@ -5,6 +5,8 @@
 #include "GameFramework/GameMode.h"
 #include "MainMenuGameMode.generated.h"
 
+class ACharacter;
+
 UCLASS()
 class UNCLEWEB_API AMainMenuGameMode : public AGameMode
 {
@@ -26,4 +28,7 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<class USoundManager> SoundManager;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<ACharacter> MenuCharacterClass;
 };
