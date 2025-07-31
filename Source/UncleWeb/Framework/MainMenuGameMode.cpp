@@ -3,6 +3,10 @@
 #include "Kismet/GameplayStatics.h"
 #include "UncleWeb/Manager/SoundManager.h"
 #include "CineCameraActor.h"
+#include "LevelSequence.h"
+#include "LevelSequencePlayer.h"
+#include "LevelSequenceActor.h"
+#include "MovieSceneSequencePlayer.h"
 #include "UncleWeb/Util/TUDefines.h"
 
 AMainMenuGameMode::AMainMenuGameMode()
@@ -45,6 +49,19 @@ void AMainMenuGameMode::BeginPlay()
 			PC->SetViewTarget(FoundCameras[0]);
 			UE_LOG(LogTemp, Warning, TEXT("Instant ViewTarget Set: %s"), *FoundCameras[0]->GetName());
 		}
+
+		ULevelSequence* SequenceAsset = LoadObject<ULevelSequence>(nullptr, TEXT("/Game/Cinematic/LS_MainMenuCam.LS_MainMenuCam"));
+		if (SequenceAsset)
+		{
+			FMovieSceneSequencePlaybackSettings Settings;
+			Settings.bAutoPlay = true;
+			Settings.LoopCount.Value = -1;
+
+			ALevelSequenceActor* OutActor = nullptr;
+
+			ULevelSequencePlayer* Player = ULevelSequencePlayer::CreateLevelSequencePlayer(GetWorld(), SequenceAsset, Settings, OutActor);
+		}
+
 
 		PC->SetInputMode(FInputModeUIOnly());
 	}
