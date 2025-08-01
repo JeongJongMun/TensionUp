@@ -116,12 +116,12 @@ void AUIManager::AddWidgetsToViewport() const
     }
     if (SettingWidget && !SettingWidget->IsInViewport())
     {
-        SettingWidget->AddToViewport();
+        SettingWidget->AddToViewport(100);
         SettingWidget->SetVisibility(ESlateVisibility::Hidden);
     }
     if (ControlGuideWidget && !ControlGuideWidget->IsInViewport())
     {
-        ControlGuideWidget->AddToViewport();
+        ControlGuideWidget->AddToViewport(90);
     }
     if (SpeedLineWidget && !SpeedLineWidget->IsInViewport())
     {
