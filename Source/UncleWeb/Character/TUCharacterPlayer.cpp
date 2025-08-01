@@ -147,7 +147,7 @@ void ATUCharacterPlayer::BeginPlay()
 		UTexture2D* CutsceneTex = LoadObject<UTexture2D>(nullptr, TEXT("/Game/Art/CutScene/T_Cutscene_Start.T_Cutscene_Start"));
 		if (CutsceneTex)
 		{
-			UIManager->ShowCutSceneImage(CutsceneTex, 3.0f);
+			UIManager->ShowCutSceneImage(CutsceneTex, 6.0f);
 			UE_LOG(LogTemp, Warning, TEXT("CutsceneTex loaded"));
 		}
 		else

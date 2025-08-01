@@ -1,10 +1,23 @@
 #pragma once
-
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "CutSceneImageWidget.generated.h"
 
 class UImage;
+class UTexture2D;
+
+USTRUCT()
+struct FFadeInfo
+{
+    GENERATED_BODY()
+
+    TObjectPtr<UImage> Target = nullptr;
+    float StartOpacity = 0.f;
+    float EndOpacity = 0.f;
+    int32 CurrentStep = 0;
+    int32 TotalSteps = 0;
+    bool bActive = false;
+};
 
 UCLASS()
 class UNCLEWEB_API UCutSceneImageWidget : public UUserWidget
@@ -12,19 +25,30 @@ class UNCLEWEB_API UCutSceneImageWidget : public UUserWidget
     GENERATED_BODY()
 
 public:
+    virtual void NativeConstruct() override;
+
     UFUNCTION(BlueprintCallable)
-    void ShowImageForSeconds(UTexture2D* InTexture, float Duration);
+    void PlayCutScene(UTexture2D* InTexture, float TotalDuration);
 
 protected:
-    virtual void NativeConstruct() override;
-    virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<UImage> CutsceneImage;
+
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<UImage> BlackOverlay;
 
 private:
-    UPROPERTY(meta = (BindWidget))
-    UImage* CutsceneImage;
+    FTimerHandle FadeInHandle;
+    FTimerHandle FadeOutHandle;
+    FTimerHandle FadeTickHandle;
 
-    float FadeOutDelay = 0.f;
-    float FadeDuration = 1.f;
-    float ElapsedTime = 0.f;
-    bool bIsFadingOut = false;
+    float FadeStepTime = 0.05f;
+
+    TArray<FFadeInfo> ActiveFades;
+
+    void BeginFadeIn();
+    void BeginFadeOut();
+    void TickFade();
+    void StartFade(UImage* TargetImage, float StartOpacity, float EndOpacity, float Duration);
+    void ClearAllFades();
 };

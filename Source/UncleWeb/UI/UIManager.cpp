@@ -212,6 +212,6 @@ void AUIManager::ShowCutSceneImage(UTexture2D* Texture, float Duration)
     {
         UE_LOG(LogTemp, Warning, TEXT("ShowCutSceneImage called"));
 
-        CutSceneImageWidget->ShowImageForSeconds(Texture, Duration);
+        CutSceneImageWidget->PlayCutScene(Texture, Duration);
     }
 }
