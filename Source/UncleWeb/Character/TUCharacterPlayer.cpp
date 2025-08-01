@@ -122,7 +122,7 @@ void ATUCharacterPlayer::Landed(const FHitResult& Hit)
 		const bool bIsShiftPressed = PC->IsInputKeyDown(EKeys::LeftShift);
 		GetCharacterMovement()->MaxWalkSpeed = bIsShiftPressed ? MaxRunSpeed : MaxWalkSpeed;
 	}
-
+	ResetWalkSoundTimer();
 	SoundManager->PlaySound2D("SW_Chr_Land");
 }
 
@@ -179,19 +179,17 @@ void ATUCharacterPlayer::Tick(float DeltaTime)
 	const bool bOnGround = GetCharacterMovement()->IsMovingOnGround();
 	const float CurrentSpeed = GetVelocity().Size();
 
-	if (bOnGround && bIsMoving && !IsDashing() && !IsCableAttached())
+	if (bOnGround && bIsMoving && !IsCableAttached() && !IsDashing())
 	{
-		const float DesiredInterval = bIsRunning ? RunSoundInterval : WalkSoundInterval;
-
 		if (!GetWorldTimerManager().IsTimerActive(WalkSoundTimerHandle))
 		{
-			GetWorldTimerManager().ClearTimer(WalkSoundTimerHandle);
-			PlayWalkSound();
-			GetWorldTimerManager().SetTimer(WalkSoundTimerHandle, this, &ATUCharacterPlayer::PlayWalkSound, DesiredInterval, true);
+			// If the timer is not active, start it with the appropriate interval
+			ResetWalkSoundTimer();
 		}
 	}
 	else
 	{
+		// If not on ground or not moving, clear the timer to stop walk sound
 		GetWorldTimerManager().ClearTimer(WalkSoundTimerHandle);
 	}
 
@@ -411,6 +409,8 @@ void ATUCharacterPlayer::OnDashFinished()
 	StopAnimMontage(AnimMontage);
 
 	bIsDashing = false;
+
+	ResetWalkSoundTimer();
 }
 
 
@@ -442,6 +442,8 @@ void ATUCharacterPlayer::StartRunning()
 	{
 		GetCharacterMovement()->MaxWalkSpeed = MaxRunSpeed;
 		bIsRunning = true;
+
+		ResetWalkSoundTimer();
 	}
 }
 
@@ -451,8 +453,26 @@ void ATUCharacterPlayer::StopRunning()
 	{
 		GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed;
 		bIsRunning = false;
+
+		ResetWalkSoundTimer();
 	}
 }
+
+void ATUCharacterPlayer::ResetWalkSoundTimer()
+{
+	if (!GetCharacterMovement()->IsMovingOnGround() || GetVelocity().IsNearlyZero())
+	{
+		GetWorldTimerManager().ClearTimer(WalkSoundTimerHandle);
+		return;
+	}
+
+	const float DesiredInterval = bIsRunning ? RunSoundInterval : WalkSoundInterval;
+
+	GetWorldTimerManager().ClearTimer(WalkSoundTimerHandle);
+	PlayWalkSound();
+	GetWorldTimerManager().SetTimer(WalkSoundTimerHandle, this, &ATUCharacterPlayer::PlayWalkSound, DesiredInterval, true);
+}
+
 
 // ----- Handler
 void ATUCharacterPlayer::HandleLaunchCable()
@@ -469,6 +489,11 @@ void ATUCharacterPlayer::HandleLaunchCable()
 void ATUCharacterPlayer::HandleRetractCable()
 {
 	CableActionComponent->TryRetractCable();
+
+	if (GetCharacterMovement()->IsMovingOnGround() && !GetVelocity().IsNearlyZero())
+	{
+		ResetWalkSoundTimer();
+	}
 }
 
 void ATUCharacterPlayer::HandleShortenCable()
@@ -508,6 +533,7 @@ void ATUCharacterPlayer::OnBeginRetract()
 {
 	GetCharacterMovement()->AirControl = AirControl;
 	GetCharacterMovement()->FallingLateralFriction = FallingLateralFriction;
+	ResetWalkSoundTimer();
 	HandleStopSteamBooster();
 	PlayAnimation(EPlayerAnimationMontageType::SwingEnd);
 
@@ -609,8 +635,11 @@ void ATUCharacterPlayer::PlayWalkSound()
 {
 	if (!SoundManager || IsCableAttached() || IsDashing()) return;
 
+	const float Pitch = bNextFootIsLeft ? 1.0f : FMath::FRandRange(0.6f, 0.8f);
+	bNextFootIsLeft = !bNextFootIsLeft;
+
 	const FName SoundKey = bIsRunning ? TEXT("SW_Chr_Run") : TEXT("SW_Chr_Walk");
-	SoundManager->PlaySound2D(SoundKey);
+	SoundManager->PlaySound2D(SoundKey, 1.0f, Pitch);
 }
 
 

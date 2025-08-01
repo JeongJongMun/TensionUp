@@ -78,6 +78,7 @@ private:
 	void PlayWalkSound();
 	void OnDashFinished();
 	void HandleDance();
+	void ResetWalkSoundTimer();
 
 // --------------------
 // Variables
@@ -217,8 +218,9 @@ private:
 	FTimerHandle WalkSoundTimerHandle;
 	FTimerHandle DashEffectHandle;
 
-	float WalkSoundInterval = 1.0f;
-	float RunSoundInterval = 1.4f;
+	float WalkSoundInterval = 0.45f;
+	float RunSoundInterval = 0.35f;
 	bool bIsRunning = false;
 	bool bIsDancing = false;
+	bool bNextFootIsLeft = true;
 };
