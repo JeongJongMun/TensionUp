@@ -561,7 +561,12 @@ void ATUCharacterPlayer::HandleJumpOrParkour()
 	}
 	else
 	{
+		// If the character is not falling, we can jump normally
+		if (ParkourComponent && ParkourComponent->GetParkourState() == EParkourState::Climbing)
+			return;
+
 		Jump();
+
 		if (!IsCableAttached() && SoundManager)
 		{
 			SoundManager->PlaySound2D("SW_Chr_Jump");
