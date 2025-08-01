@@ -98,6 +98,7 @@ void AUIManager::CreateWidgets()
     if (!CutSceneImageWidget && CutSceneImageWidgetClass)
     {
         CutSceneImageWidget = CreateWidget<UCutSceneImageWidget>(CachedPC, CutSceneImageWidgetClass);
+        UE_LOG(LogTemp, Warning, TEXT("CutSceneImageWidget Created"));
     }
 
 }
@@ -107,7 +108,6 @@ void AUIManager::AddWidgetsToViewport() const
     if (SteamWidget)
     {
         SteamWidget->AddToViewport();
-        CutSceneImageWidget->SetVisibility(ESlateVisibility::Hidden);
     }
 
     if (CrosshairWidget)
@@ -127,6 +127,12 @@ void AUIManager::AddWidgetsToViewport() const
     {
         SpeedLineWidget->AddToViewport();
     }
+    if (CutSceneImageWidget && !CutSceneImageWidget->IsInViewport())
+    {
+        CutSceneImageWidget->AddToViewport(999);
+        CutSceneImageWidget->SetVisibility(ESlateVisibility::Hidden);
+    }
+
 }
 
 void AUIManager::UpdateSteamUI(const float Current, const float Max) const
@@ -204,6 +210,8 @@ void AUIManager::ShowCutSceneImage(UTexture2D* Texture, float Duration)
 {
     if (CutSceneImageWidget)
     {
+        UE_LOG(LogTemp, Warning, TEXT("ShowCutSceneImage called"));
+
         CutSceneImageWidget->ShowImageForSeconds(Texture, Duration);
     }
 }

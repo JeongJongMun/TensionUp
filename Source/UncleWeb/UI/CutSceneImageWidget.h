@@ -4,23 +4,27 @@
 #include "Blueprint/UserWidget.h"
 #include "CutSceneImageWidget.generated.h"
 
+class UImage;
+
 UCLASS()
 class UNCLEWEB_API UCutSceneImageWidget : public UUserWidget
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	UFUNCTION(BlueprintCallable, Category = "Cutscene")
-	void ShowImageForSeconds(UTexture2D* InTexture, float Duration = 3.0f);
+    UFUNCTION(BlueprintCallable)
+    void ShowImageForSeconds(UTexture2D* InTexture, float Duration);
 
 protected:
-	virtual void NativeConstruct() override;
+    virtual void NativeConstruct() override;
+    virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
 private:
-	UPROPERTY(meta = (BindWidget))
-	class UImage* IMG_Cutscene;
+    UPROPERTY(meta = (BindWidget))
+    UImage* CutsceneImage;
 
-	FTimerHandle HideTimerHandle;
-
-	void HideImage();
+    float FadeOutDelay = 0.f;
+    float FadeDuration = 1.f;
+    float ElapsedTime = 0.f;
+    bool bIsFadingOut = false;
 };

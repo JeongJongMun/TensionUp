@@ -144,10 +144,15 @@ void ATUCharacterPlayer::BeginPlay()
 
 	if (UIManager)
 	{
-		UTexture2D* CutsceneTex = LoadObject<UTexture2D>(nullptr, TEXT("/Game/Textures/T_CutsceneMessage.T_CutsceneMessage"));
+		UTexture2D* CutsceneTex = LoadObject<UTexture2D>(nullptr, TEXT("/Game/Art/CutScene/T_Cutscene_Start.T_Cutscene_Start"));
 		if (CutsceneTex)
 		{
 			UIManager->ShowCutSceneImage(CutsceneTex, 3.0f);
+			UE_LOG(LogTemp, Warning, TEXT("CutsceneTex loaded"));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("CutsceneTex NOT FOUND"));
 		}
 	}
 

@@ -1,26 +1,52 @@
 #include "CutSceneImageWidget.h"
 #include "Components/Image.h"
-#include "TimerManager.h"
+#include "Blueprint/WidgetTree.h"
 
 void UCutSceneImageWidget::NativeConstruct()
 {
-	Super::NativeConstruct();
-
-	SetVisibility(ESlateVisibility::Hidden);
+    Super::NativeConstruct();
+    SetVisibility(ESlateVisibility::Hidden);
+    SetRenderOpacity(0.f);
 }
 
 void UCutSceneImageWidget::ShowImageForSeconds(UTexture2D* InTexture, float Duration)
 {
-	if (!IMG_Cutscene || !InTexture) return;
+    if (!CutsceneImage || !InTexture) return;
 
-	IMG_Cutscene->SetBrushFromTexture(InTexture);
-	SetVisibility(ESlateVisibility::Visible);
+    CutsceneImage->SetBrushFromTexture(InTexture);
+    SetVisibility(ESlateVisibility::Visible);
+    SetRenderOpacity(1.f);
 
-	GetWorld()->GetTimerManager().ClearTimer(HideTimerHandle);
-	GetWorld()->GetTimerManager().SetTimer(HideTimerHandle, this, &UCutSceneImageWidget::HideImage, Duration, false);
+    FadeOutDelay = Duration;
+    FadeDuration = 1.0f;
+    ElapsedTime = 0.f;
+    bIsFadingOut = false;
 }
 
-void UCutSceneImageWidget::HideImage()
+void UCutSceneImageWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
-	SetVisibility(ESlateVisibility::Hidden);
+    Super::NativeTick(MyGeometry, InDeltaTime);
+
+    if (FadeOutDelay > 0.f)
+    {
+        FadeOutDelay -= InDeltaTime;
+        if (FadeOutDelay <= 0.f)
+        {
+            bIsFadingOut = true;
+            ElapsedTime = 0.f;
+        }
+    }
+
+    if (bIsFadingOut)
+    {
+        ElapsedTime += InDeltaTime;
+        float Alpha = FMath::Clamp(1.f - (ElapsedTime / FadeDuration), 0.f, 1.f);
+        SetRenderOpacity(Alpha);
+
+        if (Alpha <= 0.f)
+        {
+            SetVisibility(ESlateVisibility::Hidden);
+            bIsFadingOut = false;
+        }
+    }
 }
