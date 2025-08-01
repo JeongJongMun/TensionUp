@@ -36,7 +36,7 @@ void AMainMenuGameMode::BeginPlay()
 	FLatentActionInfo LatentInfo;
 	LatentInfo.CallbackTarget = this;
 
-	UGameplayStatics::LoadStreamLevel(this, "Stage_2_1", true, false, LatentInfo);
+	UGameplayStatics::LoadStreamLevel(this, "Stage_2", true, false, LatentInfo);
 
 	ShowMainMenu();
 
