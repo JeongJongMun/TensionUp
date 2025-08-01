@@ -142,6 +142,20 @@ void ATUCharacterPlayer::BeginPlay()
 	UIManager = GetWorld()->SpawnActor<AUIManager>(AUIManager::StaticClass());
 	UIManager->InitializeUI(PC);
 
+	if (UIManager)
+	{
+		UTexture2D* CutsceneTex = LoadObject<UTexture2D>(nullptr, TEXT("/Game/Art/CutScene/T_Cutscene_Start.T_Cutscene_Start"));
+		if (CutsceneTex)
+		{
+			UIManager->ShowCutSceneImage(CutsceneTex, 6.0f);
+			UE_LOG(LogTemp, Warning, TEXT("CutsceneTex loaded"));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("CutsceneTex NOT FOUND"));
+		}
+	}
+
 	SteamComponent->OnSteamChanged.AddDynamic(this, &ATUCharacterPlayer::HandleUpdateSteamUI);
 	CableActionComponent->OnBeginLaunchAction.AddDynamic(this, &ATUCharacterPlayer::OnBeginLaunch);
 	CableActionComponent->OnBeginRetractAction.AddDynamic(this, &ATUCharacterPlayer::OnBeginRetract);

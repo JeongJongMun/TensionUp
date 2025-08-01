@@ -2,6 +2,7 @@
 #include "ControlGuideWidget.h"
 #include "SettingWidget.h"
 #include "SpeedLineWidget.h"
+#include "CutSceneImageWidget.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/Image.h"
 #include "Engine/World.h"
@@ -40,6 +41,13 @@ AUIManager::AUIManager()
     {
         SpeedLineWidgetClass = SpeedLineFinder.Class;
     }
+
+    static ConstructorHelpers::FClassFinder<UCutSceneImageWidget> CutSceneFinder(TEXT("/Game/UI/WBP_CutSceneImage.WBP_CutSceneImage_C"));
+    if (CutSceneFinder.Succeeded())
+    {
+        CutSceneImageWidgetClass = CutSceneFinder.Class;
+    }
+
 }
 
 void AUIManager::BeginPlay()
@@ -86,6 +94,13 @@ void AUIManager::CreateWidgets()
     {
         SpeedLineWidget = CreateWidget<UUserWidget>(CachedPC, SpeedLineWidgetClass);
     }
+
+    if (!CutSceneImageWidget && CutSceneImageWidgetClass)
+    {
+        CutSceneImageWidget = CreateWidget<UCutSceneImageWidget>(CachedPC, CutSceneImageWidgetClass);
+        UE_LOG(LogTemp, Warning, TEXT("CutSceneImageWidget Created"));
+    }
+
 }
 
 void AUIManager::AddWidgetsToViewport() const
@@ -112,6 +127,12 @@ void AUIManager::AddWidgetsToViewport() const
     {
         SpeedLineWidget->AddToViewport();
     }
+    if (CutSceneImageWidget && !CutSceneImageWidget->IsInViewport())
+    {
+        CutSceneImageWidget->AddToViewport(999);
+        CutSceneImageWidget->SetVisibility(ESlateVisibility::Hidden);
+    }
+
 }
 
 void AUIManager::UpdateSteamUI(const float Current, const float Max) const
@@ -182,5 +203,15 @@ void AUIManager::UpdateSpeedLineWidget(const float CurrentSpeed, const float Max
     if (USpeedLineWidget* SpeedLine = Cast<USpeedLineWidget>(SpeedLineWidget))
     {
         SpeedLine->UpdateSpeedLines(CurrentSpeed, MaxSpeed);
+    }
+}
+
+void AUIManager::ShowCutSceneImage(UTexture2D* Texture, float Duration)
+{
+    if (CutSceneImageWidget)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("ShowCutSceneImage called"));
+
+        CutSceneImageWidget->PlayCutScene(Texture, Duration);
     }
 }
