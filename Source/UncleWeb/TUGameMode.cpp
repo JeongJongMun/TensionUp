@@ -3,6 +3,7 @@
 #include "TUGameMode.h"
 #include "Character/TUCharacterPlayer.h"
 #include "Kismet/GameplayStatics.h"
+#include "GameFramework/PlayerStart.h"
 #include "UObject/ConstructorHelpers.h"
 
 ATUGameMode::ATUGameMode()
@@ -18,6 +19,23 @@ ATUGameMode::ATUGameMode()
 		DefaultPawnClass = ATUCharacterPlayer::StaticClass();
 		UE_LOG(LogTemp, Warning, TEXT("Blueprint Character Class Not Found. Using C++ Character Class: %s"), *DefaultPawnClass->GetName());
 	}
+}
+
+AActor* ATUGameMode::ChoosePlayerStart_Implementation(AController* Player)
+{
+	TArray<AActor*> FoundStarts;
+	UGameplayStatics::GetAllActorsOfClass(this, APlayerStart::StaticClass(), FoundStarts);
+
+	for (AActor* Start : FoundStarts)
+	{
+		if (Start->Tags.Contains("Start"))
+		{
+			UE_LOG(LogTemp, Log, TEXT("Player will spawn at tagged PlayerStart."));
+			return Start;
+		}
+	}
+
+	return Super::ChoosePlayerStart_Implementation(Player);
 }
 
 void ATUGameMode::BeginPlay()
