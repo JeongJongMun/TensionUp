@@ -142,6 +142,15 @@ void ATUCharacterPlayer::BeginPlay()
 	UIManager = GetWorld()->SpawnActor<AUIManager>(AUIManager::StaticClass());
 	UIManager->InitializeUI(PC);
 
+	if (UIManager)
+	{
+		UTexture2D* CutsceneTex = LoadObject<UTexture2D>(nullptr, TEXT("/Game/Textures/T_CutsceneMessage.T_CutsceneMessage"));
+		if (CutsceneTex)
+		{
+			UIManager->ShowCutSceneImage(CutsceneTex, 3.0f);
+		}
+	}
+
 	SteamComponent->OnSteamChanged.AddDynamic(this, &ATUCharacterPlayer::HandleUpdateSteamUI);
 	CableActionComponent->OnBeginLaunchAction.AddDynamic(this, &ATUCharacterPlayer::OnBeginLaunch);
 	CableActionComponent->OnBeginRetractAction.AddDynamic(this, &ATUCharacterPlayer::OnBeginRetract);
