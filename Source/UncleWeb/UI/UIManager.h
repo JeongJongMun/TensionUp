@@ -25,6 +25,7 @@ public:
 	void ShowSettingWidget() const;
 	void ToggleControlGuideWidget() const;
 	void UpdateSpeedLineWidget(float CurrentSpeed, float MaxSpeed) const;
+	void ShowCutSceneImage(UTexture2D* Texture, float Duration = 3.0f);
 
 protected:
 	virtual void BeginPlay() override;
@@ -60,6 +61,12 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UUserWidget> SpeedLineWidget;
+
+	UPROPERTY()
+	TObjectPtr<class UCutSceneImageWidget> CutSceneImageWidget;
+
+	UPROPERTY()
+	TSubclassOf<class UCutSceneImageWidget> CutSceneImageWidgetClass;
 
 	UPROPERTY()
 	TSubclassOf<class UUserWidget> SpeedLineWidgetClass;
