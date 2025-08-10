@@ -127,7 +127,7 @@ private:
 	TMap<EPlayerAnimationMontageType, TArray<FName>> AnimSectionMap;
 	
 	UPROPERTY(EditAnywhere, Category = "Config|Dash")
-	float DashStrength = 1400.0f;
+	float DashStrength = 750.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|Dash")
 	bool bIsDashEffect = true;

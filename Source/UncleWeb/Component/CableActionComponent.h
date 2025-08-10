@@ -99,7 +99,7 @@ private:
 	float CableMinLength = 300.0f;
 	
 	UPROPERTY(EditAnywhere, Category = "Config|Cable")
-	float CableDrivingForce = 1125.0f;
+	float CableDrivingForce = 600.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Config|Cable")
 	float CableAdjustSpeed = 200.0f;

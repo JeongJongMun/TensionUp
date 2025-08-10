@@ -131,7 +131,7 @@ void UCableActionComponent::TryDrivingForce()
 
 	const FVector Force = InputTangential * CableDrivingForce;
     
-	Owner->LaunchCharacter(Force, true, true);
+	Owner->LaunchCharacter(Force, false, false);
 
 	SoundManager->PlaySound2D("SW_Cable_DrivingForce");
 }
