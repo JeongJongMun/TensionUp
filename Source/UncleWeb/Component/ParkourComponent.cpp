@@ -21,7 +21,6 @@ void UParkourComponent::TryParkour()
 
 	if (OwnerCharacter->IsCableAttached())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Cannot Parkour ~"));
 		return;
 	}
 
@@ -29,10 +28,6 @@ void UParkourComponent::TryParkour()
 	if (FindBestClimbableWall(BestHit))
 	{
 		BeginParkour(BestHit.SurfaceNormal, BestHit.ImpactPoint);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("No Parkour surface found"));
 	}
 }
 

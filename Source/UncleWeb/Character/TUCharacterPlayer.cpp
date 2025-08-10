@@ -207,7 +207,7 @@ void ATUCharacterPlayer::Tick(float DeltaTime)
 		GetWorldTimerManager().ClearTimer(WalkSoundTimerHandle);
 	}
 
-	if (CableActionComponent->IsCanLaunchCable())
+	if (CableActionComponent->IsCanLaunchCable() && GetCharacterMovement()->IsFalling())
 	{
 		UIManager->SetCrosshairColor(ECrosshairStateType::Active);
 	}
@@ -245,7 +245,7 @@ void ATUCharacterPlayer::InitializeInputActions()
 		{ EInputActionType::SteamBoost, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_SteamBooster.IA_SteamBooster'"))) },
 		{ EInputActionType::ShowSetting, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_ShowSettings.IA_ShowSettings'"))) },
 		{ EInputActionType::ToggleControlGuide, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_ToggleControlGuide.IA_ToggleControlGuide'"))) },
-		{ EInputActionType::Dance, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_Dance.IA_Dance'"))) },
+		// { EInputActionType::Dance, TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_Dance.IA_Dance'"))) },
 	};
 
 	InputActionMap = {
@@ -260,7 +260,7 @@ void ATUCharacterPlayer::InitializeInputActions()
 		{ EInputActionType::SteamBoost, SteamBoostAction },
 		{ EInputActionType::ShowSetting, ShowSettingsAction },
 		{ EInputActionType::ToggleControlGuide, ToggleControlGuideAction },
-		{ EInputActionType::Dance, DanceAction },
+		// { EInputActionType::Dance, DanceAction },
 	};
 
 	for (const TPair<EInputActionType, TSoftObjectPtr<UInputAction>>& Pair : InputActionPaths)
