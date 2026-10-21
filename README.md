@@ -28,10 +28,3 @@
 | [CableActionComponent](Source/UncleWeb/Component/CableActionComponent.cpp) | 케이블 발사와 회수, 진자 운동 스윙 |
 | [DynamicCamera](Source/UncleWeb/Component/DynamicCamera.cpp) | 속도에 따라 카메라 거리, FOV, 블러 조절 |
 | [SteamComponent](Source/UncleWeb/Component/SteamComponent.cpp) | 증기 자원 소모와 회복 |
-
-<br/>
-
-## 개발
-
-- Unreal Engine 5.5
-- C++
